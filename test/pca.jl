@@ -33,6 +33,7 @@ M = PCA(Float64[], P, pvars, 0.25)
 @test indim(M) == 5
 @test outdim(M) == 3
 @test mean(M) == zeros(5)
+@test projection(M) == P
 @test principalvars(M) == pvars
 @test principalvar(M, 2) == pvars[2]
 @test tprincipalvar(M) == 12.0
@@ -54,6 +55,7 @@ M = PCA(mv, P, pvars, 0.25)
 @test indim(M) == 5
 @test outdim(M) == 3
 @test mean(M) == mv
+@test projection(M) == P
 @test principalvars(M) == pvars
 @test principalvar(M, 2) == pvars[2]
 @test tprincipalvar(M) == 12.0
@@ -65,9 +67,5 @@ M = PCA(mv, P, pvars, 0.25)
 
 @test_approx_eq reconstruct(M, Y[:,1]) P * Y[:,1] .+ mv
 @test_approx_eq reconstruct(M, Y) P * Y .+ mv
-
-
-
-
 
 

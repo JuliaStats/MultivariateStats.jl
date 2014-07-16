@@ -43,3 +43,25 @@ principalratio(M::PCA) = M.tprinvar / (M.tprinvar + M.tresivar)
 transform{T<:Real}(M::PCA, x::AbstractVecOrMat{T}) = At_mul_B(M.proj, centralize(x, M.mean))
 reconstruct{T<:Real}(M::PCA, y::AbstractVecOrMat{T}) = decentralize(M.proj * y, M.mean)
 
+
+#### show & dump PCA
+
+function show(io::IO, M::PCA)
+    pr = @sprintf("%.5f", principalratio(M))
+    print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $pr)")
+end
+
+function dump(io::IO, M::PCA)
+    show(io, M)
+    println(io)
+    print(io, "principal vars: ")
+    printvecln(io, M.prinvars)
+    println(io, "total principal var = $(M.tprinvar)")
+    println(io, "total residual var  = $(M.tresivar)")
+    println(io, "mean:")
+    printvecln(io, mean(M))
+    println(io, "projection:")
+    printarrln(io, projection(M))
+end
+
+
