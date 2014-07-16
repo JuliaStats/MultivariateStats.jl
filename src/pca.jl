@@ -7,21 +7,23 @@ type PCA
     proj::Matrix{Float64}       # projection matrix: of size d x p
     prinvars::Vector{Float64}   # principal variances: of length p
     tprinvar::Float64           # total principal variance, i.e. sum(prinvars)
-    tresivar::Float64           # total variance of residual
+    tvar::Float64               # total input variance
 end          
 
-# constructor
+## constructor
 
-function PCA(mean::Vector{Float64}, proj::Matrix{Float64}, pvars::Vector{Float64}, trvar::Float64)
+function PCA(mean::Vector{Float64}, proj::Matrix{Float64}, pvars::Vector{Float64}, tvar::Float64)
     d, p = size(proj)
     (isempty(mean) || length(mean) == d) ||
         throw(DimensionMismatch("Dimensions of mean and proj are inconsistent."))
     length(pvars) == p ||
         throw(DimensionMismatch("Dimensions of proj and pvars are inconsistent."))
-    PCA(mean, proj, pvars, sum(pvars), trvar)
+    tpvar = sum(pvars)
+    tpvar <= tvar || error("principal variance cannot exceed total variance.")
+    PCA(mean, proj, pvars, tpvar, tvar)
 end
 
-# properties
+## properties
 
 indim(M::PCA) = size(M.proj, 1)
 outdim(M::PCA) = size(M.proj, 2)
@@ -34,17 +36,17 @@ principalvar(M::PCA, i::Integer) = M.prinvars[i]
 principalvars(M::PCA) = M.prinvars
 
 tprincipalvar(M::PCA) = M.tprinvar
-tresidualvar(M::PCA) = M.tresivar
+tresidualvar(M::PCA) = M.tvar - M.tprinvar
+tvar(M::PCA) = M.tvar
 
-principalratio(M::PCA) = M.tprinvar / (M.tprinvar + M.tresivar)
+principalratio(M::PCA) = M.tprinvar / M.tvar
 
-# use
+## use
 
 transform{T<:Real}(M::PCA, x::AbstractVecOrMat{T}) = At_mul_B(M.proj, centralize(x, M.mean))
 reconstruct{T<:Real}(M::PCA, y::AbstractVecOrMat{T}) = decentralize(M.proj * y, M.mean)
 
-
-#### show & dump PCA
+## show & dump
 
 function show(io::IO, M::PCA)
     pr = @sprintf("%.5f", principalratio(M))
@@ -56,12 +58,70 @@ function dump(io::IO, M::PCA)
     println(io)
     print(io, "principal vars: ")
     printvecln(io, M.prinvars)
-    println(io, "total principal var = $(M.tprinvar)")
-    println(io, "total residual var  = $(M.tresivar)")
+    println(io, "total var = $(tvar(M))")
+    println(io, "total principal var = $(tprincipalvar(M))")
+    println(io, "total residual var  = $(tresidualvar(M))")
     println(io, "mean:")
     printvecln(io, mean(M))
     println(io, "projection:")
     printarrln(io, projection(M))
 end
 
+
+#### PCA Training
+
+## auxiliary 
+
+const default_pca_pratio = 0.99
+
+function check_pcaparams(d::Int, mean::Vector, md::Int, pr::Float64)
+    isempty(mean) || length(mean) == d ||
+        throw(DimensionMismatch("Incorrect length of mean."))
+    md >= 1 || error("maxoutdim must be a positive integer.")
+    0.0 < pr <= 1.0 || error("pratio must be a positive real value with pratio <= 1.0.")
+end
+
+
+function choose_pcadim(v::AbstractVector, ord::Vector{Int}, vsum::Float64, md::Int, pr::Float64)
+    md = min(length(v), md)
+    k = 1
+    a = v[ord[1]]
+    thres = vsum * pr
+    while k < md && a < thres
+        a += v[ord[k += 1]]
+    end
+    return k
+end
+
+
+## core algorithms
+
+function pcacov(C::Matrix{Float64}, mean::Vector{Float64}; 
+                maxoutdim::Int=size(C,1), 
+                pratio::Float64=default_pca_pratio)
+
+    check_pcaparams(size(C,1), mean, maxoutdim, pratio)
+    (v, P) = eig(C)
+    ord = sortperm(v; rev=true)
+    vsum = sum(v)
+    k = choose_pcadim(v, ord, vsum, maxoutdim, pratio)
+    si = ord[1:k]
+    PCA(mean, P[:,si], v[si], vsum)
+end
+
+function pcastd(Z::Matrix{Float64}, mean::Vector{Float64}, tw::Real; 
+                maxoutdim::Int=min(size(Z)...),
+                pratio::Float64=default_pca_pratio)
+
+    check_pcaparams(size(Z,1), mean, maxoutdim, pratio)
+    (U, v, V) = svd(Z)
+    for i = 1:length(v)
+        @inbounds v[i] = abs2(v[i]) / tw
+    end
+    ord = sortperm(v; rev=true)
+    vsum = sum(v)
+    k = choose_pcadim(v, ord, vsum, maxoutdim, pratio)
+    si = ord[1:k]
+    PCA(mean, U[:,si], v[si], vsum)
+end
 

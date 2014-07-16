@@ -3,24 +3,6 @@ using Base.Test
 
 srand(34568)
 
-## prepare data
-
-# d = 5
-# n = 1000
-
-# R = qr(randn(d, d))[1]
-# @test_approx_eq R'R eye(5)
-# scale!(R, rand(d) .+ 0.5)
-
-# center = randn(5)
-
-# Z = R'randn(5, n)
-# X = Z .+ center
-# w = rand(n)
-
-# Xcopy = copy(X)  
-
-
 ## PCA with zero mean
 
 X = randn(5, 10)
@@ -28,7 +10,7 @@ Y = randn(3, 10)
 
 P = qr(randn(5, 5))[1][:, 1:3]
 pvars = [5., 4., 3.]
-M = PCA(Float64[], P, pvars, 0.25)
+M = PCA(Float64[], P, pvars, 15.0)
 
 @test indim(M) == 5
 @test outdim(M) == 3
@@ -36,9 +18,10 @@ M = PCA(Float64[], P, pvars, 0.25)
 @test projection(M) == P
 @test principalvars(M) == pvars
 @test principalvar(M, 2) == pvars[2]
+@test tvar(M) == 15.0
 @test tprincipalvar(M) == 12.0
-@test tresidualvar(M) == 0.25
-@test principalratio(M) == 12.0 / 12.25
+@test tresidualvar(M) == 3.0
+@test principalratio(M) == 0.8
 
 @test_approx_eq transform(M, X[:,1]) P'X[:,1]
 @test_approx_eq transform(M, X) P'X
@@ -50,7 +33,7 @@ M = PCA(Float64[], P, pvars, 0.25)
 ## PCA with non-zero mean
 
 mv = rand(5)
-M = PCA(mv, P, pvars, 0.25)
+M = PCA(mv, P, pvars, 15.0)
 
 @test indim(M) == 5
 @test outdim(M) == 3
@@ -58,14 +41,98 @@ M = PCA(mv, P, pvars, 0.25)
 @test projection(M) == P
 @test principalvars(M) == pvars
 @test principalvar(M, 2) == pvars[2]
+@test tvar(M) == 15.0
 @test tprincipalvar(M) == 12.0
-@test tresidualvar(M) == 0.25
-@test principalratio(M) == 12.0 / 12.25
+@test tresidualvar(M) == 3.0
+@test principalratio(M) == 0.8
 
 @test_approx_eq transform(M, X[:,1]) P' * (X[:,1] .- mv)
 @test_approx_eq transform(M, X) P' * (X .- mv)
 
 @test_approx_eq reconstruct(M, Y[:,1]) P * Y[:,1] .+ mv
 @test_approx_eq reconstruct(M, Y) P * Y .+ mv
+
+
+## prepare training data
+
+d = 5
+n = 1000
+
+R = qr(randn(d, d))[1]
+@test_approx_eq R'R eye(5)
+scale!(R, sqrt([0.5, 0.3, 0.1, 0.05, 0.05]))
+
+X = R'randn(5, n) .+ randn(5)
+mv = vec(mean(X, 2))
+Z = X .- mv
+
+C = cov(X; vardim=2)
+pvs0 = sort(eigvals(C); rev=true)
+tv = sum(diag(C))
+
+## pcacov
+
+M = pcacov(C, mv)
+P = projection(M)
+pvs = principalvars(M)
+
+@test indim(M) == 5
+@test outdim(M) == 5
+@test mean(M) == mv
+@test_approx_eq P'P eye(5)
+@test issorted(pvs; rev=true)
+@test_approx_eq pvs pvs0
+@test_approx_eq tvar(M) tv
+@test_approx_eq sum(pvs) tvar(M)
+@test_approx_eq reconstruct(M, transform(M, X)) X
+
+M = pcacov(C, mv; maxoutdim=3)
+P = projection(M)
+
+@test indim(M) == 5
+@test outdim(M) == 3
+@test_approx_eq P'P eye(3)
+@test issorted(pvs; rev=true)
+
+M = pcacov(C, mv; pratio=0.85)
+
+@test indim(M) == 5
+@test outdim(M) == 3
+@test_approx_eq P'P eye(3)
+@test issorted(pvs; rev=true)
+
+## pcastd
+
+M = pcastd(Z, mv, n)
+P = projection(M)
+pvs = principalvars(M)
+
+@test indim(M) == 5
+@test outdim(M) == 5
+@test mean(M) == mv
+@test_approx_eq P'P eye(5)
+@test issorted(pvs; rev=true)
+@test_approx_eq_eps pvs pvs0 1.0e-3
+@test_approx_eq_eps tvar(M) tv 1.0e-3
+@test_approx_eq sum(pvs) tvar(M)
+@test_approx_eq reconstruct(M, transform(M, X)) X
+
+M = pcastd(Z, mv, n; maxoutdim=3)
+P = projection(M)
+
+@test indim(M) == 5
+@test outdim(M) == 3
+@test_approx_eq P'P eye(3)
+@test issorted(pvs; rev=true)
+
+M = pcastd(Z, mv, n; pratio=0.85)
+
+@test indim(M) == 5
+@test outdim(M) == 3
+@test_approx_eq P'P eye(3)
+@test issorted(pvs; rev=true)
+
+
+
 
 
