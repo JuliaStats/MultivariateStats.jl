@@ -10,7 +10,7 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 
 #### Available
 
-- Principal Component Analysis
+- Principal Component Analysis (PCA)
 
 #### Todo (soon)
 
