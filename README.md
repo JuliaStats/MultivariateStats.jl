@@ -6,4 +6,9 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 
 -------
 
+## Functionalities
+
+- [] Principal Component Analysis
+- [] Linear Discriminant Analysis
+
 
