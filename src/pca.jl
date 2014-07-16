@@ -101,7 +101,7 @@ function pcacov(C::Matrix{Float64}, mean::Vector{Float64};
                 pratio::Float64=default_pca_pratio)
 
     check_pcaparams(size(C,1), mean, maxoutdim, pratio)
-    Eg = eigfact!(Hermitian(copy(C)))
+    Eg = eigfact!(Symmetric(copy(C)))
     v = Eg.values::Vector{Float64}
     P = Eg.vectors::Matrix{Float64}
     ord = sortperm(v; rev=true)
