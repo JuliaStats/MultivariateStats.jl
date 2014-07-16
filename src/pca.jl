@@ -101,7 +101,7 @@ function pcacov(C::Matrix{Float64}, mean::Vector{Float64};
                 pratio::Float64=default_pca_pratio)
 
     check_pcaparams(size(C,1), mean, maxoutdim, pratio)
-    (v, P) = eig(C)
+    (v, P) = eig(C)::(Vector{Float64}, Matrix{Float64})
     ord = sortperm(v; rev=true)
     vsum = sum(v)
     k = choose_pcadim(v, ord, vsum, maxoutdim, pratio)
@@ -128,7 +128,7 @@ end
 
 ## interface functions
 
-function pca(X::Matrix{Float64}; 
+function fit(::Type{PCA}, X::Matrix{Float64}; 
              method::Symbol=:auto, 
              maxoutdim::Int=size(X,1), 
              pratio::Float64=default_pca_pratio, 
