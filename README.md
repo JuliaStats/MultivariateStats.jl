@@ -8,7 +8,18 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 
 ## Functionalities
 
-- [] Principal Component Analysis
-- [] Linear Discriminant Analysis
+#### Available
 
+- Principal Component Analysis
 
+#### Todo (soon)
+
+- Canonical Correlation Analysis (CCA)
+- Linear Discriminant Analysis (LDA)
+- Independent Component Analysis (ICA)
+- Multidimensional Scaling (MDS)
+
+#### Future Plan
+
+- Factor Analysis 
+- Probabilistic PCA (PPCA)
