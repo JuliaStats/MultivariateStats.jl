@@ -8,6 +8,7 @@ module MultivariateStats
     export 
 
     ## common
+    fit,                # fit a model to data (imported from StatsBase)
     centralize,         # subtract a mean vector from each column
     decentralize,       # add a mean vector to each column
     indim,              # the input dimension of a model
@@ -19,7 +20,6 @@ module MultivariateStats
     ## pca
     PCA,                # Type: Principal Component Analysis model
 
-    pca,                # Perform PCA over a given data set
     pcacov,             # PCA based on covariance
     pcastd,             # PCA based on singular value decomposition
     principalratio,     # the ratio of variances preserved in the principal subspace

@@ -101,7 +101,9 @@ function pcacov(C::Matrix{Float64}, mean::Vector{Float64};
                 pratio::Float64=default_pca_pratio)
 
     check_pcaparams(size(C,1), mean, maxoutdim, pratio)
-    (v, P) = eig(C)::(Vector{Float64}, Matrix{Float64})
+    Eg = eigfact!(Hermitian(copy(C)))
+    v = Eg.values::Vector{Float64}
+    P = Eg.vectors::Matrix{Float64}
     ord = sortperm(v; rev=true)
     vsum = sum(v)
     k = choose_pcadim(v, ord, vsum, maxoutdim, pratio)
@@ -114,7 +116,9 @@ function pcastd(Z::Matrix{Float64}, mean::Vector{Float64}, tw::Real;
                 pratio::Float64=default_pca_pratio)
 
     check_pcaparams(size(Z,1), mean, maxoutdim, pratio)
-    (U, v, V) = svd(Z)
+    Svd = svdfact(Z)
+    v = Svd.S::Vector{Float64}
+    U = Svd.U::Matrix{Float64}
     for i = 1:length(v)
         @inbounds v[i] = abs2(v[i]) / tw
     end
