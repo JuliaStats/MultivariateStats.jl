@@ -3,7 +3,7 @@ tests = ["pca"]
 println("Running tests:")
 
 for t in tests
-	fp = joinpath("test", "$(t).jl")
+	fp = string(t, ".jl")
     println(" * $(fp)")
     include(fp)
 end

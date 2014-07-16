@@ -13,6 +13,6 @@ before_install:
   - sudo apt-get update -qq -y
   - sudo apt-get install libpcre3-dev julia -y
 script:
-  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("MultivariateAnalysis"))`); Pkg.pin("MultivariateAnalysis"); Pkg.resolve()'
-  - julia -e 'using MultivariateAnalysis; @assert isdefined(:MultivariateAnalysis); @assert typeof(MultivariateAnalysis) === Module'
-  - julia runtests.jl
+  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("MultivariateStats"))`); Pkg.pin("MultivariateStats"); Pkg.resolve()'
+  - julia -e 'using MultivariateStats; @assert isdefined(:MultivariateStats); @assert typeof(MultivariateStats) === Module'
+  - julia ./test/runtests.jl

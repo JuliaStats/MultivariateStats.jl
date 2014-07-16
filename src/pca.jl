@@ -51,10 +51,10 @@ end
 # transform and reconstruction
 
 _centerize(m::PCA, x::DenseVector{Float64}) = 
-    isempty(m.center) ? x : (x - m.center)
+    isempty(m.center) ? x : x - m.center
 
 _centerize(m::PCA, x::DenseMatrix{Float64}) = 
-    isempty(m.center) ? x : bsubtract(x, m.center, 1)
+    isempty(m.center) ? x : x .- m.center
 
 transform(m::PCA, x::DenseVecOrMat) = m.projection'_centerize(m, float64(x))
 
@@ -69,7 +69,7 @@ end
 function reconstruct(m::PCA, y::DenseMatrix{Float64})
     x = m.projection * y
     if !isempty(m.center)
-        badd!(x, m.center, 1)
+        broadcast!(+, x, x, m.center, 1)
     end
     return x
 end
@@ -92,7 +92,7 @@ function pca_prepare(X::Matrix{Float64}, w::Vector{Float64}, center::Vector{Floa
     if isempty(center)
         return isempty(w) ? X : scale(X, sqrt(w))
     else
-        Z = bsubtract(X, center, 1)
+        Z = X .- center
         return isempty(w) ? Z : scale!(Z, sqrt(w))
     end
 end

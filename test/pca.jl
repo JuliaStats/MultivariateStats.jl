@@ -1,7 +1,7 @@
-using MultivariateAnalysis
+using MultivariateStats
 using Base.Test
 
-import MultivariateAnalysis: pca_prepare, compute_cov, pca_decide_outdim
+import MultivariateStats: pca_prepare, compute_cov, pca_decide_outdim
 
 srand(34568)
 
