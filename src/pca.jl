@@ -125,3 +125,36 @@ function pcastd(Z::Matrix{Float64}, mean::Vector{Float64}, tw::Real;
     PCA(mean, U[:,si], v[si], vsum)
 end
 
+
+## interface functions
+
+function pca(X::Matrix{Float64}; 
+             method::Symbol=:auto, 
+             maxoutdim::Int=size(X,1), 
+             pratio::Float64=default_pca_pratio, 
+             mean=nothing)
+
+    d, n = size(X)
+    
+    # choose method
+    if method == :auto
+        method = d < n ? :cov : :std
+    end
+
+    # process mean
+    mv = (mean == nothing ? vec(Base.mean(X, 2)) :
+          mean == 0 ? Float64[] : mean)::Vector{Float64}
+
+    # delegate to core
+    if method == :cov
+        C = cov(X; vardim=2, mean=isempty(mv) ? 0 : mv)::Matrix{Float64}
+        M = pcacov(C, mv; maxoutdim=maxoutdim, pratio=pratio)
+    elseif method == :std
+        Z = centralize(X, mv)
+        M = pcastd(Z, mv, float64(n); maxoutdim=maxoutdim, pratio=pratio)
+    else
+        error("Invalid method name $(method)")
+    end
+
+    return M::PCA
+end

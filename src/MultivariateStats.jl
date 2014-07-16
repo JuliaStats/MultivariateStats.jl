@@ -14,6 +14,7 @@ module MultivariateStats
     decentralize,       # add a mean vector to each column
     indim,              # the input dimension of a model
     outdim,             # the output dimension of a model
+    pca,                # Perform PCA over a given data set
     pcacov,             # PCA based on covariance
     pcastd,             # PCA based on singular value decomposition
     principalratio,     # the ratio of variances preserved in the principal subspace

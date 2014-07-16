@@ -70,9 +70,9 @@ C = cov(X; vardim=2)
 pvs0 = sort(eigvals(C); rev=true)
 tv = sum(diag(C))
 
-## pcacov
+## pcacov (default using cov when d < n)
 
-M = pcacov(C, mv)
+M = pca(X)
 P = projection(M)
 pvs = principalvars(M)
 
@@ -86,7 +86,13 @@ pvs = principalvars(M)
 @test_approx_eq sum(pvs) tvar(M)
 @test_approx_eq reconstruct(M, transform(M, X)) X
 
-M = pcacov(C, mv; maxoutdim=3)
+M = pca(X; mean=mv)
+@test_approx_eq projection(M) P
+
+M = pca(Z; mean=0)
+@test_approx_eq projection(M) P
+
+M = pca(X; maxoutdim=3)
 P = projection(M)
 
 @test indim(M) == 5
@@ -94,7 +100,7 @@ P = projection(M)
 @test_approx_eq P'P eye(3)
 @test issorted(pvs; rev=true)
 
-M = pcacov(C, mv; pratio=0.85)
+M = pca(X; pratio=0.85)
 
 @test indim(M) == 5
 @test outdim(M) == 3
@@ -103,7 +109,7 @@ M = pcacov(C, mv; pratio=0.85)
 
 ## pcastd
 
-M = pcastd(Z, mv, n)
+M = pca(X; method=:std)
 P = projection(M)
 pvs = principalvars(M)
 
@@ -117,7 +123,13 @@ pvs = principalvars(M)
 @test_approx_eq sum(pvs) tvar(M)
 @test_approx_eq reconstruct(M, transform(M, X)) X
 
-M = pcastd(Z, mv, n; maxoutdim=3)
+M = pca(X; method=:std, mean=mv)
+@test_approx_eq projection(M) P
+
+M = pca(Z; method=:std, mean=0)
+@test_approx_eq projection(M) P
+
+M = pca(X; method=:std, maxoutdim=3)
 P = projection(M)
 
 @test indim(M) == 5
@@ -125,14 +137,10 @@ P = projection(M)
 @test_approx_eq P'P eye(3)
 @test issorted(pvs; rev=true)
 
-M = pcastd(Z, mv, n; pratio=0.85)
+M = pca(X; method=:std, pratio=0.85)
 
 @test indim(M) == 5
 @test outdim(M) == 3
 @test_approx_eq P'P eye(3)
 @test issorted(pvs; rev=true)
-
-
-
-
 
