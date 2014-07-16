@@ -3,7 +3,7 @@
 #### PCA type
 
 type PCA
-    mean::Vector{Float64}       # of length d (mean can be empty, which indicates zero mean)
+    mean::Vector{Float64}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     proj::Matrix{Float64}       # projection matrix: of size d x p
     prinvars::Vector{Float64}   # principal variances: of length p
     tprinvar::Float64           # total principal variance, i.e. sum(prinvars)
@@ -28,7 +28,7 @@ end
 indim(M::PCA) = size(M.proj, 1)
 outdim(M::PCA) = size(M.proj, 2)
 
-Base.mean(M::PCA) = (isempty(M.mean) ? zeros(indim(M)) : M.mean)::Vector{Float64}
+Base.mean(M::PCA) = fullmean(indim(M), M.mean)
 
 projection(M::PCA) = M.proj
 

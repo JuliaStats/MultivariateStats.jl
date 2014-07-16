@@ -17,3 +17,8 @@ centralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .- m)::ty
 
 decentralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x + m)::typeof(x)
 decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)::typeof(x)
+
+# get a full mean vector 
+
+fullmean{T}(d::Int, mv::Vector{T}) = (isempty(mv) ? zeros(T, d) : mv)::Vector{T} 
+

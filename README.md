@@ -16,6 +16,8 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 
 - Canonical Correlation Analysis (CCA)
 - Linear Discriminant Analysis (LDA)
+- Quadratic Discriminant Analysis (QDA)
+- Multiclass LDA
 - Independent Component Analysis (ICA)
 - Multidimensional Scaling (MDS)
 
