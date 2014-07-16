@@ -8,3 +8,11 @@ printvec(io::IO, a::AbstractVector) = printarr(io, a')
 
 printarrln(io::IO, a::AbstractArray) = (printarr(io, a); println(io))
 printvecln(io::IO, a::AbstractVector) = (printvec(io, a); println(io))
+
+# centralize 
+
+centralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x - m)::typeof(x)
+centralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .- m)::typeof(x)
+
+decentralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x + m)::typeof(x)
+decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)::typeof(x)
