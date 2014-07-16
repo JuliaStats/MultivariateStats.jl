@@ -53,5 +53,85 @@ correlations(M::CCA) = M.corrs
 xtransform{T<:Real}(M::CCA, X::AbstractVecOrMat{T}) = At_mul_B(M.xproj, centralize(X, M.xmean))
 ytransform{T<:Real}(M::CCA, Y::AbstractVecOrMat{T}) = At_mul_B(M.yproj, centralize(Y, M.ymean))
 
+## show & dump
+
+function show(io::IO, M::CCA)
+    print(io, "CCA (xindim = $(xindim(M)), yindim = $(yindim(M)), outdim = $(outdim(M)))")
+end
+
+function dump(io::IO, M::CCA)
+    show(io, M)
+    println(io)
+    println(io, "correlations: ")
+    printvecln(io, correlations(M))
+    println(io, "xmean:")
+    printvecln(io, xmean(M))
+    println(io, "ymean:")
+    printvecln(io, ymean(M))
+    println(io, "xprojection:")
+    printarrln(io, xprojection(M))
+    println(io, "yprojection:")
+    printarrln(io, yprojection(M))
+end
+
+
+#### Perform CCA on data
+
+function ccacov(Cxx::Matrix{Float64}, 
+                Cyy::Matrix{Float64},
+                Cxy::Matrix{Float64}, 
+                xmean::Vector{Float64},
+                ymean::Vector{Float64},
+                p::Int)
+
+    # argument checking
+    dx, dx2 = size(Cxx)
+    dy, dy2 = size(Cyy)
+    dx == dx2 || error("Cxx must be a square matrix.")
+    dy == dy2 || error("Cyy must be a square matrix.")
+    size(Cxy) == (dx, dy) || 
+        throw(DimensionMismatch("size(Cxy) should be equal to (dx, dy)"))
+
+    isempty(xmean) || length(xmean) == dx || 
+        throw(DimensionMismatch("Incorrect length of xmean."))
+
+    isempty(ymean) || length(ymean) == dy ||
+        throw(DimensionMismatch("Incorrect length of ymean."))
+
+    # implementation
+    A1 = cholfact(Cxx) \ Cxy
+    A2 = cholfact(Cyy) \ Cxy'
+
+    if dx <= dy
+        Q = A1 * A2
+        (v, Px) = eig(Q)
+        si = sortperm(v; rev=true)[1:p]
+        Px = Px[:, si]
+        Py = A2 * Px
+    else
+        Q = A2 * A1
+        (v, Py) = eig(Q)
+        si = sortperm(v; rev=true)[1:p]
+        Py = Py[:, si]
+        Px = A1 * Py
+    end
+
+    # compute correlations
+    vx = coldot(Px, Cxx * Px)
+    vy = coldot(Py, Cyy * Py)
+    cv = coldot(Px, Cxy * Py)
+    for i = 1:p
+        @inbounds cv[i] /= (sqrt(vx[i]) * sqrt(vy[i]))
+    end
+
+    CCA(xmean, ymean, Px, Py, cv)
+end
+
+
+
+
+
+
+
 
 

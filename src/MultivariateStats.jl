@@ -1,5 +1,6 @@
 module MultivariateStats
     using StatsBase
+    using ArrayViews
 
     import Base: length, show, dump
     import StatsBase: fit
@@ -31,6 +32,8 @@ module MultivariateStats
 
     ## cca
     CCA,                # Type: Correlation Component Analysis model
+
+    ccacov,             # CCA based on covariances
 
     xindim,             # input dimension of X
     yindim,             # input dimension of Y
