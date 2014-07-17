@@ -10,6 +10,7 @@ Contents:
    :maxdepth: 1
 
    pca.rst
+   cca.rst
 
 
 
