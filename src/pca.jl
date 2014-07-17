@@ -144,8 +144,7 @@ function fit(::Type{PCA}, X::Matrix{Float64};
     end
 
     # process mean
-    mv = (mean == nothing ? vec(Base.mean(X, 2)) :
-          mean == 0 ? Float64[] : mean)::Vector{Float64}
+    mv = preprocess_mean(X, mean)
 
     # delegate to core
     if method == :cov

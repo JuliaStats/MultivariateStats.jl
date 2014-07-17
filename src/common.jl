@@ -22,6 +22,10 @@ decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)::
 
 fullmean{T}(d::Int, mv::Vector{T}) = (isempty(mv) ? zeros(T, d) : mv)::Vector{T} 
 
+preprocess_mean{T<:FloatingPoint}(X::Matrix{T}, m) = (m == nothing ? vec(Base.mean(X, 2)) :
+                                                      m == 0 ? T[] : 
+                                                      m)::Vector{T}
+
 # choose the first k values and columns
 #
 # S must have fields: values & vectors

@@ -70,7 +70,7 @@ Cyx = Cxy'
 ## ccacov
 
 # X ~ Y
-M = ccacov(Cxx, Cyy, Cxy, xm, ym, p)
+M = fit(CCA, X, Y; method=:cov, outdim=p)
 Px = xprojection(M)
 Py = yprojection(M)
 rho = correlations(M)
@@ -89,7 +89,7 @@ rho = correlations(M)
 @test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
 # Y ~ X
-M = ccacov(Cyy, Cxx, Cyx, ym, xm, p)
+M = fit(CCA, Y, X; method=:cov, outdim=p)
 Py = xprojection(M)
 Px = yprojection(M)
 rho = correlations(M)
@@ -111,7 +111,7 @@ rho = correlations(M)
 ## ccasvd
 
 # n > d
-M = ccasvd(Zx, Zy, xm, ym, p)
+M = fit(CCA, X, Y; method=:svd, outdim=p)
 Px = xprojection(M)
 Py = yprojection(M)
 rho = correlations(M)
@@ -128,23 +128,4 @@ rho = correlations(M)
 @test_approx_eq Cyx * (Cxx \ Cxy) * Py scale(Cyy * Py, rho.^2)
 @test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
 @test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
-
-# n < d
-Zx_ = Zx[:, 1:4]
-Zy_ = Zy[:, 1:4]
-Cxx_ = cov(Zx_; vardim=2, mean=0)
-Cyy_ = cov(Zy_; vardim=2, mean=0)
-
-M = ccasvd(Zx_, Zy_, xm, ym, p)
-Px = xprojection(M)
-Py = yprojection(M)
-@test xindim(M) == dx
-@test yindim(M) == dy
-@test outdim(M) == p
-@test xmean(M) == xm
-@test ymean(M) == ym
-
-@test_approx_eq Px' * Cxx_ * Px eye(p)
-@test_approx_eq Py' * Cyy_ * Py eye(p)
-
 

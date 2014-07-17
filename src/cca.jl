@@ -208,9 +208,39 @@ function _ccasvd(Zx, Zy, xmean, ymean, p::Int)
     CCA(xmean, ymean, Px, Py, crs)
 end
 
+## interface functions
 
+function fit(::Type{CCA}, X::Matrix{Float64}, Y::Matrix{Float64};
+             outdim::Int=min(min(size(X)...), min(size(Y)...)),
+             method::Symbol=:svd, 
+             xmean=nothing, 
+             ymean=nothing)
 
+    dx, n = size(X)
+    dy, n2 = size(Y)
 
+    n2 == n || 
+        throw(DimensionMismatch("X and Y should have the same number of columns."))
 
+    (n >= dx && n >= dy) || 
+        warn("CCA would be numerically instable when n < dx or n < dy.")
 
+    xmv = preprocess_mean(X, xmean)
+    ymv = preprocess_mean(Y, ymean)
 
+    Zx = centralize(X, xmv)
+    Zy = centralize(Y, ymv)
+
+    if method == :cov
+        Cxx = scale!(A_mul_Bt(Zx, Zx), inv(n - 1))
+        Cyy = scale!(A_mul_Bt(Zy, Zy), inv(n - 1))
+        Cxy = scale!(A_mul_Bt(Zx, Zy), inv(n - 1))
+        M = ccacov(Cxx, Cyy, Cxy, xmv, ymv, outdim)
+    elseif method == :svd
+        M = ccasvd(Zx, Zy, xmv, ymv, outdim)
+    else
+        error("Invalid method name $(method)")
+    end
+
+    return M::CCA
+end
