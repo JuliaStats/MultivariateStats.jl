@@ -15,10 +15,10 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 - Principal Component Analysis (PCA)
 - Canonical Correlation Analysis (CCA)
 - Classical Multidimensional Scaling (MDS)
+- Linear Discriminant Analysis (LDA)
 
 #### Todo (soon)
 
-- Linear Discriminant Analysis (LDA)
 - Multiclass LDA
 - Partial Least Square (PLS)
 - Independent Component Analysis (ICA)

@@ -12,6 +12,8 @@ Contents:
    pca.rst
    cca.rst
    cmds.rst
+   lda.rst
+   mclda.rst
 
 **Notes:**
 
