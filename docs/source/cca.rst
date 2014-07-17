@@ -147,12 +147,3 @@ Two algorithms are implemented in this package: ``pcacov`` and ``pcastd``.
 
     :return: The resultant CCA model.    
 
-    
-
-
-
-
-
-
-
-

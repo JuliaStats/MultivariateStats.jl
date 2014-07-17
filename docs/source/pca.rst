@@ -174,5 +174,3 @@ Two algorithms are implemented in this package: ``pcacov`` and ``pcastd``.
 
     :note: This function accepts two keyword arguments: ``maxoutdim`` and ``pratio``.
 
-
-
