@@ -57,8 +57,16 @@ module MultivariateStats
     ## lda
     Discriminant,           # Abstract Type: for all discriminant functionals
     LinearDiscriminant,     # Type: Linear Discriminant functional 
+    MulticlassLDAStats,     # Type: Statistics required for training multi-class LDA
+    MulticlassLDA,          # Type: Multi-class LDA model
 
-    ldacov              # Linear discriminant analysis based on covariances
+    ldacov,                 # Linear discriminant analysis based on covariances
+
+    classweights,           # class-specific weights
+    classmeans,             # class-specific means
+    withclass_scatter,      # with-class scatter matrix
+    betweenclass_scatter,   # between-class scatter matrix
+    multiclass_lda_stats    # compute statistics for multiclass LDA training
 
 
     ## source files
