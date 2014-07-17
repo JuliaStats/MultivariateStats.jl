@@ -80,6 +80,7 @@ pvs = principalvars(M)
 @test outdim(M) == 5
 @test mean(M) == mv
 @test_approx_eq P'P eye(5)
+@test_approx_eq C * P scale(P, pvs)
 @test issorted(pvs; rev=true)
 @test_approx_eq pvs pvs0
 @test_approx_eq tvar(M) tv
@@ -117,6 +118,7 @@ pvs = principalvars(M)
 @test outdim(M) == 5
 @test mean(M) == mv
 @test_approx_eq P'P eye(5)
+@test_approx_eq_eps C * P scale(P, pvs) 1.0e-3
 @test issorted(pvs; rev=true)
 @test_approx_eq_eps pvs pvs0 1.0e-3
 @test_approx_eq_eps tvar(M) tv 1.0e-3
