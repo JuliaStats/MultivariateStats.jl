@@ -39,7 +39,7 @@ function dmat2gram!{GT}(G::AbstractMatrix{GT}, D::AbstractMatrix)
     u = zeros(GT, n)
     s = 0.0
     for j = 1:n
-        s += (u[j] = sumabs2(view(D,:,j)) / n)
+        s += (u[j] = Base.sumabs2(view(D,:,j)) / n)
     end
     s /= n
 
@@ -55,3 +55,21 @@ function dmat2gram!{GT}(G::AbstractMatrix{GT}, D::AbstractMatrix)
 end
 
 dmat2gram{T<:Real}(D::AbstractMatrix{T}) = dmat2gram!(similar(D, Base.momenttype(T)), D)
+
+## classical MDS
+
+function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Integer)
+    n = size(D, 1)
+    p < n || error("p must be less than n.")
+
+    G = dmat2gram(D)
+    E = eigfact!(Symmetric(G))
+    ord = sortperm(E.values; rev=true)
+    (v, U) = extract_kv(E, ord, p)
+    for i = 1:p
+        @inbounds v[i] = sqrt(v[i])
+    end
+    scale!(U, v)'
+end
+
+

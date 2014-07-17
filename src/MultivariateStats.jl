@@ -47,6 +47,7 @@ module MultivariateStats
     correlations,       # correlations of all projected directions
 
     ## cmds
+    classical_mds,      # perform classical MDS over a given distance matrix
 
     gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix
     dmat2gram, dmat2gram!   # Distance matrix => Gram matrix
