@@ -79,9 +79,9 @@ end
 
 ## ccacov
 
-function ccacov(Cxx::Matrix{Float64}, 
-                Cyy::Matrix{Float64},
-                Cxy::Matrix{Float64}, 
+function ccacov(Cxx::DenseMatrix{Float64}, 
+                Cyy::DenseMatrix{Float64},
+                Cxy::DenseMatrix{Float64}, 
                 xmean::Vector{Float64},
                 ymean::Vector{Float64},
                 p::Int)
@@ -143,8 +143,8 @@ end
 
 ## ccasvd
 
-function ccasvd(Zx::Matrix{Float64}, 
-                Zy::Matrix{Float64}, 
+function ccasvd(Zx::DenseMatrix{Float64}, 
+                Zy::DenseMatrix{Float64}, 
                 xmean::Vector{Float64}, 
                 ymean::Vector{Float64}, 
                 p::Int)
@@ -210,7 +210,7 @@ end
 
 ## interface functions
 
-function fit(::Type{CCA}, X::Matrix{Float64}, Y::Matrix{Float64};
+function fit(::Type{CCA}, X::DenseMatrix{Float64}, Y::DenseMatrix{Float64};
              outdim::Int=min(min(size(X)...), min(size(Y)...)),
              method::Symbol=:svd, 
              xmean=nothing, 

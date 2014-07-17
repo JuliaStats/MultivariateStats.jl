@@ -28,9 +28,9 @@ predict(f::Discriminant, X::AbstractMatrix) = (Y = evaluate(f, X); Bool[y > 0 fo
 
 #### function to solve linear discriminant
 
-function ldacov(C::AbstractMatrix{Float64}, 
-                μp::AbstractVector{Float64}, 
-                μn::AbstractVector{Float64})
+function ldacov(C::DenseMatrix{Float64}, 
+                μp::DenseVector{Float64}, 
+                μn::DenseVector{Float64})
 
     w = cholfact(C) \ (μp - μn)
     ap = dot(w, μp)
@@ -39,14 +39,14 @@ function ldacov(C::AbstractMatrix{Float64},
     LinearDiscriminant(scale!(w, c), 1 - c * ap)
 end
 
-ldacov(Cp::AbstractMatrix{Float64}, 
-       Cn::AbstractMatrix{Float64}, 
-       μp::AbstractVector{Float64}, 
-       μn::AbstractVector{Float64}) = ldacov(Cp + Cn, μp, μn)
+ldacov(Cp::DenseMatrix{Float64}, 
+       Cn::DenseMatrix{Float64}, 
+       μp::DenseVector{Float64}, 
+       μn::DenseVector{Float64}) = ldacov(Cp + Cn, μp, μn)
 
 #### interface functions
 
-function fit(::Type{LinearDiscriminant}, Xp::Matrix{Float64}, Xn::Matrix{Float64})
+function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{Float64}, Xn::DenseMatrix{Float64})
     μp = vec(mean(Xp, 2))
     μn = vec(mean(Xn, 2))
     Zp = Xp .- μp

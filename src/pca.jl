@@ -96,7 +96,7 @@ end
 
 ## core algorithms
 
-function pcacov(C::Matrix{Float64}, mean::Vector{Float64}; 
+function pcacov(C::DenseMatrix{Float64}, mean::Vector{Float64}; 
                 maxoutdim::Int=size(C,1), 
                 pratio::Float64=default_pca_pratio)
 
@@ -110,7 +110,7 @@ function pcacov(C::Matrix{Float64}, mean::Vector{Float64};
     PCA(mean, P, v, vsum)
 end
 
-function pcasvd(Z::Matrix{Float64}, mean::Vector{Float64}, tw::Real; 
+function pcasvd(Z::DenseMatrix{Float64}, mean::Vector{Float64}, tw::Real; 
                 maxoutdim::Int=min(size(Z)...),
                 pratio::Float64=default_pca_pratio)
 
@@ -130,7 +130,7 @@ end
 
 ## interface functions
 
-function fit(::Type{PCA}, X::Matrix{Float64}; 
+function fit(::Type{PCA}, X::DenseMatrix{Float64}; 
              method::Symbol=:auto, 
              maxoutdim::Int=size(X,1), 
              pratio::Float64=default_pca_pratio, 
