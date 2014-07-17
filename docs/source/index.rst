@@ -13,6 +13,10 @@ Contents:
    cca.rst
    cmds.rst
 
+**Notes:**
+
+All methods implemented in this package adopt the column-major convention of JuliaStats: in a data matrix, each column corresponds to a sample/observation, while each row corresponds to a feature (variable or attribute).
+
 
 .. Indices and tables
 .. ==================
