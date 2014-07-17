@@ -22,6 +22,18 @@ decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)::
 
 fullmean{T}(d::Int, mv::Vector{T}) = (isempty(mv) ? zeros(T, d) : mv)::Vector{T} 
 
+# choose the first k values and columns
+#
+# S must have fields: values & vectors
+
+function extract_kv{T}(fac::Factorization{T}, ord::AbstractVector{Int}, k::Int)
+    si = ord[1:k]
+    vals = fac.values[si]::Vector{T}
+    vecs = fac.vectors[:, si]::Matrix{T}
+    return (vals, vecs)
+end
+
+
 # symmmetrize a matrix
 
 function symmetrize!(A::Matrix)

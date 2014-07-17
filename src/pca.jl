@@ -102,13 +102,12 @@ function pcacov(C::Matrix{Float64}, mean::Vector{Float64};
 
     check_pcaparams(size(C,1), mean, maxoutdim, pratio)
     Eg = eigfact!(Symmetric(copy(C)))
-    v = Eg.values::Vector{Float64}
-    P = Eg.vectors::Matrix{Float64}
-    ord = sortperm(v; rev=true)
-    vsum = sum(v)
-    k = choose_pcadim(v, ord, vsum, maxoutdim, pratio)
-    si = ord[1:k]
-    PCA(mean, P[:,si], v[si], vsum)
+    ev = Eg.values
+    ord = sortperm(ev; rev=true)
+    vsum = sum(ev)
+    k = choose_pcadim(ev, ord, vsum, maxoutdim, pratio)
+    v, P = extract_kv(Eg, ord, k)
+    PCA(mean, P, v, vsum)
 end
 
 function pcastd(Z::Matrix{Float64}, mean::Vector{Float64}, tw::Real; 
@@ -128,7 +127,6 @@ function pcastd(Z::Matrix{Float64}, mean::Vector{Float64}, tw::Real;
     si = ord[1:k]
     PCA(mean, U[:,si], v[si], vsum)
 end
-
 
 ## interface functions
 

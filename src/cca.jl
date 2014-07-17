@@ -117,9 +117,7 @@ function _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p::Int)
         G = cholfact(Cyy) \ Cxy'
         Ex = eigfact(Symmetric(Cxy * G), Symmetric(Cxx))
         ord = sortperm(Ex.values; rev=true)
-        si = ord[1:p]
-        vx = Ex.values[si]
-        Px = Ex.vectors[:, si]
+        vx, Px = extract_kv(Ex, ord, p)
         Py = qnormalize!(G * Px, Cyy)
     else
         # solve Py: (Cyx * inv(Cxx) * Cxy) Py = λ Cyy Py
@@ -128,9 +126,7 @@ function _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p::Int)
         H = cholfact(Cxx) \ Cxy
         Ey = eigfact(Symmetric(Cxy'H), Symmetric(Cyy))
         ord = sortperm(Ey.values; rev=true)
-        si = ord[1:p]
-        vy = Ey.values[si]
-        Py = Ey.vectors[:, si]
+        vy, Py = extract_kv(Ey, ord, p)
         Px = qnormalize!(H * Py, Cxx)
     end
 
