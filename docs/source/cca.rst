@@ -52,6 +52,8 @@ Given a CCA model, one can transform observations into both spaces into a common
     \mathbf{z}_x = \mathbf{P}_x^T (\mathbf{x} - \boldsymbol{\mu}_x) \\
     \mathbf{z}_y = \mathbf{P}_y^T (\mathbf{y} - \boldsymbol{\mu}_y)
 
+Here, :math:`\mathbf{P}_x` and :math:`\mathbf{P}_y` are projection matrices for ``X`` and ``Y``; :math:`\boldsymbol{\mu}_x` and :math:`\boldsymbol{\mu}_y` are mean vectors. 
+
 This package provides methods to do so:
 
 .. function:: xtransform(M, x)

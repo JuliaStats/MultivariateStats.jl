@@ -64,7 +64,7 @@ or use it to reconstruct (approximately) the observations from principal compone
 
     \tilde{\mathbf{x}} = \mathbf{P} \mathbf{y} + \boldsymbol{\mu}
 
-Here, ``P`` is the projection matrix.
+Here, :math:`\mathbf{P}` is the projection matrix.
 
 The package provides methods to do so:
 

@@ -16,7 +16,7 @@ Overview of Classical MDS
 
         \mathrm{sqr}(\mathbf{D}) = \mathbf{g} \mathbf{1}^T + \mathbf{1} \mathbf{g}^T - 2 \mathbf{G} 
 
-   Here, ``sqr(D)`` indicates the element-wise square of ``D``, and ``g`` is the diagonal elements of ``G``. This relation is
+   Here, :math:`\mathrm{sqr}(\mathbf{D})` indicates the element-wise square of :math:`\mathbf{D}`, and :math:`\mathbf{g}` is the diagonal elements of :math:`\mathbf{G}`. This relation is
    itself based on the following decomposition of squared Euclidean distance:
 
    .. math::
