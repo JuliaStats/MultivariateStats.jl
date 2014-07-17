@@ -1,4 +1,4 @@
-tests = ["pca"]
+tests = ["pca", "cca"]
 
 println("Running tests:")
 
