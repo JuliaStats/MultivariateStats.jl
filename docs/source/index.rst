@@ -1,22 +1,22 @@
-.. MultivariateStats documentation master file, created by
-   sphinx-quickstart on Thu Jul 17 10:14:34 2014.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Welcome to MultivariateStats's documentation!
+Welcome to MultivariateStats's documentation
 =============================================
+
+*MultivariateStats.jl* is a Julia package for multivariate statistical analysis. It provides a rich set of useful analysis techniques, such as PCA, CCA, LDA, PLS, etc. 
 
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+
+   pca.rst
 
 
 
-Indices and tables
-==================
+.. Indices and tables
+.. ==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
 
