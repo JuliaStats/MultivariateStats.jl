@@ -1,10 +1,12 @@
 using MultivariateStats
 using Base.Test
 
+import MultivariateStats: qnormalize!
+
 srand(34568)
 
-dx = 6
-dy = 5
+dx = 5
+dy = 6
 p = 3
 
 # CCA with zero means
@@ -66,9 +68,46 @@ Cyx = Cxy'
 
 ## ccacov
 
+# X ~ Y
 M = ccacov(Cxx, Cyy, Cxy, xm, ym, p)
+Px = xprojection(M)
+Py = yprojection(M)
+rho = correlations(M)
 @test xindim(M) == dx
 @test yindim(M) == dy
 @test outdim(M) == p
-@test issorted(correlations(M); rev=true)
+@test xmean(M) == xm
+@test ymean(M) == ym
+@test issorted(rho; rev=true)
+
+@test_approx_eq Px' * Cxx * Px eye(p)
+@test_approx_eq Py' * Cyy * Py eye(p)
+@test_approx_eq Cxy * (Cyy \ Cyx) * Px scale(Cxx * Px, rho.^2)
+@test_approx_eq Cyx * (Cxx \ Cxy) * Py scale(Cyy * Py, rho.^2)
+@test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
+@test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
+
+# Y ~ X
+M = ccacov(Cyy, Cxx, Cyx, ym, xm, p)
+Py = xprojection(M)
+Px = yprojection(M)
+rho = correlations(M)
+@test xindim(M) == dy
+@test yindim(M) == dx
+@test outdim(M) == p
+@test xmean(M) == ym
+@test ymean(M) == xm
+@test issorted(rho; rev=true)
+
+@test_approx_eq Px' * Cxx * Px eye(p)
+@test_approx_eq Py' * Cyy * Py eye(p)
+@test_approx_eq Cxy * (Cyy \ Cyx) * Px scale(Cxx * Px, rho.^2)
+@test_approx_eq Cyx * (Cxx \ Cxy) * Py scale(Cyy * Py, rho.^2)
+@test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
+@test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
+
+
+
+
+
 

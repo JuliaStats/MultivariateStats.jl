@@ -107,31 +107,40 @@ end
 function _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p::Int)
     dx = size(Cxx, 1)
     dy = size(Cyy, 1)
-    A1 = cholfact(Cxx) \ Cxy
-    A2 = cholfact(Cyy) \ Cxy'
+
+    # solve Px and Py
 
     if dx <= dy
-        Q = A1 * A2
-        (v, Px) = eig(Q)::(Vector{Float64}, Matrix{Float64})
-        si = sortperm(v; rev=true)[1:p]
-        Px = Px[:, si]
-        Py = A2 * Px
+        # solve Px: (Cxy * inv(Cyy) * Cyx) Px = λ Cxx * Px
+        # compute Py: inv(Cyy) * Cyx * Px
+
+        G = cholfact(Cyy) \ Cxy'
+        Ex = eigfact(Symmetric(Cxy * G), Symmetric(Cxx))
+        ord = sortperm(Ex.values; rev=true)
+        si = ord[1:p]
+        vx = Ex.values[si]
+        Px = Ex.vectors[:, si]
+        Py = qnormalize!(G * Px, Cyy)
     else
-        Q = A2 * A1
-        (v, Py) = eig(Q)::(Vector{Float64}, Matrix{Float64})
-        si = sortperm(v; rev=true)[1:p]
-        Py = Py[:, si]
-        Px = A1 * Py
+        # solve Py: (Cyx * inv(Cxx) * Cxy) Py = λ Cyy Py
+        # compute Px: inv(Cx) * Cxy * Py
+
+        H = cholfact(Cxx) \ Cxy
+        Ey = eigfact(Symmetric(Cxy'H), Symmetric(Cyy))
+        ord = sortperm(Ey.values; rev=true)
+        si = ord[1:p]
+        vy = Ey.values[si]
+        Py = Ey.vectors[:, si]
+        Px = qnormalize!(H * Py, Cxx)
     end
 
-    vx = coldot(Px, Cxx * Px)
-    vy = coldot(Py, Cyy * Py)
-    cv = coldot(Px, Cxy * Py)
-    for i = 1:p
-        @inbounds cv[i] /= (sqrt(vx[i]) * sqrt(vy[i]))
-    end
+    # compute correlations
+    # Note: Px' * Cxx * Px == I
+    #       Py' * Cyy * Py == I
+    crs = coldot(Px, Cxy * Py)
 
-    CCA(xmean, ymean, Px, Py, cv)
+    # construct CCA model
+    CCA(xmean, ymean, Px, Py, crs)
 end
 
 

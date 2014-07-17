@@ -51,3 +51,20 @@ function coldot(X::Matrix, Y::Matrix)
     return R
 end
 
+# qnormalize!
+
+function qnormalize!(X, C)
+    # normalize each column of X (say x), such that x'Cx = 1
+    m = size(X, 1)
+    n = size(X, 2)
+    CX = C * X
+    for j = 1:n
+        x = view(X,:,j)
+        cx = view(CX,:,j)
+        scale!(x, inv(sqrt(dot(x, cx))))
+    end
+    return X
+end
+
+
+
