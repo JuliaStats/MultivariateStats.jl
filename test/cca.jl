@@ -109,6 +109,8 @@ rho = correlations(M)
 
 
 ## ccasvd
+
+# n > d
 M = ccasvd(Zx, Zy, xm, ym, p)
 Px = xprojection(M)
 Py = yprojection(M)
@@ -127,7 +129,22 @@ rho = correlations(M)
 @test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
 @test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
+# n < d
+Zx_ = Zx[:, 1:4]
+Zy_ = Zy[:, 1:4]
+Cxx_ = cov(Zx_; vardim=2, mean=0)
+Cyy_ = cov(Zy_; vardim=2, mean=0)
 
+M = ccasvd(Zx_, Zy_, xm, ym, p)
+Px = xprojection(M)
+Py = yprojection(M)
+@test xindim(M) == dx
+@test yindim(M) == dy
+@test outdim(M) == p
+@test xmean(M) == xm
+@test ymean(M) == ym
 
+@test_approx_eq Px' * Cxx_ * Px eye(p)
+@test_approx_eq Py' * Cyy_ * Py eye(p)
 
 
