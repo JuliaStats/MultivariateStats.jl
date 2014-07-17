@@ -15,7 +15,7 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 
 #### Todo (soon)
 
-- Multidimensional Scaling (MDS)
+- Classical Multidimensional Scaling (MDS)
 - Partial Least Square (PLS)
 - Linear Discriminant Analysis (LDA)
 - Quadratic Discriminant Analysis (QDA)

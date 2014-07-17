@@ -44,11 +44,18 @@ module MultivariateStats
     yprojection,        # projection matrix for Y
     xtransform,         # transform for X
     ytransform,         # transform for Y
-    correlations        # correlations of all projected directions
+    correlations,       # correlations of all projected directions
+
+    ## cmds
+
+    gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix
+    dmat2gram, dmat2gram!   # Distance matrix => Gram matrix
+
 
     ## source files
     include("common.jl")
     include("pca.jl")
     include("cca.jl")
+    include("cmds.jl")
 
 end # module
