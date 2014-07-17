@@ -1,6 +1,7 @@
 tests = ["pca", 
          "cca", 
-         "cmds"]
+         "cmds", 
+         "lda"]
 
 println("Running tests:")
 

@@ -18,10 +18,9 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 
 #### Todo (soon)
 
-- Partial Least Square (PLS)
 - Linear Discriminant Analysis (LDA)
-- Quadratic Discriminant Analysis (QDA)
 - Multiclass LDA
+- Partial Least Square (PLS)
 - Independent Component Analysis (ICA)
 
 #### Future Plan

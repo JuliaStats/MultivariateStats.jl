@@ -2,12 +2,14 @@ module MultivariateStats
     using StatsBase
     using ArrayViews
 
-    import Base: length, show, dump
-    import StatsBase: fit
+    import Base: length, show, dump, evaluate
+    import StatsBase: fit, predict
 
     export 
 
     ## common
+    evaluate,           # evaluate discriminant function values (imported from Base)
+    predict,            # use a model to predict responses (imported from StatsBase)
     fit,                # fit a model to data (imported from StatsBase)
     centralize,         # subtract a mean vector from each column
     decentralize,       # add a mean vector to each column
@@ -50,7 +52,13 @@ module MultivariateStats
     classical_mds,      # perform classical MDS over a given distance matrix
 
     gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix
-    dmat2gram, dmat2gram!   # Distance matrix => Gram matrix
+    dmat2gram, dmat2gram!,  # Distance matrix => Gram matrix
+
+    ## lda
+    Discriminant,           # Abstract Type: for all discriminant functionals
+    LinearDiscriminant,     # Type: Linear Discriminant functional 
+
+    ldacov              # Linear discriminant analysis based on covariances
 
 
     ## source files
@@ -58,5 +66,6 @@ module MultivariateStats
     include("pca.jl")
     include("cca.jl")
     include("cmds.jl")
+    include("lda.jl")
 
 end # module
