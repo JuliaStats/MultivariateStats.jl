@@ -98,25 +98,32 @@ function ccacov(Cxx::Matrix{Float64},
     isempty(ymean) || length(ymean) == dy ||
         throw(DimensionMismatch("Incorrect length of ymean."))
 
-    # implementation
+    1 <= p <= min(dx, dy) ||
+        throw(DimensionMismatch(""))
+
+    _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p)
+end
+
+function _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p::Int)
+    dx = size(Cxx, 1)
+    dy = size(Cyy, 1)
     A1 = cholfact(Cxx) \ Cxy
     A2 = cholfact(Cyy) \ Cxy'
 
     if dx <= dy
         Q = A1 * A2
-        (v, Px) = eig(Q)
+        (v, Px) = eig(Q)::(Vector{Float64}, Matrix{Float64})
         si = sortperm(v; rev=true)[1:p]
         Px = Px[:, si]
         Py = A2 * Px
     else
         Q = A2 * A1
-        (v, Py) = eig(Q)
+        (v, Py) = eig(Q)::(Vector{Float64}, Matrix{Float64})
         si = sortperm(v; rev=true)[1:p]
         Py = Py[:, si]
         Px = A1 * Py
     end
 
-    # compute correlations
     vx = coldot(Px, Cxx * Px)
     vy = coldot(Py, Cyy * Py)
     cv = coldot(Px, Cxy * Py)
