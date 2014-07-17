@@ -11,7 +11,7 @@ Contents:
 
    pca.rst
    cca.rst
-
+   cmds.rst
 
 
 .. Indices and tables
