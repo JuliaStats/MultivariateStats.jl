@@ -9,6 +9,8 @@ immutable LinearDiscriminant <: Discriminant
     b::Float64
 end
 
+length(f::LinearDiscriminant) = length(f.w)
+
 evaluate(f::LinearDiscriminant, x::AbstractVector) = dot(f.w, x) + f.b
 
 function evaluate(f::LinearDiscriminant, X::AbstractMatrix)

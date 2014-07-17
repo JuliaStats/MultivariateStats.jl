@@ -12,6 +12,7 @@ b = 2.5
 x = [4., 5., 2., 3., 1.]
 
 f = LinearDiscriminant(w, b)
+@test length(f) == 5
 @test evaluate(f, x) == 39.5
 @test evaluate(f, -x) == -34.5
 
