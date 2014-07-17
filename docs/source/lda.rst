@@ -8,7 +8,7 @@ Linear Discriminant Analysis
 Overview of LDA
 ~~~~~~~~~~~~~~~~
 
-Suppose the samples in the positive and negative classes respectively with means: :math:`\boldsymbol{\mu}_p` and :math:`boldsymbol{\mu}_n`, and covariances :math:`\mathbf{C}_p` and :math:`\mathbf{C}_n`. Then based on *Fisher's Linear Discriminant Criteria*, the optimal projection direction can be expressed as:
+Suppose the samples in the positive and negative classes respectively with means: :math:`\boldsymbol{\mu}_p` and :math:`\boldsymbol{\mu}_n`, and covariances :math:`\mathbf{C}_p` and :math:`\mathbf{C}_n`. Then based on *Fisher's Linear Discriminant Criteria*, the optimal projection direction can be expressed as:
 
 .. math::
 
