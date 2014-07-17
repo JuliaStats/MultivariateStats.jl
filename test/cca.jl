@@ -57,9 +57,10 @@ G = randn(dg, n)
 
 X = randn(dx, dg) * G + 0.2 * randn(dx, n)
 Y = randn(dy, dg) * G + 0.2 * randn(dy, n)
-
 xm = vec(mean(X, 2))
 ym = vec(mean(Y, 2))
+Zx = X .- xm
+Zy = Y .- ym
 
 Cxx = cov(X; vardim=2)
 Cyy = cov(Y; vardim=2)
@@ -106,6 +107,25 @@ rho = correlations(M)
 @test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
 @test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
+
+## ccasvd
+M = ccasvd(Zx, Zy, xm, ym, p)
+Px = xprojection(M)
+Py = yprojection(M)
+rho = correlations(M)
+@test xindim(M) == dx
+@test yindim(M) == dy
+@test outdim(M) == p
+@test xmean(M) == xm
+@test ymean(M) == ym
+@test issorted(rho; rev=true)
+
+@test_approx_eq Px' * Cxx * Px eye(p)
+@test_approx_eq Py' * Cyy * Py eye(p)
+@test_approx_eq Cxy * (Cyy \ Cyx) * Px scale(Cxx * Px, rho.^2)
+@test_approx_eq Cyx * (Cxx \ Cxy) * Py scale(Cyy * Py, rho.^2)
+@test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
+@test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
 
 

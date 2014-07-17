@@ -77,6 +77,8 @@ end
 
 #### Perform CCA on data
 
+## ccacov
+
 function ccacov(Cxx::Matrix{Float64}, 
                 Cyy::Matrix{Float64},
                 Cxy::Matrix{Float64}, 
@@ -139,7 +141,72 @@ function _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p::Int)
     CCA(xmean, ymean, Px, Py, crs)
 end
 
+## ccasvd
 
+function ccasvd(Zx::Matrix{Float64}, 
+                Zy::Matrix{Float64}, 
+                xmean::Vector{Float64}, 
+                ymean::Vector{Float64}, 
+                p::Int)
+
+    dx, n = size(Zx)
+    dy, n2 = size(Zy)
+    n == n2 || 
+        throw(DimensionMismatch("Zx and Zy must have the same number of columns."))
+
+    isempty(xmean) || length(xmean) == dx || 
+        throw(DimensionMismatch("Incorrect length of xmean."))
+
+    isempty(ymean) || length(ymean) == dy ||
+        throw(DimensionMismatch("Incorrect length of ymean."))
+
+    1 <= p <= min(dx, dy) ||
+        throw(DimensionMismatch(""))
+
+    _ccasvd(Zx, Zy, xmean, ymean, p)
+end
+
+# The implementation is partly based on:
+#
+#   David Weenink.
+#   Canonical Correlation Analysis.
+#   Institute of Phonetic Sciences, Univ. of Amsterdam, 
+#   Proceedings 25 (2003), 81-99.
+#
+#   Note: in this paper, each row is considered as an observation.
+#   The algorithm is adpated to the column-major format here.
+#
+function _ccasvd(Zx, Zy, xmean, ymean, p::Int)
+    # svd factorization of Z
+
+    n = size(Zx, 2)
+
+    # svd decomposition
+    Sx = svdfact(Zx)
+    Sy = svdfact(Zy)
+    S = svdfact!(A_mul_Bt(Sx.Vt, Sy.Vt)) # svd of Vx * Vy'
+
+    # compute Px and Py
+    ord = sortperm(S.S; rev=true)
+    si = ord[1:p]
+    Px = scale!(Sx.U, 1.0 ./ Sx.S) * S.U[:, si]
+    Py = A_mul_Bt(scale!(Sy.U, 1.0 ./ Sy.S), S.Vt[si, :])
+
+    # scale so that Px' * Cxx * Py == I 
+    #           and Py' * Cyy * Py == I, 
+    #
+    # with Cxx = Zx * Zx' / (n - 1)
+    #      Cyy = Zy * Zy' / (n - 1)
+    #
+    scale!(Px, sqrt(n-1))
+    scale!(Py, sqrt(n-1))
+
+    # compute correlations
+    crs = scale!(coldot(Zx'Px, Zy'Py), inv(n-1))
+
+    # construct CCA model
+    CCA(xmean, ymean, Px, Py, crs)
+end
 
 
 
