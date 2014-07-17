@@ -110,7 +110,7 @@ function pcacov(C::Matrix{Float64}, mean::Vector{Float64};
     PCA(mean, P, v, vsum)
 end
 
-function pcastd(Z::Matrix{Float64}, mean::Vector{Float64}, tw::Real; 
+function pcasvd(Z::Matrix{Float64}, mean::Vector{Float64}, tw::Real; 
                 maxoutdim::Int=min(size(Z)...),
                 pratio::Float64=default_pca_pratio)
 
@@ -140,7 +140,7 @@ function fit(::Type{PCA}, X::Matrix{Float64};
     
     # choose method
     if method == :auto
-        method = d < n ? :cov : :std
+        method = d < n ? :cov : :svd
     end
 
     # process mean
@@ -150,9 +150,9 @@ function fit(::Type{PCA}, X::Matrix{Float64};
     if method == :cov
         C = cov(X; vardim=2, mean=isempty(mv) ? 0 : mv)::Matrix{Float64}
         M = pcacov(C, mv; maxoutdim=maxoutdim, pratio=pratio)
-    elseif method == :std
+    elseif method == :svd
         Z = centralize(X, mv)
-        M = pcastd(Z, mv, float64(n); maxoutdim=maxoutdim, pratio=pratio)
+        M = pcasvd(Z, mv, float64(n); maxoutdim=maxoutdim, pratio=pratio)
     else
         error("Invalid method name $(method)")
     end

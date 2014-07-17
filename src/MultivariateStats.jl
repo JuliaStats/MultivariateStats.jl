@@ -21,7 +21,7 @@ module MultivariateStats
     PCA,                # Type: Principal Component Analysis model
 
     pcacov,             # PCA based on covariance
-    pcastd,             # PCA based on singular value decomposition of input data
+    pcasvd,             # PCA based on singular value decomposition of input data
     principalratio,     # the ratio of variances preserved in the principal subspace
     principalvar,       # the variance along a specific principal direction
     principalvars,      # the variances along all principal directions

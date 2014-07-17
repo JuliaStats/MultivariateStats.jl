@@ -110,7 +110,7 @@ M = fit(PCA, X; pratio=0.85)
 
 ## pcastd
 
-M = fit(PCA, X; method=:std)
+M = fit(PCA, X; method=:svd)
 P = projection(M)
 pvs = principalvars(M)
 
@@ -125,13 +125,13 @@ pvs = principalvars(M)
 @test_approx_eq sum(pvs) tvar(M)
 @test_approx_eq reconstruct(M, transform(M, X)) X
 
-M = fit(PCA, X; method=:std, mean=mv)
+M = fit(PCA, X; method=:svd, mean=mv)
 @test_approx_eq projection(M) P
 
-M = fit(PCA, Z; method=:std, mean=0)
+M = fit(PCA, Z; method=:svd, mean=0)
 @test_approx_eq projection(M) P
 
-M = fit(PCA, X; method=:std, maxoutdim=3)
+M = fit(PCA, X; method=:svd, maxoutdim=3)
 P = projection(M)
 
 @test indim(M) == 5
@@ -139,7 +139,7 @@ P = projection(M)
 @test_approx_eq P'P eye(3)
 @test issorted(pvs; rev=true)
 
-M = fit(PCA, X; method=:std, pratio=0.85)
+M = fit(PCA, X; method=:svd, pratio=0.85)
 
 @test indim(M) == 5
 @test outdim(M) == 3
