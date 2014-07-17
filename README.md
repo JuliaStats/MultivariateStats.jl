@@ -27,3 +27,7 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 #### Future Plan
 
 - Factor Analysis 
+
+## Resources
+
+- **Documentation:** <http://multivariatestatsjl.readthedocs.org/en/latest/index.html>
