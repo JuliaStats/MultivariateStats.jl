@@ -49,8 +49,8 @@ function fit(::Type{LinearDiscriminant}, Xp::Matrix{Float64}, Xn::Matrix{Float64
     μn = vec(mean(Xn, 2))
     Zp = Xp .- μp
     Zn = Xn .- μn
-    Cp = At_mul_B(Zp, Zp)
-    Cn = At_mul_B(Zn, Zn)
+    Cp = A_mul_Bt(Zp, Zp)
+    Cn = A_mul_Bt(Zn, Zn)
     ldacov(Cp, Cn, μp, μn)
 end
 
