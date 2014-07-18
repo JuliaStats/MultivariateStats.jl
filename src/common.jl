@@ -82,5 +82,29 @@ function qnormalize!(X, C)
     return X
 end
 
+# add_diag!
+
+function add_diag!(A::AbstractMatrix, v::Real)
+    # add v to diagonal of A
+    m = size(A, 1)
+    n = size(A, 2)
+    @assert m == n
+    if v != zero(v)
+        for i = 1:n
+            @inbounds A[i,i] += v
+        end
+    end
+    return A
+end
+
+function regularize_symmat!{T<:FloatingPoint}(A::Matrix{T}, lambda::Real)
+    if lambda > 0
+        # emax = eigmax(Symmetric(A))  ## there is a bug of eigmax
+        emax = maximum(eigvals(Symmetric(A)))
+        add_diag!(A, emax * lambda)
+    end
+    return A
+end
+
 
 

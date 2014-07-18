@@ -66,8 +66,11 @@ module MultivariateStats
     classmeans,             # class-specific means
     withclass_scatter,      # with-class scatter matrix
     betweenclass_scatter,   # between-class scatter matrix
-    multiclass_lda_stats    # compute statistics for multiclass LDA training
-
+    multiclass_lda_stats,   # compute statistics for multiclass LDA training
+    multiclass_lda,         # train multi-class LDA based on statistics
+    mclda_solve,            # solve multi-class LDA projection given scatter matrices
+    mclda_solve!,           # solve multi-class LDA projection (inputs are overriden)
+    whitening, whitening!   # compute whitening transform
 
     ## source files
     include("common.jl")
