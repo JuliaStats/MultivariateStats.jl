@@ -110,13 +110,13 @@ M = fit(MulticlassLDA, nc, X, y; method=:gevd, regcoef=lambda)
 @test indim(M) == d
 @test outdim(M) == nc - 1
 @test_approx_eq projection(M) P1
-@test_approx_eq M.pmeans P1'cmeans
+@test_approx_eq M.pmeans M.proj'cmeans
 @test_approx_eq transform(M, X) M.proj'X
 
 M = fit(MulticlassLDA, nc, X, y; method=:whiten, regcoef=lambda)
 @test indim(M) == d
 @test outdim(M) == nc - 1
 # @test_approx_eq projection(M) P2  # signs may change
-@test_approx_eq M.pmeans P2'cmeans
+@test_approx_eq M.pmeans M.proj'cmeans
 @test_approx_eq transform(M, X) M.proj'X
 
