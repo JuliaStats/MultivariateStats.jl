@@ -1,4 +1,5 @@
-tests = ["pca", 
+tests = ["whiten",
+         "pca", 
          "cca", 
          "cmds", 
          "lda", 

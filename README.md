@@ -12,6 +12,7 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 
 #### Available
 
+- Data Whitening
 - Principal Component Analysis (PCA)
 - Canonical Correlation Analysis (CCA)
 - Classical Multidimensional Scaling (MDS)
@@ -20,12 +21,13 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 
 #### Todo (soon)
 
-- Partial Least Square (PLS)
 - Independent Component Analysis (ICA)
 
 #### Future Plan
 
-- Factor Analysis 
+- Probabilistic PCA (PPCA)
+- Factor Analysis
+- Partial Least Square (PLS)
 
 ## Resources
 

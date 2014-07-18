@@ -2,7 +2,8 @@ module MultivariateStats
     using StatsBase
     using ArrayViews
 
-    import Base: length, show, dump, evaluate
+    import Base: length, size, show, dump, evaluate
+    import Base.LinAlg: Cholesky
     import StatsBase: fit, predict
 
     export 
@@ -18,6 +19,14 @@ module MultivariateStats
     projection,         # the projection matrix
     reconstruct,        # reconstruct the input (approximately) given the output
     transform,          # apply a model to transform a vector or a matrix
+
+    # whiten
+    Whitening,          # Type: Whitening transformation
+
+    invsqrtm,           # Compute inverse of matrix square root, i.e. inv(sqrtm(A))
+    invsqrtm!,          # Compute inverse of matrix square root inplace
+    cov_whitening,      # Compute a whitening transform based on covariance
+    cov_whitening!,     # Compute a whitening transform based on covariance (input will be overwritten)
 
     ## pca
     PCA,                # Type: Principal Component Analysis model
@@ -69,11 +78,11 @@ module MultivariateStats
     multiclass_lda_stats,   # compute statistics for multiclass LDA training
     multiclass_lda,         # train multi-class LDA based on statistics
     mclda_solve,            # solve multi-class LDA projection given scatter matrices
-    mclda_solve!,           # solve multi-class LDA projection (inputs are overriden)
-    whitening, whitening!   # compute whitening transform
+    mclda_solve!            # solve multi-class LDA projection (inputs are overriden)
 
     ## source files
     include("common.jl")
+    include("whiten.jl")
     include("pca.jl")
     include("cca.jl")
     include("cmds.jl")

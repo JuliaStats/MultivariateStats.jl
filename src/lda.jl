@@ -196,7 +196,7 @@ function mclda_solve!(Sb::Matrix{Float64},
         P = E.vectors[:, ord[1:p]]
 
     elseif method == :whiten
-        W = whitening!(Sw, regcoef)
+        W = _lda_whitening!(Sw, regcoef)
         wSb = At_mul_B(W, Sb * W)
         Eb = eigfact!(Symmetric(wSb))
         ord = sortperm(Eb.values; rev=true)
@@ -208,7 +208,7 @@ function mclda_solve!(Sb::Matrix{Float64},
     return P::Matrix{Float64}
 end
 
-function whitening!(C::Matrix{Float64}, regcoef::Float64)
+function _lda_whitening!(C::Matrix{Float64}, regcoef::Float64)
     n = size(C,1)
     E = eigfact!(Symmetric(C))
     v = E.values
@@ -218,6 +218,4 @@ function whitening!(C::Matrix{Float64}, regcoef::Float64)
     end
     return scale!(E.vectors, v)
 end
-
-whitening(C::DenseMatrix{Float64}, regcoef::Float64) = whitening!(copy(C), regcoef)
 

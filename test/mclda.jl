@@ -65,22 +65,6 @@ S = multiclass_lda_stats(nc, X, y)
 @test_approx_eq withclass_scatter(S) Sw 
 @test_approx_eq betweenclass_scatter(S) Sb
 
-
-## Whitening
-
-C = Xs[1] * Xs[1]'
-Cc = copy(C)
-W = whitening(C, 0.0)
-@test size(W) == size(C)
-@test C == Cc
-@test_approx_eq W' * C * W eye(d)
-
-emax = maximum(eigvals(C))
-W = whitening(C, 0.5)
-@test C == Cc
-@test_approx_eq W' * (C + 0.5 * emax * eye(d)) * W eye(d)
-
-
 ## Solve
 
 emax = maximum(eigvals(Sw))
