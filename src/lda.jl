@@ -146,6 +146,9 @@ type MulticlassLDA
     stats::MulticlassLDAStats
 end
 
+indim(M::MulticlassLDA) = size(M.proj, 1)
+outdim(M::MulticlassLDA) = size(M.proj, 2)
+
 projection(M::MulticlassLDA) = M.proj
 
 Base.mean(M::MulticlassLDA) = mean(M.stats)
