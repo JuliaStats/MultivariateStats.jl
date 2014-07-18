@@ -160,40 +160,40 @@ transform{T<:FloatingPoint}(M::MulticlassLDA, x::AbstractVecOrMat{T}) = M.proj'x
 function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{Float64}, y::AbstractVector{Int}; 
              method::Symbol=:gevd, 
              outdim::Int=min(size(X,1), nc-1),
-             lambda::Float64=1.0e-6)
+             regcoef::Float64=1.0e-6)
 
     multiclass_lda(multiclass_lda_stats(nc, X, y); 
                    method=method, 
-                   lambda=lambda, 
+                   regcoef=regcoef, 
                    outdim=outdim)
 end
 
 function multiclass_lda(S::MulticlassLDAStats; 
                         method::Symbol=:gevd, 
                         outdim::Int=min(size(X,1), S.nclasses-1),
-                        lambda::Float64=1.0e-6) 
+                        regcoef::Float64=1.0e-6) 
 
-    P = mclda_solve(S.Sb, S.Sw, method, outdim, lambda)
+    P = mclda_solve(S.Sb, S.Sw, method, outdim, regcoef)
     MulticlassLDA(P, P'S.cmeans, S)
 end
 
-mclda_solve(Sb::DenseMatrix{Float64}, Sw::DenseMatrix{Float64}, method::Symbol, p::Int, lambda::Float64) = 
-    mclda_solve!(copy(Sb), copy(Sw), method, p, lambda)
+mclda_solve(Sb::DenseMatrix{Float64}, Sw::DenseMatrix{Float64}, method::Symbol, p::Int, regcoef::Float64) = 
+    mclda_solve!(copy(Sb), copy(Sw), method, p, regcoef)
 
 function mclda_solve!(Sb::Matrix{Float64}, 
                       Sw::Matrix{Float64}, 
-                      method::Symbol, p::Int, lambda::Float64)
+                      method::Symbol, p::Int, regcoef::Float64)
 
     p <= size(Sb, 1) || error("p cannot exceed sample dimension.")
 
     if method == :gevd
-        regularize_symmat!(Sw, lambda)
+        regularize_symmat!(Sw, regcoef)
         E = eigfact!(Symmetric(Sb), Symmetric(Sw))
         ord = sortperm(E.values; rev=true)
         P = E.vectors[:, ord[1:p]]
 
     elseif method == :whiten
-        W = whitening!(Sw, lambda)
+        W = whitening!(Sw, regcoef)
         wSb = At_mul_B(W, Sb * W)
         Eb = eigfact!(Symmetric(wSb))
         ord = sortperm(Eb.values; rev=true)
@@ -205,16 +205,16 @@ function mclda_solve!(Sb::Matrix{Float64},
     return P::Matrix{Float64}
 end
 
-function whitening!(C::Matrix{Float64}, lambda::Float64)
+function whitening!(C::Matrix{Float64}, regcoef::Float64)
     n = size(C,1)
     E = eigfact!(Symmetric(C))
     v = E.values
-    a = lambda * maximum(v)
+    a = regcoef * maximum(v)
     for i = 1:n
         @inbounds v[i] = 1.0 / sqrt(v[i] + a)
     end
     return scale!(E.vectors, v)
 end
 
-whitening(C::DenseMatrix{Float64}, lambda::Float64) = whitening!(copy(C), lambda)
+whitening(C::DenseMatrix{Float64}, regcoef::Float64) = whitening!(copy(C), regcoef)
 

@@ -106,12 +106,12 @@ P2 = mclda_solve(Sb, Sw, :whiten, nc-1, lambda)
 
 ## LDA
 
-M = fit(MulticlassLDA, nc, X, y; method=:gevd, lambda=lambda)
+M = fit(MulticlassLDA, nc, X, y; method=:gevd, regcoef=lambda)
 @test_approx_eq projection(M) P1
 @test_approx_eq M.pmeans P1'cmeans
 @test_approx_eq transform(M, X) M.proj'X
 
-M = fit(MulticlassLDA, nc, X, y; method=:whiten, lambda=lambda)
+M = fit(MulticlassLDA, nc, X, y; method=:whiten, regcoef=lambda)
 @test_approx_eq projection(M) P2
 @test_approx_eq M.pmeans P2'cmeans
 @test_approx_eq transform(M, X) M.proj'X
