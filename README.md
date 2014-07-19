@@ -18,16 +18,15 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 - Classical Multidimensional Scaling (MDS)
 - Linear Discriminant Analysis (LDA)
 - Multiclass LDA
-
-#### Todo (soon)
-
-- Independent Component Analysis (ICA)
+- Independent Component Analysis (ICA), FastICA
 
 #### Future Plan
 
 - Probabilistic PCA (PPCA)
 - Factor Analysis
 - Partial Least Square (PLS)
+- Other algorithms for ICA (*e.g.* JADE)
+
 
 ## Resources
 
