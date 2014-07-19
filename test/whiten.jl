@@ -67,4 +67,9 @@ Cx = (X * X') / (n - 1)
 W = f.W
 @test_approx_eq W'Cx * W eye(d)
 
+# invsqrtm
+
+R = invsqrtm(C)
+@test C == C0
+@test_approx_eq R inv(sqrtm(C))
 

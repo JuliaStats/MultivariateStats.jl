@@ -51,3 +51,20 @@ function fit{T<:FloatingPoint}(::Type{Whitening}, X::DenseMatrix{T};
     return Whitening(mv, cov_whitening!(C, regcoef))
 end
 
+# invsqrtm
+
+function _invsqrtm!{T<:FloatingPoint}(C::Matrix{T})
+    n = size(C, 1)
+    size(C, 2) == n || error("C must be a square matrix.")
+    E = eigfact!(Symmetric(C))
+    U = E.vectors
+    evs = E.values
+    for i = 1:n
+        @inbounds evs[i] = 1.0 / sqrt(sqrt(evs[i]))
+    end
+    scale!(U, evs)
+    return A_mul_Bt(U, U)
+end
+
+invsqrtm{T<:FloatingPoint}(C::DenseMatrix{T}) = _invsqrtm!(copy(C))
+

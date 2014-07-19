@@ -77,7 +77,7 @@ Given a dataset, one can use the ``fit`` method to estimate a whitening transfor
     **Note:** This function internally relies on ``cov_whiten`` to derive the transformation ``W``. The function ``cov_whiten`` itself is also a useful function.
 
 
-.. function:: cov_whiten(C)
+.. function:: cov_whitening(C)
 
     Derive the whitening transform coefficient matrix ``W`` given the covariance matrix ``C``. Here, ``C`` can be either a square matrix, or an instance of ``Cholesky``.
 
@@ -85,7 +85,7 @@ Given a dataset, one can use the ``fit`` method to estimate a whitening transfor
 
     **Note:** The return matrix ``W`` is an upper triangular matrix.
 
-.. function:: cov_whiten(C, regcoef)
+.. function:: cov_whitening(C, regcoef)
 
     Derive a whitening transform based on a regularized covariance, as ``C + (eigmax(C) * regcoef) * eye(d)``.
 

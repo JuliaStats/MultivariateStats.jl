@@ -27,6 +27,7 @@ module MultivariateStats
     invsqrtm!,          # Compute inverse of matrix square root inplace
     cov_whitening,      # Compute a whitening transform based on covariance
     cov_whitening!,     # Compute a whitening transform based on covariance (input will be overwritten)
+    invsqrtm,           # Compute C^{-1/2}, i.e. inv(sqrtm(C))
 
     ## pca
     PCA,                # Type: Principal Component Analysis model
@@ -78,7 +79,14 @@ module MultivariateStats
     multiclass_lda_stats,   # compute statistics for multiclass LDA training
     multiclass_lda,         # train multi-class LDA based on statistics
     mclda_solve,            # solve multi-class LDA projection given scatter matrices
-    mclda_solve!            # solve multi-class LDA projection (inputs are overriden)
+    mclda_solve!,           # solve multi-class LDA projection (inputs are overriden)
+
+    ## fastica
+    FastICA,                # Type: the Fast ICA model
+
+    icagfun,                # a function to get a ICA approx neg-entropy functor
+    fastica!                # core algorithm function for the Fast ICA
+
 
     ## source files
     include("common.jl")
@@ -87,5 +95,6 @@ module MultivariateStats
     include("cca.jl")
     include("cmds.jl")
     include("lda.jl")
+    include("fastica.jl")
 
 end # module
