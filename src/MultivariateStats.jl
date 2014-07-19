@@ -20,6 +20,10 @@ module MultivariateStats
     reconstruct,        # reconstruct the input (approximately) given the output
     transform,          # apply a model to transform a vector or a matrix
 
+    # lreg
+    llsq,               # Linear Least Square regression
+    ridge,              # Ridge regression
+
     # whiten
     Whitening,          # Type: Whitening transformation
 
@@ -90,6 +94,7 @@ module MultivariateStats
 
     ## source files
     include("common.jl")
+    include("lreg.jl")
     include("whiten.jl")
     include("pca.jl")
     include("cca.jl")
