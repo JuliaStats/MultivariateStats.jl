@@ -9,6 +9,7 @@ Welcome to MultivariateStats's documentation
 .. toctree::
    :maxdepth: 1
 
+   lreg.rst
    whiten.rst
    pca.rst
    cca.rst

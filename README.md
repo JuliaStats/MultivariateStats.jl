@@ -12,6 +12,8 @@ A Julia package for multivariate statistics and data analysis (e.g. dimension re
 
 #### Available
 
+- Linear Least Square Regression
+- Ridge Regression
 - Data Whitening
 - Principal Component Analysis (PCA)
 - Canonical Correlation Analysis (CCA)
