@@ -143,6 +143,7 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
             @printf("Iter %4d:  change = %.6e\n", t, chg)
         end
     end
+    return W
 end
 
 #### interface function 
