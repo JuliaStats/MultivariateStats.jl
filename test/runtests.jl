@@ -4,7 +4,7 @@ tests = ["whiten",
          "cmds", 
          "lda", 
          "mclda", 
-         "fastica"]
+         "ica"]
 
 println("Running tests:")
 

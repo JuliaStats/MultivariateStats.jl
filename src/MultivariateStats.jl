@@ -81,8 +81,8 @@ module MultivariateStats
     mclda_solve,            # solve multi-class LDA projection given scatter matrices
     mclda_solve!,           # solve multi-class LDA projection (inputs are overriden)
 
-    ## fastica
-    FastICA,                # Type: the Fast ICA model
+    ## ica
+    ICA,                    # Type: the Fast ICA model
 
     icagfun,                # a function to get a ICA approx neg-entropy functor
     fastica!                # core algorithm function for the Fast ICA
@@ -95,6 +95,6 @@ module MultivariateStats
     include("cca.jl")
     include("cmds.jl")
     include("lda.jl")
-    include("fastica.jl")
+    include("ica.jl")
 
 end # module

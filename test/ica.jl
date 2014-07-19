@@ -47,10 +47,10 @@ mv = vec(mean(X,2))
 @assert size(X) == (m, n)
 C = cov(X; vardim=2)
 
-# fit FastICA 
+# FastICA 
 
-M = fit(FastICA, X, k; do_whiten=false)
-@test isa(M, FastICA)
+M = fit(ICA, X, k; do_whiten=false)
+@test isa(M, ICA)
 @test indim(M) == m
 @test outdim(M) == k
 @test mean(M) == mv
@@ -58,8 +58,8 @@ W = M.W
 @test_approx_eq transform(M, X) W' * (X .- mv)
 @test_approx_eq W'W eye(k)
 
-M = fit(FastICA, X, k; do_whiten=true)
-@test isa(M, FastICA)
+M = fit(ICA, X, k; do_whiten=true)
+@test isa(M, ICA)
 @test indim(M) == m
 @test outdim(M) == k
 @test mean(M) == mv

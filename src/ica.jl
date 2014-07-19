@@ -1,13 +1,20 @@
-# FastICA
+# Independent Component Analysis
 
-# Reference:
-#
-#   Aapo Hyvarinen and Erkki Oja
-#   Independent Component Analysis: Algorithms and Applications.
-#   Neural Network 13(4-5), 2000.
-#
+#### FastICA type
 
-#### g: Derivatives of G
+type ICA
+    mean::Vector{Float64}   # mean vector, of length m (or empty to indicate zero mean)
+    W::Matrix{Float64}      # component coefficient matrix, of size (m, k)
+end
+
+indim(M::ICA) = size(M.W, 1)
+outdim(M::ICA) = size(M.W, 2)
+Base.mean(M::ICA) = fullmean(indim(M), M.mean)
+
+transform(M::ICA, x::AbstractVecOrMat) = At_mul_B(M.W, centralize(x, M.mean))
+
+
+#### core algorithm
 
 # the abstract type for all g functions:
 #
@@ -41,9 +48,14 @@ icagfun(fname::Symbol, a::Float64) =
     fname == :gaus ? error("The gfun $(fname) has no parameters") :
     error("Unknown gfun $(fname)")
 
-
-#### core algorithm
-
+# Fast ICA
+#
+# Reference:
+#
+#   Aapo Hyvarinen and Erkki Oja
+#   Independent Component Analysis: Algorithms and Applications.
+#   Neural Network 13(4-5), 2000.
+#
 function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, size (m, k)
                   X::DenseMatrix{Float64},      # (whitened) observation sample matrix, size(m, n)
                   fun::ICAGDeriv,               # approximate neg-entropy functor
@@ -133,38 +145,25 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
     end
 end
 
-
-#### FastICA type
-
-type FastICA
-    mean::Vector{Float64}   # mean vector, of length m (or empty to indicate zero mean)
-    W::Matrix{Float64}      # component coefficient matrix, of size (m, k)
-end
-
-indim(M::FastICA) = size(M.W, 1)
-outdim(M::FastICA) = size(M.W, 2)
-Base.mean(M::FastICA) = fullmean(indim(M), M.mean)
-
-transform(M::FastICA, x::AbstractVecOrMat) = At_mul_B(M.W, centralize(x, M.mean))
-
-
 #### interface function 
 
-function fit(::Type{FastICA}, X::DenseMatrix{Float64},          # sample matrix, size (m, n)
-                              k::Int;                           # number of independent components
-                              fun::ICAGDeriv=icagfun(:tanh),    # approx neg-entropy functor
-                              do_whiten::Bool=true,             # whether to perform pre-whitening 
-                              maxiter::Integer=100,             # maximum number of iterations
-                              tol::Real=1.0e-6,                 # convergence tolerance
-                              mean=nothing,                     # pre-computed mean
-                              winit::Matrix{Float64}=zeros(0,0),  # init guess of W, size (m, k)
-                              verbose::Bool=false)              # whether to display iterations
+function fit(::Type{ICA}, X::DenseMatrix{Float64},          # sample matrix, size (m, n)
+                          k::Int;                           # number of independent components
+                          alg::Symbol=:fastica,             # choice of algorithm
+                          fun::ICAGDeriv=icagfun(:tanh),    # approx neg-entropy functor
+                          do_whiten::Bool=true,             # whether to perform pre-whitening 
+                          maxiter::Integer=100,             # maximum number of iterations
+                          tol::Real=1.0e-6,                 # convergence tolerance
+                          mean=nothing,                     # pre-computed mean
+                          winit::Matrix{Float64}=zeros(0,0),  # init guess of W, size (m, k)
+                          verbose::Bool=false)              # whether to display iterations
 
     # check input arguments
     m, n = size(X)
     n > 1 || error("There must be more than one samples, i.e. n > 1.")
     k <= min(m, n) || error("k must not exceed min(m, n).")
 
+    alg == :fastica || error("alg must be :fastica")
     maxiter > 1 || error("maxiter must be greater than 1.")
     tol > 0 || error("tol must be positive.")
 
@@ -193,6 +192,6 @@ function fit(::Type{FastICA}, X::DenseMatrix{Float64},          # sample matrix,
     if do_whiten
         W = W0 * W
     end
-    return FastICA(mv, W)
+    return ICA(mv, W)
 end
 
