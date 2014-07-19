@@ -2,7 +2,7 @@ module MultivariateStats
     using StatsBase
     using ArrayViews
 
-    import Base: length, size, show, dump, evaluate
+    import Base: length, size, show, dump, evaluate, sumabs2
     import Base.LinAlg: Cholesky
     import StatsBase: fit, predict
 
