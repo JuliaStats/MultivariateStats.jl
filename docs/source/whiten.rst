@@ -91,4 +91,10 @@ Given a dataset, one can use the ``fit`` method to estimate a whitening transfor
 
 In addition, the package also provides ``cov_whiten!``, in which the input matrix ``C`` will be overwritten during computation. This can be more efficient when ``C`` is no longer used. 
 
+.. function:: invsqrtm(C)
+
+    Compute ``inv(sqrtm(C))`` through symmetric eigenvalue decomposition.
+
+
+
 
