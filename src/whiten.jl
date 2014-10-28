@@ -4,9 +4,10 @@
 #
 # finds W, such that W'CW = I
 #
-cov_whitening{T<:FloatingPoint}(C::Cholesky{T}) = 
-    convert(Matrix{T}, C.uplo == 'U' ? inv(Triangular(C.UL, :U)) : 
-                                       inv(Triangular(C.UL, :L)') )::Matrix{T}
+function cov_whitening{T<:FloatingPoint}(C::Cholesky{T})
+    cf = C[:UL]
+    full(istriu(cf) ? inv(Triangular(C.UL, :U)) : inv(Triangular(C.UL, :L)'))::Matrix{T}
+end
 
 cov_whitening!{T<:FloatingPoint}(C::DenseMatrix{T}) = cov_whitening(cholfact!(C, :U))
 cov_whitening{T<:FloatingPoint}(C::DenseMatrix{T}) = cov_whitening!(copy(C))
