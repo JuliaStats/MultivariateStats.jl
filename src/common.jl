@@ -100,8 +100,7 @@ end
 # regularize a symmetric matrix
 function regularize_symmat!{T<:FloatingPoint}(A::Matrix{T}, lambda::Real)
     if lambda > 0
-        # emax = eigmax(Symmetric(A))  ## there is a bug of eigmax
-        emax = maximum(eigvals(Symmetric(A)))
+        emax = eigmax(Symmetric(A)) 
         add_diag!(A, emax * lambda)
     end
     return A
