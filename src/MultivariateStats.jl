@@ -89,7 +89,10 @@ module MultivariateStats
     ICA,                    # Type: the Fast ICA model
 
     icagfun,                # a function to get a ICA approx neg-entropy functor
-    fastica!                # core algorithm function for the Fast ICA
+    fastica!,                # core algorithm function for the Fast ICA
+
+    ## factor analysis
+    FactorAnalysis
 
 
     ## source files
@@ -101,5 +104,6 @@ module MultivariateStats
     include("cmds.jl")
     include("lda.jl")
     include("ica.jl")
+    include("fa.jl")
 
 end # module
