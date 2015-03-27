@@ -9,6 +9,6 @@ notifications:
     email: false
 script:
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-    - julia -e 'Pkg.clone(pwd()); Pkg.build("MultivariateStats.jl"); Pkg.test("MultivariateStats.jl"; coverage=true)';
-    - julia -e 'cd(Pkg.dir("MultivariateStats.jl")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
+    - julia -e 'Pkg.clone(pwd()); Pkg.build("MultivariateStats"); Pkg.test("MultivariateStats"; coverage=true)';
+    - julia -e 'cd(Pkg.dir("MultivariateStats")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
 
