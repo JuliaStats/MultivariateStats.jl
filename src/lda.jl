@@ -2,11 +2,11 @@
 
 #### Type to represent a linear discriminant functional
 
-abstract Discriminant
+abstract Discriminant{T}
 
-immutable LinearDiscriminant <: Discriminant
-    w::Vector{Float64}
-    b::Float64
+immutable LinearDiscriminant{T<:FloatingPoint} <: Discriminant{T}
+    w::Vector{T}
+    b::T
 end
 
 length(f::LinearDiscriminant) = length(f.w)
@@ -28,25 +28,25 @@ predict(f::Discriminant, X::AbstractMatrix) = (Y = evaluate(f, X); Bool[y > 0 fo
 
 #### function to solve linear discriminant
 
-function ldacov(C::DenseMatrix{Float64}, 
-                μp::DenseVector{Float64}, 
-                μn::DenseVector{Float64})
+function ldacov{T<:FloatingPoint}(C::DenseMatrix{T},
+                μp::DenseVector{T},
+                μn::DenseVector{T})
 
     w = cholfact(C) \ (μp - μn)
-    ap = dot(w, μp)
-    an = dot(w, μn)
+    ap = w ⋅ μp
+    an = w ⋅ μn
     c = 2 / (ap - an)
     LinearDiscriminant(scale!(w, c), 1 - c * ap)
 end
 
-ldacov(Cp::DenseMatrix{Float64}, 
-       Cn::DenseMatrix{Float64}, 
-       μp::DenseVector{Float64}, 
-       μn::DenseVector{Float64}) = ldacov(Cp + Cn, μp, μn)
+ldacov{T<:FloatingPoint}(Cp::DenseMatrix{T},
+       Cn::DenseMatrix{T},
+       μp::DenseVector{T},
+       μn::DenseVector{T}) = ldacov(Cp + Cn, μp, μn)
 
 #### interface functions
 
-function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{Float64}, Xn::DenseMatrix{Float64})
+function fit{T<:FloatingPoint}(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T})
     μp = vec(mean(Xp, 2))
     μn = vec(mean(Xn, 2))
     Zp = Xp .- μp
@@ -59,15 +59,15 @@ end
 
 #### Multiclass LDA Stats
 
-type MulticlassLDAStats
-    dim::Int                    # sample dimensions
-    nclasses::Int               # number of classes
-    cweights::Vector{Float64}   # class weights
-    tweight::Float64            # total sample weight
-    mean::Vector{Float64}       # overall sample mean
-    cmeans::Matrix{Float64}     # class-specific means
-    Sw::Matrix{Float64}         # within-class scatter matrix
-    Sb::Matrix{Float64}         # between-class scatter matrix
+type MulticlassLDAStats{T<:FloatingPoint}
+    dim::Int              # sample dimensions
+    nclasses::Int         # number of classes
+    cweights::Vector{T}   # class weights
+    tweight::T            # total sample weight
+    mean::Vector{T}       # overall sample mean
+    cmeans::Matrix{T}     # class-specific means
+    Sw::Matrix{T}         # within-class scatter matrix
+    Sb::Matrix{T}         # between-class scatter matrix
 end
 
 Base.mean(S::MulticlassLDAStats) = S.mean
@@ -77,11 +77,11 @@ classmeans(S::MulticlassLDAStats) = S.cmeans
 withclass_scatter(S::MulticlassLDAStats) = S.Sw
 betweenclass_scatter(S::MulticlassLDAStats) = S.Sb
 
-function MulticlassLDAStats(cweights::Vector{Float64}, 
-                            mean::Vector{Float64},
-                            cmeans::Matrix{Float64}, 
-                            Sw::Matrix{Float64}, 
-                            Sb::Matrix{Float64})
+function MulticlassLDAStats{T<:FloatingPoint}(cweights::Vector{T},
+                            mean::Vector{T},
+                            cmeans::Matrix{T},
+                            Sw::Matrix{T},
+                            Sb::Matrix{T})
     d, nc = size(cmeans)
     length(mean) == d || throw(DimensionMismatch("Incorrect length of mean"))
     length(cweights) == nc || throw(DimensionMismatch("Incorrect length of cweights"))
@@ -91,11 +91,11 @@ function MulticlassLDAStats(cweights::Vector{Float64},
     MulticlassLDAStats(d, nc, cweights, tw, mean, cmeans, Sw, Sb)
 end
 
-function multiclass_lda_stats(nc::Int, X::DenseMatrix{Float64}, y::AbstractVector{Int})
+function multiclass_lda_stats{T<:FloatingPoint}(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int})
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
-    n >= nc || error("The number of samples is less than the number of classes")
+    n ≥ nc || throw(ArgumentError("The number of samples is less than the number of classes"))
     length(y) == n || throw(DimensionMismatch("Inconsistent array sizes."))
 
     # compute class-specific weights and means
@@ -118,7 +118,7 @@ function multiclass_lda_stats(nc::Int, X::DenseMatrix{Float64}, y::AbstractVecto
     end
 
     # compute within-class scattering
-    Z = Array(Float64, d, n)
+    Z = Array(T, d, n)
     for j = 1:n
         z = view(Z,:,j)
         x = view(X,:,j)
@@ -140,10 +140,10 @@ end
 
 #### Multiclass LDA
 
-type MulticlassLDA
-    proj::Matrix{Float64}
-    pmeans::Matrix{Float64}
-    stats::MulticlassLDAStats
+type MulticlassLDA{T<:FloatingPoint}
+    proj::Matrix{T}
+    pmeans::Matrix{T}
+    stats::MulticlassLDAStats{T}
 end
 
 indim(M::MulticlassLDA) = size(M.proj, 1)
@@ -160,34 +160,34 @@ betweenclass_scatter(M::MulticlassLDA) = betweenclass_scatter(M.stats)
 
 transform{T<:FloatingPoint}(M::MulticlassLDA, x::AbstractVecOrMat{T}) = M.proj'x
 
-function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{Float64}, y::AbstractVector{Int}; 
-             method::Symbol=:gevd, 
+function fit{T<:FloatingPoint}(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
+             method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
-             regcoef::Float64=1.0e-6)
+             regcoef::T=1.0e-6)
 
-    multiclass_lda(multiclass_lda_stats(nc, X, y); 
-                   method=method, 
-                   regcoef=regcoef, 
+    multiclass_lda(multiclass_lda_stats(nc, X, y);
+                   method=method,
+                   regcoef=regcoef,
                    outdim=outdim)
 end
 
-function multiclass_lda(S::MulticlassLDAStats; 
-                        method::Symbol=:gevd, 
+function multiclass_lda{T<:FloatingPoint}(S::MulticlassLDAStats{T};
+                        method::Symbol=:gevd,
                         outdim::Int=min(size(X,1), S.nclasses-1),
-                        regcoef::Float64=1.0e-6) 
+                        regcoef::T=1.0e-6)
 
     P = mclda_solve(S.Sb, S.Sw, method, outdim, regcoef)
     MulticlassLDA(P, P'S.cmeans, S)
 end
 
-mclda_solve(Sb::DenseMatrix{Float64}, Sw::DenseMatrix{Float64}, method::Symbol, p::Int, regcoef::Float64) = 
+mclda_solve{T<:FloatingPoint}(Sb::DenseMatrix{T}, Sw::DenseMatrix{T}, method::Symbol, p::Int, regcoef::T) =
     mclda_solve!(copy(Sb), copy(Sw), method, p, regcoef)
 
-function mclda_solve!(Sb::Matrix{Float64}, 
-                      Sw::Matrix{Float64}, 
-                      method::Symbol, p::Int, regcoef::Float64)
+function mclda_solve!{T<:FloatingPoint}(Sb::Matrix{T},
+                      Sw::Matrix{T},
+                      method::Symbol, p::Int, regcoef::T)
 
-    p <= size(Sb, 1) || error("p cannot exceed sample dimension.")
+    p <= size(Sb, 1) || throw(ArgumentError("p cannot exceed sample dimension."))
 
     if method == :gevd
         regularize_symmat!(Sw, regcoef)
@@ -203,12 +203,12 @@ function mclda_solve!(Sb::Matrix{Float64},
         P = W * Eb.vectors[:, ord[1:p]]
 
     else
-        error("Invalid method name $(method)")
+        throw(ArgumentError("Invalid method name $(method)"))
     end
-    return P::Matrix{Float64}
+    return P::Matrix{T}
 end
 
-function _lda_whitening!(C::Matrix{Float64}, regcoef::Float64)
+function _lda_whitening!{T<:FloatingPoint}(C::Matrix{T}, regcoef::T)
     n = size(C,1)
     E = eigfact!(Symmetric(C))
     v = E.values
