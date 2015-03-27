@@ -2,24 +2,24 @@
 
 #### PCA type
 
-type PCA
-    mean::Vector{Float64}       # sample mean: of length d (mean can be empty, which indicates zero mean)
-    proj::Matrix{Float64}       # projection matrix: of size d x p
-    prinvars::Vector{Float64}   # principal variances: of length p
-    tprinvar::Float64           # total principal variance, i.e. sum(prinvars)
-    tvar::Float64               # total input variance
-end          
+type PCA{T<:FloatingPoint}
+    mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
+    proj::Matrix{T}       # projection matrix: of size d x p
+    prinvars::Vector{T}   # principal variances: of length p
+    tprinvar::T           # total principal variance, i.e. sum(prinvars)
+    tvar::T               # total input variance
+end
 
 ## constructor
 
-function PCA(mean::Vector{Float64}, proj::Matrix{Float64}, pvars::Vector{Float64}, tvar::Float64)
+function PCA{T<:FloatingPoint}(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T)
     d, p = size(proj)
     (isempty(mean) || length(mean) == d) ||
         throw(DimensionMismatch("Dimensions of mean and proj are inconsistent."))
     length(pvars) == p ||
         throw(DimensionMismatch("Dimensions of proj and pvars are inconsistent."))
     tpvar = sum(pvars)
-    tpvar <= tvar || error("principal variance cannot exceed total variance.")
+    tpvar <= tvar || throw(ArgumenetError("principal variance cannot exceed total variance."))
     PCA(mean, proj, pvars, tpvar, tvar)
 end
 
@@ -32,7 +32,7 @@ Base.mean(M::PCA) = fullmean(indim(M), M.mean)
 
 projection(M::PCA) = M.proj
 
-principalvar(M::PCA, i::Integer) = M.prinvars[i]
+principalvar(M::PCA, i::Int) = M.prinvars[i]
 principalvars(M::PCA) = M.prinvars
 
 tprincipalvar(M::PCA) = M.tprinvar
@@ -43,8 +43,8 @@ principalratio(M::PCA) = M.tprinvar / M.tvar
 
 ## use
 
-transform{T<:Real}(M::PCA, x::AbstractVecOrMat{T}) = At_mul_B(M.proj, centralize(x, M.mean))
-reconstruct{T<:Real}(M::PCA, y::AbstractVecOrMat{T}) = decentralize(M.proj * y, M.mean)
+transform{T<:FloatingPoint}(M::PCA{T}, x::AbstractVecOrMat{T}) = At_mul_B(M.proj, centralize(x, M.mean))
+reconstruct{T<:FloatingPoint}(M::PCA{T}, y::AbstractVecOrMat{T}) = decentralize(M.proj * y, M.mean)
 
 ## show & dump
 
@@ -70,19 +70,19 @@ end
 
 #### PCA Training
 
-## auxiliary 
+## auxiliary
 
 const default_pca_pratio = 0.99
 
-function check_pcaparams(d::Int, mean::Vector, md::Int, pr::Float64)
+function check_pcaparams{T<:FloatingPoint}(d::Int, mean::Vector{T}, md::Int, pr::T)
     isempty(mean) || length(mean) == d ||
         throw(DimensionMismatch("Incorrect length of mean."))
     md >= 1 || error("maxoutdim must be a positive integer.")
-    0.0 < pr <= 1.0 || error("pratio must be a positive real value with pratio <= 1.0.")
+    0.0 < pr <= 1.0 || throw(ArgumentError("pratio must be a positive real value with pratio ≤ 1.0."))
 end
 
 
-function choose_pcadim(v::AbstractVector, ord::Vector{Int}, vsum::Float64, md::Int, pr::Float64)
+function choose_pcadim{T<:FloatingPoint}(v::AbstractVector{T}, ord::Vector{Int}, vsum::T, md::Int, pr::T)
     md = min(length(v), md)
     k = 1
     a = v[ord[1]]
@@ -96,12 +96,12 @@ end
 
 ## core algorithms
 
-function pcacov(C::DenseMatrix{Float64}, mean::Vector{Float64}; 
-                maxoutdim::Int=size(C,1), 
-                pratio::Float64=default_pca_pratio)
+function pcacov{T<:FloatingPoint}(C::DenseMatrix{T}, mean::Vector{T};
+                maxoutdim::Int=size(C,1),
+                pratio::T=default_pca_pratio)
 
     check_pcaparams(size(C,1), mean, maxoutdim, pratio)
-    Eg = eigfact!(Symmetric(copy(C)))
+    Eg = eigfact(Symmetric(C))
     ev = Eg.values
     ord = sortperm(ev; rev=true)
     vsum = sum(ev)
@@ -110,14 +110,14 @@ function pcacov(C::DenseMatrix{Float64}, mean::Vector{Float64};
     PCA(mean, P, v, vsum)
 end
 
-function pcasvd(Z::DenseMatrix{Float64}, mean::Vector{Float64}, tw::Real; 
+function pcasvd{T<:FloatingPoint}(Z::DenseMatrix{T}, mean::Vector{T}, tw::Real;
                 maxoutdim::Int=min(size(Z)...),
-                pratio::Float64=default_pca_pratio)
+                pratio::T=default_pca_pratio)
 
     check_pcaparams(size(Z,1), mean, maxoutdim, pratio)
     Svd = svdfact(Z)
-    v = Svd.S::Vector{Float64}
-    U = Svd.U::Matrix{Float64}
+    v = Svd.S::Vector{T}
+    U = Svd.U::Matrix{T}
     for i = 1:length(v)
         @inbounds v[i] = abs2(v[i]) / tw
     end
@@ -130,14 +130,14 @@ end
 
 ## interface functions
 
-function fit(::Type{PCA}, X::DenseMatrix{Float64}; 
-             method::Symbol=:auto, 
-             maxoutdim::Int=size(X,1), 
-             pratio::Float64=default_pca_pratio, 
+function fit{T<:FloatingPoint}(::Type{PCA}, X::DenseMatrix{T};
+             method::Symbol=:auto,
+             maxoutdim::Int=size(X,1),
+             pratio::T=default_pca_pratio,
              mean=nothing)
 
     d, n = size(X)
-    
+
     # choose method
     if method == :auto
         method = d < n ? :cov : :svd
@@ -148,13 +148,13 @@ function fit(::Type{PCA}, X::DenseMatrix{Float64};
 
     # delegate to core
     if method == :cov
-        C = cov(X; vardim=2, mean=isempty(mv) ? 0 : mv)::Matrix{Float64}
+        C = cov(X; vardim=2, mean=isempty(mv) ? 0 : mv)::Matrix{T}
         M = pcacov(C, mv; maxoutdim=maxoutdim, pratio=pratio)
     elseif method == :svd
         Z = centralize(X, mv)
-        M = pcasvd(Z, mv, float64(n); maxoutdim=maxoutdim, pratio=pratio)
+        M = pcasvd(Z, mv, n; maxoutdim=maxoutdim, pratio=pratio)
     else
-        error("Invalid method name $(method)")
+        throw(ArgumentError("Invalid method name $(method)"))
     end
 
     return M::PCA
