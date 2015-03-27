@@ -30,7 +30,7 @@ m = 8
 
 t = linspace(0.0, 10.0, n)
 s1 = sin(t * 2)
-s2 = s2 = 1.0 - 2.0 * Bool[isodd(ifloor(_ / 3)) for _ in t]
+s2 = s2 = 1.0 - 2.0 * Bool[isodd(floor(Int, _ / 3)) for _ in t]
 s3 = Float64[mod(_, 5.0) for _ in t]
 
 s1 += 0.1 * randn(n)
@@ -42,12 +42,12 @@ S = hcat(s1, s2, s3)'
 
 A = randn(m, k)
 
-X = A * S 
+X = A * S
 mv = vec(mean(X,2))
 @assert size(X) == (m, n)
 C = cov(X; vardim=2)
 
-# FastICA 
+# FastICA
 
 M = fit(ICA, X, k; do_whiten=false)
 @test isa(M, ICA)
