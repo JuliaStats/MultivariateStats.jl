@@ -1,6 +1,23 @@
 using MultivariateStats
 using Base.Test
 
+#Test equivalence of eigenvectors/singular vectors taking into account possible
+#phase (sign) differences
+#This may end up in Base.Test; see JuliaLang/julia#10651
+function test_approx_eq_vecs{S<:Real,T<:Real}(a::StridedVecOrMat{S},
+    b::StridedVecOrMat{T}, error=nothing)
+    n = size(a, 2)
+    @test n==size(b, 2) && size(a, 1)==size(b, 1)
+    error==nothing && (error=n^3*(eps(S)+eps(T)))
+    for i=1:n
+        ev1, ev2 = a[:, i], b[:, i]
+        deviation = min(abs(norm(ev1-ev2)), abs(norm(ev1+ev2)))
+        if !isnan(deviation)
+            @test_approx_eq_eps deviation 0.0 error
+        end
+    end
+end
+
 srand(34568)
 
 ## prepare data
@@ -85,7 +102,7 @@ V = Sw_r * P1
 P2 = mclda_solve(Sb, Sw, :whiten, nc-1, lambda)
 @test_approx_eq P2' * Sw_r * P2 eye(nc-1)
 
-@test_approx_eq P1 P2
+test_approx_eq_vecs(P1, P2)
 
 
 ## LDA
