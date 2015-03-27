@@ -19,7 +19,7 @@ _haug{T}(X::DenseMatrix{T}) = hcat(X, ones(T, size(X,1), 1))::Matrix{T}
 
 ## linear least square
 
-function llsq{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}; 
+function llsq{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T};
                                 trans::Bool=false, bias::Bool=true)
     if trans
         mX, nX = size(X)
@@ -35,21 +35,21 @@ end
 
 ## ridge regression
 
-function ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::Real; 
+function ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::Real;
                                 trans::Bool=false, bias::Bool=true)
     lreg_chkdims(X, Y, trans)
     r >= zero(r) || error("r must be non-negative.")
     _ridge(X, Y, convert(T, r), trans, bias)
 end
 
-function ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseVector{T}; 
+function ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseVector{T};
                                 trans::Bool=false, bias::Bool=true)
     d = lreg_chkdims(X, Y, trans)
     length(r) == d || throw(DimensionMismatch("Incorrect length of r."))
     _ridge(X, Y, r, trans, bias)
 end
 
-function ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseMatrix{T}; 
+function ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseMatrix{T};
                                 trans::Bool=false, bias::Bool=true)
     d = lreg_chkdims(X, Y, trans)
     size(r) == (d, d) || throw(DimensionMismatch("Incorrect size of r."))
@@ -58,7 +58,7 @@ end
 
 ## implementation
 
-function _ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, 
+function _ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T},
                                   r::Union(Real, DenseVecOrMat), trans::Bool, bias::Bool)
     if bias
         if trans
@@ -80,7 +80,7 @@ end
 
 function _ridge_reg!(Q::Matrix, r::Real, bias::Bool)
     if r > zero(r)
-        n = size(Q, 1) - int(bias)
+        n = size(Q, 1) - @compat Int(bias)
         for i = 1:n
             @inbounds Q[i,i] += r
         end
@@ -89,7 +89,7 @@ function _ridge_reg!(Q::Matrix, r::Real, bias::Bool)
 end
 
 function _ridge_reg!(Q::Matrix, r::DenseVector, bias::Bool)
-    n = size(Q, 1) - int(bias)
+    n = size(Q, 1) - @compat Int(bias)
     @assert length(r) == n
     for i = 1:n
         @inbounds Q[i,i] += r[i]
@@ -98,7 +98,7 @@ function _ridge_reg!(Q::Matrix, r::DenseVector, bias::Bool)
 end
 
 function _ridge_reg!(Q::Matrix, r::Matrix, bias::Bool)
-    n = size(Q, 1) - int(bias)
+    n = size(Q, 1) - @compat Int(bias)
     @assert size(r) == (n, n)
     for j = 1:n, i = 1:n
         @inbounds Q[i,j] += r[i,j]

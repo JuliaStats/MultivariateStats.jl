@@ -62,7 +62,7 @@ S = multiclass_lda_stats(nc, X, y)
 @test_approx_eq classmeans(S) cmeans
 @test_approx_eq mean(S) mv
 
-@test_approx_eq withclass_scatter(S) Sw 
+@test_approx_eq withclass_scatter(S) Sw
 @test_approx_eq betweenclass_scatter(S) Sb
 
 ## Solve
@@ -78,9 +78,9 @@ P1 = mclda_solve(Sb, Sw, :gevd, nc-1, lambda)
 @test_approx_eq P1' * Sw_r * P1 eye(nc-1)
 U = Sb * P1
 V = Sw_r * P1
-# test whether U is proportional to V, 
+# test whether U is proportional to V,
 # which indicates P is the generalized eigenvectors
-@test_approx_eq U scale(V, vec(mean(U ./ V, 1)))  
+@test_approx_eq U scale(V, vec(mean(U ./ V, 1)))
 
 P2 = mclda_solve(Sb, Sw, :whiten, nc-1, lambda)
 @test_approx_eq P2' * Sw_r * P2 eye(nc-1)

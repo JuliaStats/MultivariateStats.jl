@@ -1,4 +1,5 @@
 module MultivariateStats
+    using Compat
     using StatsBase
     using ArrayViews
 
@@ -6,7 +7,7 @@ module MultivariateStats
     import Base.LinAlg: Cholesky
     import StatsBase: fit, predict, evaluate
 
-    export 
+    export
 
     ## common
     evaluate,           # evaluate discriminant function values (imported from Base)
@@ -41,7 +42,7 @@ module MultivariateStats
     principalratio,     # the ratio of variances preserved in the principal subspace
     principalvar,       # the variance along a specific principal direction
     principalvars,      # the variances along all principal directions
-    
+
     tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
     tresidualvar,       # total residual variance
     tvar,               # total variance
@@ -70,7 +71,7 @@ module MultivariateStats
 
     ## lda
     Discriminant,           # Abstract Type: for all discriminant functionals
-    LinearDiscriminant,     # Type: Linear Discriminant functional 
+    LinearDiscriminant,     # Type: Linear Discriminant functional
     MulticlassLDAStats,     # Type: Statistics required for training multi-class LDA
     MulticlassLDA,          # Type: Multi-class LDA model
 

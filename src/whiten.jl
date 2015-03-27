@@ -6,16 +6,20 @@
 #
 function cov_whitening{T<:FloatingPoint}(C::Cholesky{T})
     cf = C[:UL]
-    full(istriu(cf) ? inv(Triangular(C.UL, :U)) : inv(Triangular(C.UL, :L)'))::Matrix{T}
+    if VERSION < v"0.4.0-"
+        full(istriu(cf) ? inv(Triangular(C.UL, :U)) : inv(Triangular(C.UL, :L)'))::Matrix{T}
+    else
+        full(istriu(cf) ? inv(UpperTriangular(C.UL)) : inv(LowerTriangular(C.UL)'))::Matrix{T}
+    end
 end
 
 cov_whitening!{T<:FloatingPoint}(C::DenseMatrix{T}) = cov_whitening(cholfact!(C, :U))
 cov_whitening{T<:FloatingPoint}(C::DenseMatrix{T}) = cov_whitening!(copy(C))
 
-cov_whitening!{T<:FloatingPoint}(C::DenseMatrix{T}, regcoef::Real) = 
+cov_whitening!{T<:FloatingPoint}(C::DenseMatrix{T}, regcoef::Real) =
     cov_whitening!(regularize_symmat!(C, regcoef))
 
-cov_whitening{T<:FloatingPoint}(C::DenseMatrix{T}, regcoef::Real) = 
+cov_whitening{T<:FloatingPoint}(C::DenseMatrix{T}, regcoef::Real) =
     cov_whitening!(copy(C), regcoef)
 
 
@@ -42,7 +46,7 @@ transform(f::Whitening, x::AbstractVecOrMat) = At_mul_B(f.W, centralize(x, f.mea
 
 ## Fit whitening to data
 
-function fit{T<:FloatingPoint}(::Type{Whitening}, X::DenseMatrix{T}; 
+function fit{T<:FloatingPoint}(::Type{Whitening}, X::DenseMatrix{T};
                                mean=nothing, regcoef::Real=zero(T))
     n = size(X, 2)
     n > 1 || error("X must contain more than one sample.")
