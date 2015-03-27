@@ -1,6 +1,6 @@
 The MultivariateAnalysis.jl package is licensed under the MIT "Expat" License:
 
-> Copyright (c) 2014: Dahua Lin and all contributors.
+> Copyright (c) 2014--2015: Dahua Lin and [other contributors](https://github.com/JuliaStats/MultivariateStats.jl/graphs/contributors).
 >
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the
