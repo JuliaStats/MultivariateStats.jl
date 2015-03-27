@@ -14,7 +14,7 @@ X0 = randn(3, 5)
 G0 = X0'X0
 D0 = pwdists(X0)
 
-## conversion between dmat and gram 
+## conversion between dmat and gram
 
 @assert issym(D0)
 @assert issym(G0)
@@ -31,4 +31,8 @@ G = dmat2gram(D0)
 
 X = classical_mds(D0, 3)
 @test_approx_eq pwdists(X) D0
+
+#Test MDS embeddings in dimensions >= number of points
+@test classical_mds([0 1; 1 0], 2, dowarn=false) == [-0.5 0.5; 0 0]
+@test classical_mds([0 1; 1 0], 3, dowarn=false) == [-0.5 0.5; 0 0; 0 0]
 

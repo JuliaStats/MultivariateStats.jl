@@ -9,7 +9,7 @@ function gram2dmat!{DT}(D::AbstractMatrix{DT}, G::AbstractMatrix)
     m == n || error("D should be a square matrix.")
     size(D) == (m, n) ||
         throw(DimensionMismatch("Sizes of D and G do not match."))
-   
+
     # implementation
     for j = 1:n
         for i = 1:j-1
@@ -29,10 +29,8 @@ gram2dmat{T<:Real}(G::AbstractMatrix{T}) = gram2dmat!(similar(G, Base.momenttype
 
 function dmat2gram!{GT}(G::AbstractMatrix{GT}, D::AbstractMatrix)
     # argument checking
-    m = size(D, 1)
-    n = size(D, 2)
-    m == n || error("D should be a square matrix.")
-    size(G) == (m, n) ||
+    n = Base.LinAlg.chksquare(D)
+    size(G) == (n, n) ||
         throw(DimensionMismatch("Sizes of G and D do not match."))
 
     # implementation
@@ -58,18 +56,50 @@ dmat2gram{T<:Real}(D::AbstractMatrix{T}) = dmat2gram!(similar(D, Base.momenttype
 
 ## classical MDS
 
-function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Integer)
+function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Int;
+        dowarn::Bool=true)
+
     n = size(D, 1)
-    p < n || error("p must be less than n.")
+    m = min(p, n) #Actual number of eigenpairs wanted
 
     G = dmat2gram(D)
+
+    #Get m largest eigenpairs
     E = eigfact!(Symmetric(G))
     ord = sortperm(E.values; rev=true)
-    (v, U) = extract_kv(E, ord, p)
-    for i = 1:p
-        @inbounds v[i] = sqrt(v[i])
-    end
-    scale!(U, v)'
-end
 
+    v = E[:values][ord[1:m]]
+    for i = 1:m
+        if v[i] > 0
+            v[i] = √v[i]
+        else #Keeping all remaining eigenpairs would not change solution (if 0)
+             #or make the answer _worse_ (if <0).
+             #The least squares solution would want to throw all these away.
+            dowarn && warn("Gramian has only $(i-1) positive eigenvalue(s)")
+            m = i-1
+            ord = ord[1:m]
+            v = v[1:m]
+            break
+        end
+    end
+
+    #Check if the last considered eigenvalue is degenerate
+    if dowarn
+        nevalsmore = sum(abs(E[:values][ord[m+1:end]] .- v[m]^2) .< n*eps())
+        nevals = sum(abs(E[:values] .- v[m]^2) .< n*eps())
+        if nevalsmore > 1
+            warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
+        end
+    end
+    U = E[:vectors][:, ord[1:m]]
+    scale!(U, v)
+
+    #Add trailing zero coordinates if dimension of embedding space (p) exceeds
+    #number of eigenpairs used (m)
+    if m < p
+        U = [U zeros(n, p-m)]
+    end
+
+    U' #Return each coordinate in a column
+end
 
