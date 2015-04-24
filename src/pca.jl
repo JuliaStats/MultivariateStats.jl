@@ -19,7 +19,7 @@ function PCA{T<:FloatingPoint}(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T
     length(pvars) == p ||
         throw(DimensionMismatch("Dimensions of proj and pvars are inconsistent."))
     tpvar = sum(pvars)
-    tpvar <= tvar || throw(ArgumenetError("principal variance cannot exceed total variance."))
+    tpvar <= tvar || throw(ArgumentError("principal variance cannot exceed total variance."))
     PCA(mean, proj, pvars, tpvar, tvar)
 end
 
