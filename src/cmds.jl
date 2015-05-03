@@ -66,9 +66,22 @@ function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Int;
 
     #Get m largest eigenpairs
     E = eigfact!(Symmetric(G))
-    ord = sortperm(E.values; rev=true)
 
-    v = E[:values][ord[1:m]]
+    #Sometimes dmat2gram produces a negative definite matrix, and the sign just
+    #needs to be flipped. The heuristic to check for this robustly is to check
+    #if there is a negative eigenvalue of magnitude larger than the largest
+    #positive eigenvalue, and flip the sign of eigenvalues if necessary.
+
+    mineig, maxeig = extrema(E[:values])
+    if mineig < 0 && abs(mineig) > abs(maxeig)
+        #do flip
+        ord = sortperm(E.values)
+        v = -E[:values][ord[1:m]]
+    else
+        ord = sortperm(E.values; rev=true)
+        v = E[:values][ord[1:m]]
+    end
+
     for i = 1:m
         if v[i] > 0
             v[i] = √v[i]
@@ -84,11 +97,11 @@ function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Int;
     end
 
     #Check if the last considered eigenvalue is degenerate
-    if dowarn
+    if m>0
         nevalsmore = sum(abs(E[:values][ord[m+1:end]] .- v[m]^2) .< n*eps())
         nevals = sum(abs(E[:values] .- v[m]^2) .< n*eps())
         if nevalsmore > 1
-            warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
+            dowarn && warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
         end
     end
     U = E[:vectors][:, ord[1:m]]
