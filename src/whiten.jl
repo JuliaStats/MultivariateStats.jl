@@ -9,7 +9,7 @@ function cov_whitening{T<:FloatingPoint}(C::Cholesky{T})
     if VERSION < v"0.4.0-"
         full(istriu(cf) ? inv(Triangular(C.UL, :U)) : inv(Triangular(C.UL, :L)'))::Matrix{T}
     else
-        full(istriu(cf) ? inv(UpperTriangular(C.UL)) : inv(LowerTriangular(C.UL)'))::Matrix{T}
+        full(inv(istriu(cf) ? cf : cf'))::Matrix{T}
     end
 end
 
