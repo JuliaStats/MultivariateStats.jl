@@ -2,7 +2,7 @@
 
 #### PCA type
 
-type PCA{T<:FloatingPoint}
+type PCA{T<:AbstractFloat}
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     proj::Matrix{T}       # projection matrix: of size d x p
     prinvars::Vector{T}   # principal variances: of length p
@@ -12,7 +12,7 @@ end
 
 ## constructor
 
-function PCA{T<:FloatingPoint}(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T)
+function PCA{T<:AbstractFloat}(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T)
     d, p = size(proj)
     (isempty(mean) || length(mean) == d) ||
         throw(DimensionMismatch("Dimensions of mean and proj are inconsistent."))
@@ -43,8 +43,8 @@ principalratio(M::PCA) = M.tprinvar / M.tvar
 
 ## use
 
-transform{T<:FloatingPoint}(M::PCA{T}, x::AbstractVecOrMat{T}) = At_mul_B(M.proj, centralize(x, M.mean))
-reconstruct{T<:FloatingPoint}(M::PCA{T}, y::AbstractVecOrMat{T}) = decentralize(M.proj * y, M.mean)
+transform{T<:AbstractFloat}(M::PCA{T}, x::AbstractVecOrMat{T}) = At_mul_B(M.proj, centralize(x, M.mean))
+reconstruct{T<:AbstractFloat}(M::PCA{T}, y::AbstractVecOrMat{T}) = decentralize(M.proj * y, M.mean)
 
 ## show & dump
 
@@ -74,7 +74,7 @@ end
 
 const default_pca_pratio = 0.99
 
-function check_pcaparams{T<:FloatingPoint}(d::Int, mean::Vector{T}, md::Int, pr::T)
+function check_pcaparams{T<:AbstractFloat}(d::Int, mean::Vector{T}, md::Int, pr::AbstractFloat)
     isempty(mean) || length(mean) == d ||
         throw(DimensionMismatch("Incorrect length of mean."))
     md >= 1 || error("maxoutdim must be a positive integer.")
@@ -82,7 +82,7 @@ function check_pcaparams{T<:FloatingPoint}(d::Int, mean::Vector{T}, md::Int, pr:
 end
 
 
-function choose_pcadim{T<:FloatingPoint}(v::AbstractVector{T}, ord::Vector{Int}, vsum::T, md::Int, pr::T)
+function choose_pcadim{T<:AbstractFloat}(v::AbstractVector{T}, ord::Vector{Int}, vsum::T, md::Int, pr::AbstractFloat)
     md = min(length(v), md)
     k = 1
     a = v[ord[1]]
@@ -96,9 +96,9 @@ end
 
 ## core algorithms
 
-function pcacov{T<:FloatingPoint}(C::DenseMatrix{T}, mean::Vector{T};
+function pcacov{T<:AbstractFloat}(C::DenseMatrix{T}, mean::Vector{T};
                 maxoutdim::Int=size(C,1),
-                pratio::T=default_pca_pratio)
+                pratio::AbstractFloat=default_pca_pratio)
 
     check_pcaparams(size(C,1), mean, maxoutdim, pratio)
     Eg = eigfact(Symmetric(C))
@@ -110,9 +110,9 @@ function pcacov{T<:FloatingPoint}(C::DenseMatrix{T}, mean::Vector{T};
     PCA(mean, P, v, vsum)
 end
 
-function pcasvd{T<:FloatingPoint}(Z::DenseMatrix{T}, mean::Vector{T}, tw::Real;
+function pcasvd{T<:AbstractFloat}(Z::DenseMatrix{T}, mean::Vector{T}, tw::Real;
                 maxoutdim::Int=min(size(Z)...),
-                pratio::T=default_pca_pratio)
+                pratio::AbstractFloat=default_pca_pratio)
 
     check_pcaparams(size(Z,1), mean, maxoutdim, pratio)
     Svd = svdfact(Z)
@@ -130,10 +130,10 @@ end
 
 ## interface functions
 
-function fit{T<:FloatingPoint}(::Type{PCA}, X::DenseMatrix{T};
+function fit{T<:AbstractFloat}(::Type{PCA}, X::DenseMatrix{T};
              method::Symbol=:auto,
              maxoutdim::Int=size(X,1),
-             pratio::T=default_pca_pratio,
+             pratio::AbstractFloat=default_pca_pratio,
              mean=nothing)
 
     d, n = size(X)
