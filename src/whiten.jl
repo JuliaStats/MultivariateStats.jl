@@ -4,7 +4,7 @@
 #
 # finds W, such that W'CW = I
 #
-function cov_whitening{T<:FloatingPoint}(C::Cholesky{T})
+function cov_whitening{T<:AbstractFloat}(C::Cholesky{T})
     cf = C[:UL]
     if VERSION < v"0.4.0-"
         full(istriu(cf) ? inv(Triangular(C.UL, :U)) : inv(Triangular(C.UL, :L)'))::Matrix{T}
@@ -13,24 +13,24 @@ function cov_whitening{T<:FloatingPoint}(C::Cholesky{T})
     end
 end
 
-cov_whitening!{T<:FloatingPoint}(C::DenseMatrix{T}) = cov_whitening(cholfact!(C, :U))
-cov_whitening{T<:FloatingPoint}(C::DenseMatrix{T}) = cov_whitening!(copy(C))
+cov_whitening!{T<:AbstractFloat}(C::DenseMatrix{T}) = cov_whitening(cholfact!(C, :U))
+cov_whitening{T<:AbstractFloat}(C::DenseMatrix{T}) = cov_whitening!(copy(C))
 
-cov_whitening!{T<:FloatingPoint}(C::DenseMatrix{T}, regcoef::Real) =
+cov_whitening!{T<:AbstractFloat}(C::DenseMatrix{T}, regcoef::Real) =
     cov_whitening!(regularize_symmat!(C, regcoef))
 
-cov_whitening{T<:FloatingPoint}(C::DenseMatrix{T}, regcoef::Real) =
+cov_whitening{T<:AbstractFloat}(C::DenseMatrix{T}, regcoef::Real) =
     cov_whitening!(copy(C), regcoef)
 
 
 ## Whitening type
 
-immutable Whitening{T<:FloatingPoint}
+immutable Whitening{T<:AbstractFloat}
     mean::Vector{T}
     W::Matrix{T}
 end
 
-function Whitening{T<:FloatingPoint}(mean::Vector{T}, W::Matrix{T})
+function Whitening{T<:AbstractFloat}(mean::Vector{T}, W::Matrix{T})
     d, d2 = size(W)
     d == d2 || error("W must be a square matrix.")
     isempty(mean) || length(mean) == d ||
@@ -46,7 +46,7 @@ transform(f::Whitening, x::AbstractVecOrMat) = At_mul_B(f.W, centralize(x, f.mea
 
 ## Fit whitening to data
 
-function fit{T<:FloatingPoint}(::Type{Whitening}, X::DenseMatrix{T};
+function fit{T<:AbstractFloat}(::Type{Whitening}, X::DenseMatrix{T};
                                mean=nothing, regcoef::Real=zero(T))
     n = size(X, 2)
     n > 1 || error("X must contain more than one sample.")
@@ -58,7 +58,7 @@ end
 
 # invsqrtm
 
-function _invsqrtm!{T<:FloatingPoint}(C::Matrix{T})
+function _invsqrtm!{T<:AbstractFloat}(C::Matrix{T})
     n = size(C, 1)
     size(C, 2) == n || error("C must be a square matrix.")
     E = eigfact!(Symmetric(C))
@@ -71,5 +71,5 @@ function _invsqrtm!{T<:FloatingPoint}(C::Matrix{T})
     return A_mul_Bt(U, U)
 end
 
-invsqrtm{T<:FloatingPoint}(C::DenseMatrix{T}) = _invsqrtm!(copy(C))
+invsqrtm{T<:AbstractFloat}(C::DenseMatrix{T}) = _invsqrtm!(copy(C))
 

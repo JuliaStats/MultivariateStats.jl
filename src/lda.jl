@@ -4,7 +4,7 @@
 
 abstract Discriminant{T}
 
-immutable LinearDiscriminant{T<:FloatingPoint} <: Discriminant{T}
+immutable LinearDiscriminant{T<:AbstractFloat} <: Discriminant{T}
     w::Vector{T}
     b::T
 end
@@ -28,7 +28,7 @@ predict(f::Discriminant, X::AbstractMatrix) = (Y = evaluate(f, X); Bool[y > 0 fo
 
 #### function to solve linear discriminant
 
-function ldacov{T<:FloatingPoint}(C::DenseMatrix{T},
+function ldacov{T<:AbstractFloat}(C::DenseMatrix{T},
                 μp::DenseVector{T},
                 μn::DenseVector{T})
 
@@ -39,14 +39,14 @@ function ldacov{T<:FloatingPoint}(C::DenseMatrix{T},
     LinearDiscriminant(scale!(w, c), 1 - c * ap)
 end
 
-ldacov{T<:FloatingPoint}(Cp::DenseMatrix{T},
+ldacov{T<:AbstractFloat}(Cp::DenseMatrix{T},
        Cn::DenseMatrix{T},
        μp::DenseVector{T},
        μn::DenseVector{T}) = ldacov(Cp + Cn, μp, μn)
 
 #### interface functions
 
-function fit{T<:FloatingPoint}(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T})
+function fit{T<:AbstractFloat}(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T})
     μp = vec(mean(Xp, 2))
     μn = vec(mean(Xn, 2))
     Zp = Xp .- μp
@@ -59,7 +59,7 @@ end
 
 #### Multiclass LDA Stats
 
-type MulticlassLDAStats{T<:FloatingPoint}
+type MulticlassLDAStats{T<:AbstractFloat}
     dim::Int              # sample dimensions
     nclasses::Int         # number of classes
     cweights::Vector{T}   # class weights
@@ -77,7 +77,7 @@ classmeans(S::MulticlassLDAStats) = S.cmeans
 withclass_scatter(S::MulticlassLDAStats) = S.Sw
 betweenclass_scatter(S::MulticlassLDAStats) = S.Sb
 
-function MulticlassLDAStats{T<:FloatingPoint}(cweights::Vector{T},
+function MulticlassLDAStats{T<:AbstractFloat}(cweights::Vector{T},
                             mean::Vector{T},
                             cmeans::Matrix{T},
                             Sw::Matrix{T},
@@ -91,7 +91,7 @@ function MulticlassLDAStats{T<:FloatingPoint}(cweights::Vector{T},
     MulticlassLDAStats(d, nc, cweights, tw, mean, cmeans, Sw, Sb)
 end
 
-function multiclass_lda_stats{T<:FloatingPoint}(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int})
+function multiclass_lda_stats{T<:AbstractFloat}(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int})
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
@@ -140,7 +140,7 @@ end
 
 #### Multiclass LDA
 
-type MulticlassLDA{T<:FloatingPoint}
+type MulticlassLDA{T<:AbstractFloat}
     proj::Matrix{T}
     pmeans::Matrix{T}
     stats::MulticlassLDAStats{T}
@@ -158,9 +158,9 @@ classweights(M::MulticlassLDA) = classweights(M.stats)
 withclass_scatter(M::MulticlassLDA) = withclass_scatter(M.stats)
 betweenclass_scatter(M::MulticlassLDA) = betweenclass_scatter(M.stats)
 
-transform{T<:FloatingPoint}(M::MulticlassLDA, x::AbstractVecOrMat{T}) = M.proj'x
+transform{T<:AbstractFloat}(M::MulticlassLDA, x::AbstractVecOrMat{T}) = M.proj'x
 
-function fit{T<:FloatingPoint}(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
+function fit{T<:AbstractFloat}(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
              method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
              regcoef::T=1.0e-6)
@@ -171,7 +171,7 @@ function fit{T<:FloatingPoint}(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}
                    outdim=outdim)
 end
 
-function multiclass_lda{T<:FloatingPoint}(S::MulticlassLDAStats{T};
+function multiclass_lda{T<:AbstractFloat}(S::MulticlassLDAStats{T};
                         method::Symbol=:gevd,
                         outdim::Int=min(size(X,1), S.nclasses-1),
                         regcoef::T=1.0e-6)
@@ -180,10 +180,10 @@ function multiclass_lda{T<:FloatingPoint}(S::MulticlassLDAStats{T};
     MulticlassLDA(P, P'S.cmeans, S)
 end
 
-mclda_solve{T<:FloatingPoint}(Sb::DenseMatrix{T}, Sw::DenseMatrix{T}, method::Symbol, p::Int, regcoef::T) =
+mclda_solve{T<:AbstractFloat}(Sb::DenseMatrix{T}, Sw::DenseMatrix{T}, method::Symbol, p::Int, regcoef::T) =
     mclda_solve!(copy(Sb), copy(Sw), method, p, regcoef)
 
-function mclda_solve!{T<:FloatingPoint}(Sb::Matrix{T},
+function mclda_solve!{T<:AbstractFloat}(Sb::Matrix{T},
                       Sw::Matrix{T},
                       method::Symbol, p::Int, regcoef::T)
 
@@ -208,7 +208,7 @@ function mclda_solve!{T<:FloatingPoint}(Sb::Matrix{T},
     return P::Matrix{T}
 end
 
-function _lda_whitening!{T<:FloatingPoint}(C::Matrix{T}, regcoef::T)
+function _lda_whitening!{T<:AbstractFloat}(C::Matrix{T}, regcoef::T)
     n = size(C,1)
     E = eigfact!(Symmetric(C))
     v = E.values

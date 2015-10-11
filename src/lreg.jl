@@ -19,7 +19,7 @@ _haug{T}(X::DenseMatrix{T}) = hcat(X, ones(T, size(X,1), 1))::Matrix{T}
 
 ## linear least square
 
-function llsq{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T};
+function llsq{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T};
                                 trans::Bool=false, bias::Bool=true)
     if trans
         mX, nX = size(X)
@@ -35,21 +35,21 @@ end
 
 ## ridge regression
 
-function ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::Real;
+function ridge{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::Real;
                                 trans::Bool=false, bias::Bool=true)
     lreg_chkdims(X, Y, trans)
     r >= zero(r) || error("r must be non-negative.")
     _ridge(X, Y, convert(T, r), trans, bias)
 end
 
-function ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseVector{T};
+function ridge{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseVector{T};
                                 trans::Bool=false, bias::Bool=true)
     d = lreg_chkdims(X, Y, trans)
     length(r) == d || throw(DimensionMismatch("Incorrect length of r."))
     _ridge(X, Y, r, trans, bias)
 end
 
-function ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseMatrix{T};
+function ridge{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseMatrix{T};
                                 trans::Bool=false, bias::Bool=true)
     d = lreg_chkdims(X, Y, trans)
     size(r) == (d, d) || throw(DimensionMismatch("Incorrect size of r."))
@@ -58,8 +58,8 @@ end
 
 ## implementation
 
-function _ridge{T<:FloatingPoint}(X::DenseMatrix{T}, Y::DenseVecOrMat{T},
-                                  r::Union(Real, DenseVecOrMat), trans::Bool, bias::Bool)
+@compat function _ridge{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T},
+                                  r::Union{Real, DenseVecOrMat}, trans::Bool, bias::Bool)
     if bias
         if trans
             X_ = _vaug(X)
