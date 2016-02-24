@@ -45,7 +45,11 @@ A = randn(m, k)
 X = A * S
 mv = vec(mean(X,2))
 @assert size(X) == (m, n)
-C = cov(X; vardim=2)
+if VERSION < v"0.5.0-dev+660"
+    C = cov(X; vardim=2)
+else
+    C = cov(X, 2)
+end
 
 # FastICA
 

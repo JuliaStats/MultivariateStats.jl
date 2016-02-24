@@ -41,8 +41,13 @@ Xn = scale([2.8, 1.8], randn(2, n)) .+ [-5.0, 2.0]
 
 up = vec(mean(Xp, 2))
 un = vec(mean(Xn, 2))
-Cp = cov(Xp; vardim=2)
-Cn = cov(Xn; vardim=2)
+if VERSION < v"0.5.0-dev+660"
+    Cp = cov(Xp; vardim=2)
+    Cn = cov(Xn; vardim=2)
+else
+    Cp = cov(Xp, 2)
+    Cn = cov(Xn, 2)
+end
 C = 0.5 * (Cp + Cn)
 
 w_gt = C \ (up - un)
