@@ -29,7 +29,7 @@ gram2dmat{T<:Real}(G::AbstractMatrix{T}) = gram2dmat!(similar(G, Base.momenttype
 
 function dmat2gram!{GT}(G::AbstractMatrix{GT}, D::AbstractMatrix)
     # argument checking
-    n = Base.LinAlg.chksquare(D)
+    n = Compat.LinAlg.checksquare(D)
     size(G) == (n, n) ||
         throw(DimensionMismatch("Sizes of G and D do not match."))
 

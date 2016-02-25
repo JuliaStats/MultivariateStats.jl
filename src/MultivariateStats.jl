@@ -5,7 +5,7 @@ module MultivariateStats
 
     import Base: length, size, show, dump, sumabs2
     import Base.LinAlg: Cholesky
-    import StatsBase: fit, predict, evaluate
+    import StatsBase: fit, predict
 
     export
 

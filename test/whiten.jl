@@ -10,7 +10,11 @@ n = 5
 
 X = rand(d, n)
 mv = vec(mean(X, 2))
-C = cov(X; vardim=2)
+if VERSION < v"0.5.0-dev+660"
+    C = cov(X; vardim=2)
+else
+    C = cov(X, 2)
+end
 C0 = copy(C)
 
 emax = maximum(eigvals(C))

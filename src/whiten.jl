@@ -28,15 +28,15 @@ cov_whitening{T<:AbstractFloat}(C::DenseMatrix{T}, regcoef::Real) =
 immutable Whitening{T<:AbstractFloat}
     mean::Vector{T}
     W::Matrix{T}
-end
-
-function Whitening{T<:AbstractFloat}(mean::Vector{T}, W::Matrix{T})
-    d, d2 = size(W)
-    d == d2 || error("W must be a square matrix.")
-    isempty(mean) || length(mean) == d ||
+    function Whitening(mean::Vector{T}, W::Matrix{T})
+        d, d2 = size(W)
+        d == d2 || error("W must be a square matrix.")
+        isempty(mean) || length(mean) == d ||
         throw(DimensionMismatch("Sizes of mean and W are inconsistent."))
-    return Whitening{T}(mean, W)
+        return new(mean, W)
+    end
 end
+Whitening{T<:AbstractFloat}(mean::Vector{T}, W::Matrix{T}) = Whitening{T}(mean, W)
 
 indim(f::Whitening) = size(f.W, 1)
 outdim(f::Whitening) = size(f.W, 2)

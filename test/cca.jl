@@ -62,9 +62,15 @@ ym = vec(mean(Y, 2))
 Zx = X .- xm
 Zy = Y .- ym
 
-Cxx = cov(X; vardim=2)
-Cyy = cov(Y; vardim=2)
-Cxy = cov(X, Y; vardim=2)
+if VERSION < v"0.5.0-dev+660"
+    Cxx = cov(X; vardim=2)
+    Cyy = cov(Y; vardim=2)
+    Cxy = cov(X, Y; vardim=2)
+else
+    Cxx = cov(X, 2)
+    Cyy = cov(Y, 2)
+    Cxy = cov(X, Y, 2)
+end
 Cyx = Cxy'
 
 ## ccacov

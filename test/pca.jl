@@ -66,7 +66,11 @@ X = R'randn(5, n) .+ randn(5)
 mv = vec(mean(X, 2))
 Z = X .- mv
 
-C = cov(X; vardim=2)
+if VERSION < v"0.5.0-dev+660"
+    C = cov(X; vardim=2)
+else
+    C = cov(X, 2)
+end
 pvs0 = sort(eigvals(C); rev=true)
 tv = sum(diag(C))
 

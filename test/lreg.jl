@@ -44,7 +44,7 @@ a = llsq(Xt, y0; trans=true, bias=false)
 Aa = llsq(X, Y1; trans=false, bias=true)
 Aa_r = copy(Aa)
 @test size(Aa) == (n+1, n2)
-A, b = Aa[1:end-1,:], Aa[end,:]
+A, b = Aa[1:end-1,:], Aa[end:end,:]
 @test_approx_eq X' * (Y1 .- b) X'X * A
 
 aa = llsq(X, y1; trans=false, bias=true)
@@ -81,7 +81,7 @@ a = ridge(Xt, y0, r; trans=true, bias=false)
 Aa = ridge(X, Y1, r; trans=false, bias=true)
 Aa_r = copy(Aa)
 @test size(Aa) == (n+1, n2)
-A, b = Aa[1:end-1,:], Aa[end,:]
+A, b = Aa[1:end-1,:], Aa[end:end,:]
 @test_approx_eq X' * (Y1 .- b) (X'X + r * eye(n)) * A
 
 aa = ridge(X, y1, r; trans=false, bias=true)
@@ -118,7 +118,7 @@ a = ridge(Xt, y0, r; trans=true, bias=false)
 Aa = ridge(X, Y1, r; trans=false, bias=true)
 Aa_r = copy(Aa)
 @test size(Aa) == (n+1, n2)
-A, b = Aa[1:end-1,:], Aa[end,:]
+A, b = Aa[1:end-1,:], Aa[end:end,:]
 @test_approx_eq X' * (Y1 .- b) (X'X + diagm(r)) * A
 
 aa = ridge(X, y1, r; trans=false, bias=true)
@@ -156,7 +156,7 @@ a = ridge(Xt, y0, r; trans=true, bias=false)
 Aa = ridge(X, Y1, r; trans=false, bias=true)
 Aa_r = copy(Aa)
 @test size(Aa) == (n+1, n2)
-A, b = Aa[1:end-1,:], Aa[end,:]
+A, b = Aa[1:end-1,:], Aa[end:end,:]
 @test_approx_eq X' * (Y1 .- b) (X'X + r) * A
 
 aa = ridge(X, y1, r; trans=false, bias=true)
