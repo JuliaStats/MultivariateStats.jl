@@ -1,6 +1,10 @@
 using MultivariateStats
 using Base.Test
 
+if !isdefined(Base, :normalize)
+    normalize(x) = x/norm(x)
+end
+
 #Test equivalence of eigenvectors/singular vectors taking into account possible
 #phase (sign) differences
 #This may end up in Base.Test; see JuliaLang/julia#10651
@@ -35,7 +39,7 @@ for k = 1:nc
 	R = qr(randn(d, d))[1]
 	nk = ns[k]
 
-	Xk = R * scale(2 * rand(d) + 0.5, randn(d, nk)) .+ randn(d)
+	Xk = R * Diagonal(2 * rand(d) + 0.5) * randn(d, nk) .+ randn(d)
 	yk = fill(k, nk)
 	uk = vec(mean(Xk, 2))
 	Zk = Xk .- uk
@@ -97,7 +101,7 @@ U = Sb * P1
 V = Sw_r * P1
 # test whether U is proportional to V,
 # which indicates P is the generalized eigenvectors
-@test_approx_eq U scale(V, vec(mean(U ./ V, 1)))
+@test_approx_eq U V*Diagonal(vec(mean(U./V, 1)))
 
 P2 = mclda_solve(Sb, Sw, :whiten, nc-1, lambda)
 @test_approx_eq P2' * Sw_r * P2 eye(nc-1)

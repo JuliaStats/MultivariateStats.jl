@@ -89,8 +89,8 @@ rho = correlations(M)
 
 @test_approx_eq Px' * Cxx * Px eye(p)
 @test_approx_eq Py' * Cyy * Py eye(p)
-@test_approx_eq Cxy * (Cyy \ Cyx) * Px scale(Cxx * Px, rho.^2)
-@test_approx_eq Cyx * (Cxx \ Cxy) * Py scale(Cyy * Py, rho.^2)
+@test_approx_eq Cxy * (Cyy \ Cyx) * Px  Cxx * Px * Diagonal(rho.^2)
+@test_approx_eq Cyx * (Cxx \ Cxy) * Py  Cyy * Py * Diagonal(rho.^2)
 @test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
 @test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
@@ -108,8 +108,8 @@ rho = correlations(M)
 
 @test_approx_eq Px' * Cxx * Px eye(p)
 @test_approx_eq Py' * Cyy * Py eye(p)
-@test_approx_eq Cxy * (Cyy \ Cyx) * Px scale(Cxx * Px, rho.^2)
-@test_approx_eq Cyx * (Cxx \ Cxy) * Py scale(Cyy * Py, rho.^2)
+@test_approx_eq Cxy * (Cyy \ Cyx) * Px  Cxx * Px * Diagonal(rho.^2)
+@test_approx_eq Cyx * (Cxx \ Cxy) * Py  Cyy * Py * Diagonal(rho.^2)
 @test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
 @test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
@@ -130,8 +130,7 @@ rho = correlations(M)
 
 @test_approx_eq Px' * Cxx * Px eye(p)
 @test_approx_eq Py' * Cyy * Py eye(p)
-@test_approx_eq Cxy * (Cyy \ Cyx) * Px scale(Cxx * Px, rho.^2)
-@test_approx_eq Cyx * (Cxx \ Cxy) * Py scale(Cyy * Py, rho.^2)
+@test_approx_eq Cxy * (Cyy \ Cyx) * Px  Cxx * Px * Diagonal(rho.^2)
+@test_approx_eq Cyx * (Cxx \ Cxy) * Py  Cyy * Py * Diagonal(rho.^2)
 @test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
 @test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
-

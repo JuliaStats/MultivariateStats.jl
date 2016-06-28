@@ -36,8 +36,8 @@ R1 = [cos(t1) -sin(t1); sin(t1) cos(t1)]
 R2 = [cos(t2) -sin(t2); sin(t2) cos(t2)]
 
 n = 20
-Xp = scale([1.2, 3.6], randn(2, n)) .+ [1.0, -3.0]
-Xn = scale([2.8, 1.8], randn(2, n)) .+ [-5.0, 2.0]
+Xp = Diagonal([1.2, 3.6]) * randn(2, n) .+ [1.0, -3.0]
+Xn = Diagonal([2.8, 1.8]) * randn(2, n) .+ [-5.0, 2.0]
 
 up = vec(mean(Xp, 2))
 un = vec(mean(Xn, 2))
@@ -70,4 +70,3 @@ f = ldacov(Cp, Cn, up, un)
 f = fit(LinearDiscriminant, Xp, Xn)
 @test_approx_eq f.w w_gt
 @test_approx_eq f.b b_gt
-

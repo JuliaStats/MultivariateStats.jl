@@ -1,11 +1,11 @@
 module MultivariateStats
     using Compat
     using StatsBase
-    using ArrayViews
 
     import Base: length, size, show, dump, sumabs2
     import Base.LinAlg: Cholesky
     import StatsBase: fit, predict
+    using  Compat: view
 
     export
 
