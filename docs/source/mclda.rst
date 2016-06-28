@@ -3,7 +3,7 @@
 Multi-class Linear Discriminant Analysis
 ==========================================
 
-*Multi-class LDA* is a generalization of standard two-class LDA that can handle arbitrary number of classes. 
+*Multi-class LDA* is a generalization of standard two-class LDA that can handle arbitrary number of classes.
 
 Overview
 ~~~~~~~~~~
@@ -18,7 +18,7 @@ The **with-class scatter matrix** is defined as:
 
     \mathbf{S}_w = \sum_{i=1}^n (\mathbf{x}_i - \boldsymbol{\mu}_{y_i}) (\mathbf{x}_i - \boldsymbol{\mu}_{y_i})^T
 
-Here, :math:`\boldsymbol{\mu}_k` is the sample mean of the ``k``-th class. 
+Here, :math:`\boldsymbol{\mu}_k` is the sample mean of the ``k``-th class.
 
 The **between-class scatter matrix** is defined as:
 
@@ -37,11 +37,13 @@ Then, multi-class LDA can be formulated as an optimization problem to find a set
 
 The solution is given by the following generalized eigenvalue problem:
 
-.. math::
-
-    \mathbf{S}_b \mathbf{w} = \lambda \mathbf{S}_w \mathbf{w}
+.. math:: \mathbf{S}_b \mathbf{w} = \lambda \mathbf{S}_w \mathbf{w}
+   :label: LDAeigenvalue
 
 Generally, at most ``m - 1`` generalized eigenvectors are useful to discriminate between ``m`` classes.
+
+When the dimensionality is high, it may not be feasible to construct
+the scatter matrices. In such cases, see SubspaceLDA_ below.
 
 
 Multi-class LDA
@@ -71,7 +73,7 @@ Several methods are provided to access properties of the LDA model. Let ``M`` be
 
 .. function:: projection(M)
 
-    Get the projection matrix (of size ``d x p``). 
+    Get the projection matrix (of size ``d x p``).
 
 .. function:: mean(M)
 
@@ -83,7 +85,7 @@ Several methods are provided to access properties of the LDA model. Let ``M`` be
 
 .. function:: classweights(M)
 
-    Get the weights of individual classes (a vector of length ``m``). If the samples are not weighted, the weight equals the number of samples of each class. 
+    Get the weights of individual classes (a vector of length ``m``). If the samples are not weighted, the weight equals the number of samples of each class.
 
 .. function:: withinclass_scatter(M)
 
@@ -131,8 +133,8 @@ One can use ``fit`` to perform multi-class LDA over a set of data:
     ----------- --------------------------------------------------------------- --------------------
      regcoef    The regularization coefficient.                                  ``1.0e-6``
                 A positive value ``regcoef * eigmax(Sw)`` is added to the
-                diagonal of ``Sw`` to improve numerical stability. 
-    =========== =============================================================== ====================    
+                diagonal of ``Sw`` to improve numerical stability.
+    =========== =============================================================== ====================
 
     **Note:** The resultant projection matrix ``P`` satisfies:
 
@@ -148,7 +150,7 @@ Task Functions
 
 The multi-class LDA consists of several steps:
 
-1. Compute statistics, such as class means, scatter matrices, etc. 
+1. Compute statistics, such as class means, scatter matrices, etc.
 2. Solve the projection matrix.
 3. Construct the model.
 
@@ -187,7 +189,7 @@ Sometimes, it is useful to only perform one of these tasks. The package exposes 
     :param mean: the overall sample mean, a vector of length ``d``.
     :param cmeans: the class-specific sample means, a matrix of size ``(d, m)``.
     :param Sw: the within-class scatter matrix, a matrix of size ``(d, d)``.
-    :param Sb: the between-class scatter matrix, a matrix of size ``(d, d)``. 
+    :param Sb: the between-class scatter matrix, a matrix of size ``(d, d)``.
 
 
 .. function:: multiclass_lda(S; ...)
@@ -208,9 +210,48 @@ Sometimes, it is useful to only perform one of these tasks. The package exposes 
 
 .. function:: mclda_solve!(Sb, Sw, method, p, regcoef)
 
-    Solve the projection matrix given both scatter matrices. 
+    Solve the projection matrix given both scatter matrices.
 
     **Note:** In this function, ``Sb`` and ``Sw`` will be overwritten (saving some space).
 
+.. _SubspaceLDA:
 
+Subspace LDA
+~~~~~~~~~~~~~~~~~
 
+The package also defines a ``SubspaceLDA`` type to represent a
+multi-class LDA model for high-dimensional spaces.  ``MulticlassLDA``,
+because it stores the scatter matrices, is not well-suited for
+high-dimensional data. For example, if you are performing LDA on
+images, and each image has ``10^6`` pixels, then the scatter matrices
+would contain ``10^12`` elements, far too many to store
+directly. ``SubspaceLDA`` calculates the projection direction without
+the intermediary of the scatter matrices, by focusing on the subspace
+that lies within the span of the within-class scatter. This also
+serves to regularize the computation.
+
+.. code-block:: julia
+
+    immutable SubspaceLDA{T<:AbstractFloat}
+        projw::Matrix{T}   # P, project down to the subspace spanned by within-class scatter
+        projLDA::Matrix{T} # L, LDA directions in the projected subspace
+        λ::Vector{T}
+        cmeans::Matrix{T}
+        cweights::Vector{Int}
+    end
+
+This supports all the same methods as ``MulticlassLDA``, with the
+exception of the functions that return a scatter matrix.  The overall
+projection is represented as a factorization ``P*L``, where ``P'*x``
+projects data points to the subspace spanned by the within-class
+scatter, and ``L`` is the LDA projection in the subspace.  The
+projection directions ``w`` (the columns of ``projection(M)``) satisfy
+the equation
+
+.. math::
+
+   \mathbf{P}^T \mathbf{S}_b \mathbf{w} = \lambda \mathbf{P}^T \mathbf{S}_w \mathbf{w}.
+
+When ``P`` is of full rank (e.g., if there are more data points than
+dimensions), then this equation guarantees that
+Eq. :eq:`LDAeigenvalue` will also hold.
