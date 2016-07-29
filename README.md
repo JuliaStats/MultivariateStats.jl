@@ -2,8 +2,8 @@
 
 A Julia package for multivariate statistics and data analysis (e.g. dimensionality reduction).
 
-[![MultivariateStats](http://pkg.julialang.org/badges/MultivariateStats_0.3.svg)](http://pkg.julialang.org/?pkg=MultivariateStats&ver=0.3)
-[![MultivariateStats](http://pkg.julialang.org/badges/MultivariateStats_0.4.svg)](http://pkg.julialang.org/?pkg=MultivariateStats&ver=0.4)
+[![MultivariateStats](http://pkg.julialang.org/badges/MultivariateStats_0.4.svg)](http://pkg.julialang.org/?pkg=MultivariateStats)
+[![MultivariateStats](http://pkg.julialang.org/badges/MultivariateStats_0.5.svg)](http://pkg.julialang.org/?pkg=MultivariateStats)
 [![Coverage Status](https://coveralls.io/repos/JuliaStats/MultivariateStats.jl/badge.svg?branch=master)](https://coveralls.io/r/JuliaStats/MultivariateStats.jl?branch=master)
 [![Build Status](https://travis-ci.org/JuliaStats/MultivariateStats.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/MultivariateStats.jl)
 
