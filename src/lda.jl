@@ -99,34 +99,8 @@ function multiclass_lda_stats{T<:AbstractFloat}(nc::Int, X::DenseMatrix{T}, y::A
     length(y) == n || throw(DimensionMismatch("Inconsistent array sizes."))
 
     # compute class-specific weights and means
-    cweights = zeros(nc)
-    cmeans = zeros(d, nc)
-    for j = 1:n
-        @inbounds c = y[j]
-        1 <= c <= nc || error("class label must be in [1, nc].")
-        cweights[c] += 1
-        v = view(cmeans,:,c)
-        x = view(X,:,j)
-        for i = 1:d
-            @inbounds v[i] += x[i]
-        end
-    end
-    for j = 1:nc
-        @inbounds cw = cweights[j]
-        cw > 0 || error("The $(j)-th class has no sample.")
-        scale!(view(cmeans,:,j), inv(cw))
-    end
+    cmeans, cweights, Z = center(X, y, nc)
 
-    # compute within-class scattering
-    Z = Array(T, d, n)
-    for j = 1:n
-        z = view(Z,:,j)
-        x = view(X,:,j)
-        v = view(cmeans,:,y[j])
-        for i = 1:d
-            z[i] = x[i] - v[i]
-        end
-    end
     Sw = A_mul_Bt(Z, Z)
 
     # compute between-class scattering
@@ -134,7 +108,7 @@ function multiclass_lda_stats{T<:AbstractFloat}(nc::Int, X::DenseMatrix{T}, y::A
     U = scale!(cmeans .- mean, sqrt(cweights))
     Sb = A_mul_Bt(U, U)
 
-    return MulticlassLDAStats(cweights, mean, cmeans, Sw, Sb)
+    return MulticlassLDAStats(Vector{T}(cweights), mean, cmeans, Sw, Sb)
 end
 
 
@@ -219,3 +193,104 @@ function _lda_whitening!{T<:AbstractFloat}(C::Matrix{T}, regcoef::T)
     return scale!(E.vectors, v)
 end
 
+#### SubspaceLDA
+
+# When the dimensionality is much higher than the number of samples,
+# it makes more sense to perform LDA on the space spanned by the
+# within-group scatter.
+
+immutable SubspaceLDA{T<:AbstractFloat}
+    projw::Matrix{T}
+    projLDA::Matrix{T}
+    λ::Vector{T}
+    cmeans::Matrix{T}
+    cweights::Vector{Int}
+end
+
+indim(M::SubspaceLDA) = size(M.projw,1)
+outdim(M::SubspaceLDA) = size(M.projLDA, 2)
+
+projection(M::SubspaceLDA) = M.projw * M.projLDA
+
+Base.mean(M::SubspaceLDA) = vec(sum(M.cmeans * Diagonal(M.cweights / sum(M.cweights)), 2))
+classmeans(M::SubspaceLDA) = M.cmeans
+classweights(M::SubspaceLDA) = M.cweights
+
+transform(M::SubspaceLDA, x) = M.projLDA' * (M.projw' * x)
+
+fit{T,F<:SubspaceLDA}(::Type{F}, X::AbstractMatrix{T}, nc::Int, label::AbstractVector{Int})=
+    fit(F, X, label, nc)
+
+function fit{T,F<:SubspaceLDA}(::Type{F}, X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label))
+    d, n = size(X, 1), size(X, 2)
+    n ≥ nc || throw(ArgumentError("The number of samples is less than the number of classes"))
+    length(label) == n || throw(DimensionMismatch("Inconsistent array sizes."))
+    # Compute centroids, class weights, and deviation from centroids
+    # Note Sb = Hb*Hb', Sw = Hw*Hw'
+    cmeans, cweights, Hw = center(X, label, nc)
+    dmeans = cmeans .- cmeans * (cweights / n)
+    Hb = dmeans * Diagonal(sqrt(cweights))
+    # Project to the subspace spanned by the within-class scatter
+    # (essentially, PCA before LDA)
+    Uw, Σw, _ = svd(Hw, thin=true)
+    keep = Σw .> sqrt(eps(T)) * maximum(Σw)
+    projw = Uw[:,keep]
+    pHb = projw' * Hb
+    pHw = projw' * Hw
+    λ, G = lda_gsvd(pHb, pHw, cweights)
+    SubspaceLDA(projw, G, λ, cmeans, cweights)
+end
+
+# Reference: Howland & Park (2006), "Generalizing discriminant analysis
+# using the generalized singular value decomposition", IEEE
+# Trans. Patt. Anal. & Mach. Int., 26: 995-1006.
+function lda_gsvd{T}(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::AbstractVector{Int})
+    nc = length(cweights)
+    K = vcat(Hb', Hw')
+    P, R, Q = svd(K, thin=true)
+    keep = R .> sqrt(eps(T))*maximum(R)
+    R = R[keep]
+    Pk = P[1:nc, keep]
+    U, ΣA, W = svd(Pk)
+    ncnz = sum(cweights .> 0)
+    G = Q[:,keep]*(Diagonal(1./R) * W[:,1:ncnz-1])
+    # Normalize
+    Gw = G' * Hw
+    nrm = Gw * Gw'
+    G = G ./ reshape(sqrt(diag(nrm)), 1, ncnz-1)
+    # Also get the eigenvalues
+    Gw = G' * Hw
+    Gb = G' * Hb
+    λ = diag(Gb * Gb')./diag(Gw * Gw')
+    λ, G
+end
+
+function center{T}(X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label))
+    d, n = size(X,1), size(X,2)
+    # Calculate the class weights and means
+    cmeans = zeros(T, d, nc)
+    cweights = zeros(Int, nc)
+    for j = 1:n
+        k = label[j]
+        for i = 1:d
+            cmeans[i,k] += X[i,j]
+        end
+        cweights[k] += 1
+    end
+    for j = 1:nc
+        cw = cweights[j]
+        cw == 0 && continue
+        for i = 1:d
+            cmeans[i,j] /= cw
+        end
+    end
+    # Compute differences from the means
+    dX = Array(T, d, n)
+    for j = 1:n
+        k = label[j]
+        for i = 1:d
+            dX[i,j] = X[i,j] - cmeans[i,k]
+        end
+    end
+    cmeans, cweights, dX
+end

@@ -1,5 +1,6 @@
 using MultivariateStats
 using Base.Test
+using Compat
 
 ## testing data
 
@@ -16,15 +17,15 @@ D0 = pwdists(X0)
 
 ## conversion between dmat and gram
 
-@assert issym(D0)
-@assert issym(G0)
+@assert issymmetric(D0)
+@assert issymmetric(G0)
 
 D = gram2dmat(G0)
-@test issym(D)
+@test issymmetric(D)
 @test_approx_eq D D0
 
 G = dmat2gram(D0)
-@test issym(G)
+@test issymmetric(G)
 @test_approx_eq gram2dmat(G) D0
 
 ## classical MDS

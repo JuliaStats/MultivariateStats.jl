@@ -1,11 +1,11 @@
 module MultivariateStats
     using Compat
     using StatsBase
-    using ArrayViews
 
     import Base: length, size, show, dump, sumabs2
     import Base.LinAlg: Cholesky
     import StatsBase: fit, predict
+    using  Compat: view
 
     export
 
@@ -74,6 +74,7 @@ module MultivariateStats
     LinearDiscriminant,     # Type: Linear Discriminant functional
     MulticlassLDAStats,     # Type: Statistics required for training multi-class LDA
     MulticlassLDA,          # Type: Multi-class LDA model
+    SubspaceLDA,            # Type: LDA model for high-dimensional spaces
 
     ldacov,                 # Linear discriminant analysis based on covariances
 
