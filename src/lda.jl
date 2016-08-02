@@ -221,15 +221,18 @@ transform(M::SubspaceLDA, x) = M.projLDA' * (M.projw' * x)
 fit{T,F<:SubspaceLDA}(::Type{F}, X::AbstractMatrix{T}, nc::Int, label::AbstractVector{Int})=
     fit(F, X, label, nc)
 
-function fit{T,F<:SubspaceLDA}(::Type{F}, X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label))
+function fit{T,F<:SubspaceLDA}(::Type{F}, X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label); normalize::Bool=false)
     d, n = size(X, 1), size(X, 2)
     n ≥ nc || throw(ArgumentError("The number of samples is less than the number of classes"))
     length(label) == n || throw(DimensionMismatch("Inconsistent array sizes."))
     # Compute centroids, class weights, and deviation from centroids
     # Note Sb = Hb*Hb', Sw = Hw*Hw'
     cmeans, cweights, Hw = center(X, label, nc)
-    dmeans = cmeans .- cmeans * (cweights / n)
-    Hb = dmeans * Diagonal(sqrt(cweights))
+    dmeans = cmeans .- (normalize ? mean(cmeans, 2) : cmeans * (cweights / n))
+    Hb = normalize ? dmeans : dmeans * Diagonal(sqrt(cweights))
+    if normalize
+        Hw /= sqrt(n)
+    end
     # Project to the subspace spanned by the within-class scatter
     # (essentially, PCA before LDA)
     Uw, Σw, _ = svd(Hw, thin=true)
