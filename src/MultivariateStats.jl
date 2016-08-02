@@ -1,3 +1,5 @@
+__precompile__()
+
 module MultivariateStats
     using Compat
     using StatsBase
