@@ -8,11 +8,11 @@ Multi-class Linear Discriminant Analysis
 Overview
 ~~~~~~~~~~
 
-*Multi-class LDA* is based on the analysis of two scatter matrices: *with-class scatter matrix* and *between-class scatter matrix*.
+*Multi-class LDA* is based on the analysis of two scatter matrices: *within-class scatter matrix* and *between-class scatter matrix*.
 
 Given a set of samples :math:`\mathbf{x}_1, \ldots, \mathbf{x}_n`, and their class labels :math:`y_1, \ldots, y_n`:
 
-The **with-class scatter matrix** is defined as:
+The **within-class scatter matrix** is defined as:
 
 .. math::
 
@@ -43,8 +43,29 @@ The solution is given by the following generalized eigenvalue problem:
 Generally, at most ``m - 1`` generalized eigenvectors are useful to discriminate between ``m`` classes.
 
 When the dimensionality is high, it may not be feasible to construct
-the scatter matrices. In such cases, see SubspaceLDA_ below.
+the scatter matrices explicitly. In such cases, see SubspaceLDA_ below.
 
+Normalization by number of observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An alternative definition of the within- and between-class scatter
+matrices normalizes for the number of observations in each group:
+
+.. math::
+
+    \mathbf{S}_w^* &= n \sum_{k=1}^m \frac{1}{n_k} \sum_{i \mid y_i=k} (\mathbf{x}_i - \boldsymbol{\mu}_{k}) (\mathbf{x}_i - \boldsymbol{\mu}_{k})^T
+
+    \mathbf{S}_b^* &= n \sum_{k=1}^m (\boldsymbol{\mu}_k - \boldsymbol{\mu}^*) (\boldsymbol{\mu}_k - \boldsymbol{\mu}^*)^T
+
+where
+
+.. math::
+
+    \boldsymbol{\mu}^* = \frac{1}{k} \sum_{k=1}^m \boldsymbol{\mu}_k.
+
+This definition can sometimes be more useful when looking for
+directions which discriminate among clusters containing widely-varying
+numbers of observations.
 
 Multi-class LDA
 ~~~~~~~~~~~~~~~~~
@@ -144,6 +165,7 @@ One can use ``fit`` to perform multi-class LDA over a set of data:
 
     Here, :math:`\kappa` equals ``regcoef * eigmax(Sw)``. The columns of ``P`` are arranged in descending order of the corresponding generalized eigenvalues.
 
+    Note that ``MulticlassLDA`` does not currently support the normalized version using :math:`\mathbf{S}_w^*` and :math:`\mathbf{S}_b^*` (see ``SubspaceLDA`` below).
 
 Task Functions
 ~~~~~~~~~~~~~~~
@@ -255,3 +277,11 @@ the equation
 When ``P`` is of full rank (e.g., if there are more data points than
 dimensions), then this equation guarantees that
 Eq. :eq:`LDAeigenvalue` will also hold.
+
+SubspaceLDA also supports the normalized version of LDA via the ``normalize`` keyword:
+
+.. code-block:: julia
+
+   M = fit(SubspaceLDA, X, label; normalize=true)
+
+would perform LDA using the equivalent of :math:`\mathbf{S}_w^*` and :math:`\mathbf{S}_b^*`.
