@@ -100,7 +100,8 @@ module MultivariateStats
 
     ppcaml,                 # Maximum likelihood probabilistic PCA
     ppcaem,                 # EM algorithm for probabilistic PCA
-    bayespca                # Bayesian PCA
+    bayespca,               # Bayesian PCA
+    loadings                # factor loadings matrix
 
 
     ## source files

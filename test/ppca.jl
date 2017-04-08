@@ -15,7 +15,7 @@ M = PPCA(Float64[], W, σ²)
 @test indim(M) == 5
 @test outdim(M) == 3
 @test mean(M) == zeros(5)
-@test projection(M) == W
+@test loadings(M) == W
 @test var(M) == σ²
 
 T = inv(W'*W .+ σ²*eye(3))*W'
@@ -35,7 +35,7 @@ M = PPCA(mv, W, σ²)
 @test indim(M) == 5
 @test outdim(M) == 3
 @test mean(M) == mv
-@test projection(M) == W
+@test loadings(M) == W
 @test var(M) == σ²
 
 @test_approx_eq transform(M, X[:,1]) T * (X[:,1] .- mv)
@@ -63,65 +63,79 @@ M0 = fit(PCA, X; mean=mv, maxoutdim = 4)
 ## ppcaml (default)
 
 M = fit(PPCA, X)
-W = projection(M)
+P = projection(M)
+W = loadings(M)
 
 @test indim(M) == 5
 @test outdim(M) == 4
 @test mean(M) == mv
-@test_approx_eq W'W diagm(diag(W'W))
+@test_approx_eq P'P eye(4)
 @test_approx_eq reconstruct(M, transform(M, X)) reconstruct(M0, transform(M0, X))
 
 M = fit(PPCA, X; mean=mv)
-@test_approx_eq projection(M) W
+@test_approx_eq loadings(M) W
 
 M = fit(PPCA, Z; mean=0)
-@test_approx_eq projection(M) W
+@test_approx_eq loadings(M) W
 
 M = fit(PPCA, X; maxoutdim=3)
-W = projection(M)
+P = projection(M)
+W = loadings(M)
 
 @test indim(M) == 5
 @test outdim(M) == 3
-@test_approx_eq W'W diagm(diag(W'W))
+@test_approx_eq P'P eye(3)
 
 # ppcaem
 
 M = fit(PPCA, X; method=:em)
-W = projection(M)
+P = projection(M)
+W = loadings(M)
+
 @test indim(M) == 5
 @test outdim(M) == 4
 @test mean(M) == mv
+@test_approx_eq P'P eye(4)
 @test_approx_eq_eps reconstruct(M, transform(M, X)) reconstruct(M0, transform(M0, X)) 1e-3
 
 M = fit(PPCA, X; method=:em, mean=mv)
-@test_approx_eq projection(M) W
+@test_approx_eq loadings(M) W
 
 M = fit(PPCA, Z; method=:em, mean=0)
-@test_approx_eq projection(M) W
+@test_approx_eq loadings(M) W
 
 M = fit(PPCA, X; method=:em, maxoutdim=3)
+P = projection(M)
+
 @test indim(M) == 5
 @test outdim(M) == 3
+@test_approx_eq P'P eye(3)
 
 # bayespca
 M0 = fit(PCA, X; mean=mv, maxoutdim = 3)
 
 M = fit(PPCA, X; method=:bayes)
-W = projection(M)
+P = projection(M)
+W = loadings(M)
+
 @test indim(M) == 5
 @test outdim(M) == 3
 @test mean(M) == mv
+@test_approx_eq P'P eye(3)
 @test_approx_eq reconstruct(M, transform(M, X)) reconstruct(M0, transform(M0, X))
 
 M = fit(PPCA, X; method=:bayes, mean=mv)
-@test_approx_eq projection(M) W
+@test_approx_eq loadings(M) W
 
 M = fit(PPCA, Z; method=:bayes, mean=0)
-@test_approx_eq projection(M) W
+@test_approx_eq loadings(M) W
 
 M = fit(PPCA, X; method=:em, maxoutdim=2)
+P = projection(M)
+
 @test indim(M) == 5
 @test outdim(M) == 2
+@test_approx_eq P'P eye(2)
 
 # test that fit works with Float32 values
 X2 = convert(Array{Float32,2}, X)

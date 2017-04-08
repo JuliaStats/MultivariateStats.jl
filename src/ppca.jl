@@ -20,8 +20,9 @@ MultivariateStats.indim(M::PPCA) = size(M.W, 1)
 MultivariateStats.outdim(M::PPCA) = size(M.W, 2)
 
 Base.mean(M::PPCA) = MultivariateStats.fullmean(indim(M), M.mean)
-projection(M::PPCA) = M.W
+projection(M::PPCA) = svdfact(M.W)[:U] # recover principle components from the weight matrix
 Base.var(M::PPCA) = M.σ²
+loadings(M::PPCA) = M.W
 
 ## use
 
