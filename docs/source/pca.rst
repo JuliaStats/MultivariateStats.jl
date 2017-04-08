@@ -8,7 +8,7 @@ This package defines a ``PCA`` type to represent a PCA model, and provides a set
 Properties
 ~~~~~~~~~~~
 
-Let ``M`` be an instance of ``PCA``, ``d`` be the dimension of observations, and ``p`` be the output dimension (*i.e* the dimensio of the principal subspace)
+Let ``M`` be an instance of ``PCA``, ``d`` be the dimension of observations, and ``p`` be the output dimension (*i.e* the dimension of the principal subspace)
 
 .. function:: indim(M)
 

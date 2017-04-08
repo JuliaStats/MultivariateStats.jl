@@ -12,6 +12,7 @@ Welcome to MultivariateStats's documentation
    lreg.rst
    whiten.rst
    pca.rst
+   ppca.rst
    cca.rst
    cmds.rst
    lda.rst
