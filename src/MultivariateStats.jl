@@ -96,7 +96,7 @@ module MultivariateStats
     fastica!,               # core algorithm function for the Fast ICA
 
     ## ppca
-    ProbPCA,                # Type: the Probabilistic PCA model
+    PPCA,                   # Type: the Probabilistic PCA model
 
     ppcaml,                 # Maximum likelihood probabilistic PCA
     ppcaem,                 # EM algorithm for probabilistic PCA

@@ -1,12 +1,12 @@
 # Probabilistic Principal Component Analysis
 
 """Probabilistic PCA type"""
-type ProbPCA{T<:AbstractFloat}
+type PPCA{T<:AbstractFloat}
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     W::Matrix{T}          # weight matrix: of size d x p
     σ²::T                 # residual variance
 
-    function (::Type{ProbPCA}){T}(mean::Vector{T}, W::Matrix{T}, var::T)
+    function (::Type{PPCA}){T}(mean::Vector{T}, W::Matrix{T}, var::T)
         d = size(W, 1)
         (isempty(mean) || length(mean) == d) ||
             throw(DimensionMismatch("Dimensions of weight matrix and mean are inconsistent."))
@@ -16,23 +16,23 @@ end
 
 ## properties
 
-MultivariateStats.indim(M::ProbPCA) = size(M.W, 1)
-MultivariateStats.outdim(M::ProbPCA) = size(M.W, 2)
+MultivariateStats.indim(M::PPCA) = size(M.W, 1)
+MultivariateStats.outdim(M::PPCA) = size(M.W, 2)
 
-Base.mean(M::ProbPCA) = MultivariateStats.fullmean(indim(M), M.mean)
-projection(M::ProbPCA) = M.W
-Base.var(M::ProbPCA) = M.σ²
+Base.mean(M::PPCA) = MultivariateStats.fullmean(indim(M), M.mean)
+projection(M::PPCA) = M.W
+Base.var(M::PPCA) = M.σ²
 
 ## use
 
-function MultivariateStats.transform{T<:AbstractFloat}(m::ProbPCA{T}, x::AbstractVecOrMat{T})
+function MultivariateStats.transform{T<:AbstractFloat}(m::PPCA{T}, x::AbstractVecOrMat{T})
     xn = centralize(x, m.mean)
     W  = m.W
     M = W'W .+ m.σ²*eye(size(m.W,2))
     return inv(M)*m.W'*xn
 end
 
-function MultivariateStats.reconstruct{T<:AbstractFloat}(m::ProbPCA{T}, z::AbstractVecOrMat{T})
+function MultivariateStats.reconstruct{T<:AbstractFloat}(m::PPCA{T}, z::AbstractVecOrMat{T})
     W  = m.W
     WTW = W'W
     M  = WTW .+ var(m)*eye(size(WTW,1))
@@ -41,7 +41,7 @@ end
 
 ## show
 
-function Base.show(io::IO, M::ProbPCA)
+function Base.show(io::IO, M::PPCA)
     print(io, "Probabilistic PCA(indim = $(indim(M)), outdim = $(outdim(M)), σ² = $(var(M)))")
 end
 
@@ -76,7 +76,7 @@ function ppcaml{T<:AbstractFloat}(Z::DenseMatrix{T}, mean::Vector{T};
     U = Svd[:U]::Matrix{T}
     W = U[:,ord[1:l]]*diagm(V[1:l])
 
-    return ProbPCA(mean, W, σ²)
+    return PPCA(mean, W, σ²)
 end
 
 function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
@@ -115,7 +115,7 @@ function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
         i += 1
     end
 
-    return ProbPCA(mean, W, σ²)
+    return PPCA(mean, W, σ²)
 end
 
 function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
@@ -162,12 +162,12 @@ function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
         i += 1
     end
 
-    return ProbPCA(mean, W[:,wnorm .> 0.], σ²)
+    return PPCA(mean, W[:,wnorm .> 0.], σ²)
 end
 
 ## interface functions
 
-function MultivariateStats.fit{T<:AbstractFloat}(::Type{ProbPCA}, X::DenseMatrix{T};
+function MultivariateStats.fit{T<:AbstractFloat}(::Type{PPCA}, X::DenseMatrix{T};
              method::Symbol=:ml,
              maxoutdim::Int=size(X,1)-1,
              mean=nothing,
@@ -192,5 +192,5 @@ function MultivariateStats.fit{T<:AbstractFloat}(::Type{ProbPCA}, X::DenseMatrix
         throw(ArgumentError("Invalid method name $(method)"))
     end
 
-    return M::ProbPCA
+    return M::PPCA
 end

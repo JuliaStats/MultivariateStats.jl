@@ -10,7 +10,7 @@ Y = randn(3, 10)
 
 W = qr(randn(5, 5))[1][:, 1:3]
 σ² = 0.1
-M = ProbPCA(Float64[], W, σ²)
+M = PPCA(Float64[], W, σ²)
 
 @test indim(M) == 5
 @test outdim(M) == 3
@@ -30,7 +30,7 @@ R = W*inv(W'W)*(W'W .+ σ²*eye(3))
 ## PCA with non-zero mean
 
 mv = rand(5)
-M = ProbPCA(mv, W, σ²)
+M = PPCA(mv, W, σ²)
 
 @test indim(M) == 5
 @test outdim(M) == 3
@@ -62,7 +62,7 @@ M0 = fit(PCA, X; mean=mv, maxoutdim = 4)
 
 ## ppcaml (default)
 
-M = fit(ProbPCA, X)
+M = fit(PPCA, X)
 W = projection(M)
 
 @test indim(M) == 5
@@ -71,13 +71,13 @@ W = projection(M)
 @test_approx_eq W'W diagm(diag(W'W))
 @test_approx_eq reconstruct(M, transform(M, X)) reconstruct(M0, transform(M0, X))
 
-M = fit(ProbPCA, X; mean=mv)
+M = fit(PPCA, X; mean=mv)
 @test_approx_eq projection(M) W
 
-M = fit(ProbPCA, Z; mean=0)
+M = fit(PPCA, Z; mean=0)
 @test_approx_eq projection(M) W
 
-M = fit(ProbPCA, X; maxoutdim=3)
+M = fit(PPCA, X; maxoutdim=3)
 W = projection(M)
 
 @test indim(M) == 5
@@ -86,44 +86,44 @@ W = projection(M)
 
 # ppcaem
 
-M = fit(ProbPCA, X; method=:em)
+M = fit(PPCA, X; method=:em)
 W = projection(M)
 @test indim(M) == 5
 @test outdim(M) == 4
 @test mean(M) == mv
 @test_approx_eq_eps reconstruct(M, transform(M, X)) reconstruct(M0, transform(M0, X)) 1e-3
 
-M = fit(ProbPCA, X; method=:em, mean=mv)
+M = fit(PPCA, X; method=:em, mean=mv)
 @test_approx_eq projection(M) W
 
-M = fit(ProbPCA, Z; method=:em, mean=0)
+M = fit(PPCA, Z; method=:em, mean=0)
 @test_approx_eq projection(M) W
 
-M = fit(ProbPCA, X; method=:em, maxoutdim=3)
+M = fit(PPCA, X; method=:em, maxoutdim=3)
 @test indim(M) == 5
 @test outdim(M) == 3
 
 # bayespca
 M0 = fit(PCA, X; mean=mv, maxoutdim = 3)
 
-M = fit(ProbPCA, X; method=:bayes)
+M = fit(PPCA, X; method=:bayes)
 W = projection(M)
 @test indim(M) == 5
 @test outdim(M) == 3
 @test mean(M) == mv
 @test_approx_eq reconstruct(M, transform(M, X)) reconstruct(M0, transform(M0, X))
 
-M = fit(ProbPCA, X; method=:bayes, mean=mv)
+M = fit(PPCA, X; method=:bayes, mean=mv)
 @test_approx_eq projection(M) W
 
-M = fit(ProbPCA, Z; method=:bayes, mean=0)
+M = fit(PPCA, Z; method=:bayes, mean=0)
 @test_approx_eq projection(M) W
 
-M = fit(ProbPCA, X; method=:em, maxoutdim=2)
+M = fit(PPCA, X; method=:em, maxoutdim=2)
 @test indim(M) == 5
 @test outdim(M) == 2
 
 # test that fit works with Float32 values
 X2 = convert(Array{Float32,2}, X)
 # Float32 input, default pratio
-M = fit(ProbPCA, X2; maxoutdim=3)
+M = fit(PPCA, X2; maxoutdim=3)
