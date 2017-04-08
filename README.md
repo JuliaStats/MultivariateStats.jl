@@ -24,10 +24,10 @@ A Julia package for multivariate statistics and data analysis (e.g. dimensionali
 - Linear Discriminant Analysis (LDA)
 - Multiclass LDA
 - Independent Component Analysis (ICA), FastICA
+- Probabilistic PCA (PPCA)
 
 #### Future Plan
 
-- Probabilistic PCA (PPCA)
 - Factor Analysis
 - Partial Least Square (PLS)
 - Other algorithms for ICA (*e.g.* JADE)
