@@ -1,39 +1,32 @@
 # Probabilistic Principal Component Analysis
 
 """Probabilistic PCA type"""
-type PPCA{T<:AbstractFloat}
+immutable PPCA{T<:AbstractFloat}
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     W::Matrix{T}          # weight matrix: of size d x p
     σ²::T                 # residual variance
-
-    function (::Type{PPCA}){T}(mean::Vector{T}, W::Matrix{T}, var::T)
-        d = size(W, 1)
-        (isempty(mean) || length(mean) == d) ||
-            throw(DimensionMismatch("Dimensions of weight matrix and mean are inconsistent."))
-        new{T}(mean, W, var)
-    end
 end
 
 ## properties
 
-MultivariateStats.indim(M::PPCA) = size(M.W, 1)
-MultivariateStats.outdim(M::PPCA) = size(M.W, 2)
+indim(M::PPCA) = size(M.W, 1)
+outdim(M::PPCA) = size(M.W, 2)
 
-Base.mean(M::PPCA) = MultivariateStats.fullmean(indim(M), M.mean)
+Base.mean(M::PPCA) = fullmean(indim(M), M.mean)
 projection(M::PPCA) = svdfact(M.W)[:U] # recover principle components from the weight matrix
 Base.var(M::PPCA) = M.σ²
 loadings(M::PPCA) = M.W
 
 ## use
 
-function MultivariateStats.transform{T<:AbstractFloat}(m::PPCA{T}, x::AbstractVecOrMat{T})
+function transform{T<:AbstractFloat}(m::PPCA{T}, x::AbstractVecOrMat{T})
     xn = centralize(x, m.mean)
     W  = m.W
     M = W'W .+ m.σ²*eye(size(m.W,2))
     return inv(M)*m.W'*xn
 end
 
-function MultivariateStats.reconstruct{T<:AbstractFloat}(m::PPCA{T}, z::AbstractVecOrMat{T})
+function reconstruct{T<:AbstractFloat}(m::PPCA{T}, z::AbstractVecOrMat{T})
     W  = m.W
     WTW = W'W
     M  = WTW .+ var(m)*eye(size(WTW,1))
@@ -168,7 +161,7 @@ end
 
 ## interface functions
 
-function MultivariateStats.fit{T<:AbstractFloat}(::Type{PPCA}, X::DenseMatrix{T};
+function fit{T<:AbstractFloat}(::Type{PPCA}, X::DenseMatrix{T};
              method::Symbol=:ml,
              maxoutdim::Int=size(X,1)-1,
              mean=nothing,
@@ -178,7 +171,9 @@ function MultivariateStats.fit{T<:AbstractFloat}(::Type{PPCA}, X::DenseMatrix{T}
     d, n = size(X)
 
     # process mean
-    mv = MultivariateStats.preprocess_mean(X, mean)
+    mv = preprocess_mean(X, mean)
+    (isempty(mv) || length(mv) == d) ||
+            throw(DimensionMismatch("Dimensions of weight matrix and mean are inconsistent."))
 
     if method == :ml
         Z = centralize(X, mv)
