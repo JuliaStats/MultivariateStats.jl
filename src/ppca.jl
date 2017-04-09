@@ -172,18 +172,24 @@ function fit{T<:AbstractFloat}(::Type{PPCA}, X::DenseMatrix{T};
 
     # process mean
     mv = preprocess_mean(X, mean)
-    (isempty(mv) || length(mv) == d) ||
-            throw(DimensionMismatch("Dimensions of weight matrix and mean are inconsistent."))
+    if !(isempty(mv) || length(mv) == d)
+        throw(DimensionMismatch("Dimensions of weight matrix and mean are inconsistent."))
+    end
 
     if method == :ml
         Z = centralize(X, mv)
         M = ppcaml(Z, mv, maxoutdim=maxoutdim, tol=tol)
-    elseif method == :em
-        S = Base.covm(X, isempty(mv) ? 0 : mv, 2)
-        M = ppcaem(S, mv, n, maxoutdim=maxoutdim, tol=tol, tot=tot)
-    elseif method == :bayes
-        S = Base.covm(X, isempty(mv) ? 0 : mv, 2)
-        M = bayespca(S, mv, n, maxoutdim=maxoutdim, tol=tol, tot=tot)
+    elseif method == :em || method == :bayes
+        S = if VERSION < v"0.5.0-dev+660"
+            cov(X; vardim=2, mean=isempty(mv) ? 0 : mv)::Matrix{T}
+        else
+            Base.covm(X, isempty(mv) ? 0 : mv, 2)
+        end
+        if method == :em
+            M = ppcaem(S, mv, n, maxoutdim=maxoutdim, tol=tol, tot=tot)
+        elseif method == :bayes
+            M = bayespca(S, mv, n, maxoutdim=maxoutdim, tol=tol, tot=tot)
+        end
     else
         throw(ArgumentError("Invalid method name $(method)"))
     end
