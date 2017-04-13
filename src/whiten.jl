@@ -6,11 +6,7 @@
 #
 function cov_whitening{T<:AbstractFloat}(C::Cholesky{T})
     cf = C[:UL]
-    if VERSION < v"0.4.0-"
-        full(istriu(cf) ? inv(Triangular(C.UL, :U)) : inv(Triangular(C.UL, :L)'))::Matrix{T}
-    else
-        full(inv(istriu(cf) ? cf : cf'))::Matrix{T}
-    end
+    full(inv(istriu(cf) ? cf : cf'))::Matrix{T}
 end
 
 cov_whitening!{T<:AbstractFloat}(C::DenseMatrix{T}) = cov_whitening(cholfact!(C, :U))
@@ -28,15 +24,15 @@ cov_whitening{T<:AbstractFloat}(C::DenseMatrix{T}, regcoef::Real) =
 immutable Whitening{T<:AbstractFloat}
     mean::Vector{T}
     W::Matrix{T}
-    function Whitening(mean::Vector{T}, W::Matrix{T})
+    function (::Type{Whitening{T}}){T}(mean::Vector{T}, W::Matrix{T})
         d, d2 = size(W)
         d == d2 || error("W must be a square matrix.")
         isempty(mean) || length(mean) == d ||
         throw(DimensionMismatch("Sizes of mean and W are inconsistent."))
-        return new(mean, W)
+        return new{T}(mean, W)
     end
 end
-Whitening{T<:AbstractFloat}(mean::Vector{T}, W::Matrix{T}) = Whitening{T}(mean, W)
+(::Type{Whitening}){T<:AbstractFloat}(mean::Vector{T}, W::Matrix{T}) = Whitening{T}(mean, W)
 
 indim(f::Whitening) = size(f.W, 1)
 outdim(f::Whitening) = size(f.W, 2)

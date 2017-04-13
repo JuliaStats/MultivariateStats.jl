@@ -27,8 +27,8 @@ M = CCA(Float64[], Float64[], Px, Py, [0.8, 0.6, 0.4])
 @test yprojection(M) == Py
 @test correlations(M) == [0.8, 0.6, 0.4]
 
-@test_approx_eq xtransform(M, X) Px'X
-@test_approx_eq ytransform(M, Y) Py'Y
+@test xtransform(M, X) ≈ Px'X
+@test ytransform(M, Y) ≈ Py'Y
 
 ## CCA with nonzero means
 
@@ -45,8 +45,8 @@ M = CCA(ux, uy, Px, Py, [0.8, 0.6, 0.4])
 @test yprojection(M) == Py
 @test correlations(M) == [0.8, 0.6, 0.4]
 
-@test_approx_eq xtransform(M, X) Px' * (X .- ux)
-@test_approx_eq ytransform(M, Y) Py' * (Y .- uy)
+@test xtransform(M, X) ≈ Px' * (X .- ux)
+@test ytransform(M, Y) ≈ Py' * (Y .- uy)
 
 
 ## prepare data
@@ -62,15 +62,9 @@ ym = vec(mean(Y, 2))
 Zx = X .- xm
 Zy = Y .- ym
 
-if VERSION < v"0.5.0-dev+660"
-    Cxx = cov(X; vardim=2)
-    Cyy = cov(Y; vardim=2)
-    Cxy = cov(X, Y; vardim=2)
-else
-    Cxx = cov(X, 2)
-    Cyy = cov(Y, 2)
-    Cxy = cov(X, Y, 2)
-end
+Cxx = cov(X, 2)
+Cyy = cov(Y, 2)
+Cxy = cov(X, Y, 2)
 Cyx = Cxy'
 
 ## ccacov
@@ -87,12 +81,12 @@ rho = correlations(M)
 @test ymean(M) == ym
 @test issorted(rho; rev=true)
 
-@test_approx_eq Px' * Cxx * Px eye(p)
-@test_approx_eq Py' * Cyy * Py eye(p)
-@test_approx_eq Cxy * (Cyy \ Cyx) * Px  Cxx * Px * Diagonal(rho.^2)
-@test_approx_eq Cyx * (Cxx \ Cxy) * Py  Cyy * Py * Diagonal(rho.^2)
-@test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
-@test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
+@test Px' * Cxx * Px ≈ eye(p)
+@test Py' * Cyy * Py ≈ eye(p)
+@test Cxy * (Cyy \ Cyx) * Px ≈ Cxx * Px * Diagonal(rho.^2)
+@test Cyx * (Cxx \ Cxy) * Py ≈ Cyy * Py * Diagonal(rho.^2)
+@test Px ≈ qnormalize!(Cxx \ (Cxy * Py), Cxx)
+@test Py ≈ qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
 # Y ~ X
 M = fit(CCA, Y, X; method=:cov, outdim=p)
@@ -106,12 +100,12 @@ rho = correlations(M)
 @test ymean(M) == xm
 @test issorted(rho; rev=true)
 
-@test_approx_eq Px' * Cxx * Px eye(p)
-@test_approx_eq Py' * Cyy * Py eye(p)
-@test_approx_eq Cxy * (Cyy \ Cyx) * Px  Cxx * Px * Diagonal(rho.^2)
-@test_approx_eq Cyx * (Cxx \ Cxy) * Py  Cyy * Py * Diagonal(rho.^2)
-@test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
-@test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
+@test Px' * Cxx * Px ≈ eye(p)
+@test Py' * Cyy * Py ≈ eye(p)
+@test Cxy * (Cyy \ Cyx) * Px ≈ Cxx * Px * Diagonal(rho.^2)
+@test Cyx * (Cxx \ Cxy) * Py ≈ Cyy * Py * Diagonal(rho.^2)
+@test Px ≈ qnormalize!(Cxx \ (Cxy * Py), Cxx)
+@test Py ≈ qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
 
 ## ccasvd
@@ -128,9 +122,9 @@ rho = correlations(M)
 @test ymean(M) == ym
 @test issorted(rho; rev=true)
 
-@test_approx_eq Px' * Cxx * Px eye(p)
-@test_approx_eq Py' * Cyy * Py eye(p)
-@test_approx_eq Cxy * (Cyy \ Cyx) * Px  Cxx * Px * Diagonal(rho.^2)
-@test_approx_eq Cyx * (Cxx \ Cxy) * Py  Cyy * Py * Diagonal(rho.^2)
-@test_approx_eq Px qnormalize!(Cxx \ (Cxy * Py), Cxx)
-@test_approx_eq Py qnormalize!(Cyy \ (Cyx * Px), Cyy)
+@test Px' * Cxx * Px ≈ eye(p)
+@test Py' * Cyy * Py ≈ eye(p)
+@test Cxy * (Cyy \ Cyx) * Px ≈ Cxx * Px * Diagonal(rho.^2)
+@test Cyx * (Cxx \ Cxy) * Py ≈ Cyy * Py * Diagonal(rho.^2)
+@test Px ≈ qnormalize!(Cxx \ (Cxy * Py), Cxx)
+@test Py ≈ qnormalize!(Cyy \ (Cyx * Px), Cyy)
