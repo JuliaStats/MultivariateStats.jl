@@ -90,7 +90,7 @@ One can use the ``fit`` method to perform PCA over a given dataset.
      method     The choice of methods:                                           ``:ml``
 
                 - ``:ml``: use maximum likelihood version of probabilistic PCA
-                - ``:em``: use EM verison of probabilistic PCA
+                - ``:em``: use EM version of probabilistic PCA
                 - ``:bayes``: use Bayesian PCA
     ----------- --------------------------------------------------------------- ---------------
      maxoutdim  Maximum output dimension.                                        ``d-1``
@@ -103,7 +103,7 @@ One can use the ``fit`` method to perform PCA over a given dataset.
     ----------- --------------------------------------------------------------- ---------------
      tol        Convergence tolerance                                            ``1.0e-6``
     ----------- --------------------------------------------------------------- ---------------
-     tot        Maximum number of iterations.                                    ``1000``
+     tot        Maximum number of iterations                                     ``1000``
     =========== =============================================================== ===============
 
     **Notes:**
@@ -147,9 +147,9 @@ Three algorithms are implemented in this package: ``ppcaml``, ``ppcaem``, and ``
 
     :note: This function accepts two keyword arguments: ``maxoutdim`` and ``tol``.
 
-.. function:: ppcaem(C, mean; ...)
+.. function:: ppcaem(S, mean, n; ...)
 
-    Compute probabilistic PCA based on expectation-maximizaton algorithm for a given sample covariance matrix ``S``.
+    Compute probabilistic PCA based on expectation-maximization algorithm for a given sample covariance matrix ``S``.
 
     :param S: The sample covariance matrix.
 
@@ -162,7 +162,7 @@ Three algorithms are implemented in this package: ``ppcaml``, ``ppcaem``, and ``
 
     :note: This function accepts two keyword arguments: ``maxoutdim``, ``tol``,  and ``tot``.
 
-.. function:: bayespca(C, mean; ...)
+.. function:: bayespca(S, mean, n; ...)
 
     Compute probabilistic PCA based on Bayesian algorithm for a given sample covariance matrix ``S``.
 
