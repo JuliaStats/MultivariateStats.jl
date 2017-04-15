@@ -93,7 +93,15 @@ module MultivariateStats
     ICA,                    # Type: the Fast ICA model
 
     icagfun,                # a function to get a ICA approx neg-entropy functor
-    fastica!                # core algorithm function for the Fast ICA
+    fastica!,               # core algorithm function for the Fast ICA
+
+    ## ppca
+    PPCA,                   # Type: the Probabilistic PCA model
+
+    ppcaml,                 # Maximum likelihood probabilistic PCA
+    ppcaem,                 # EM algorithm for probabilistic PCA
+    bayespca,               # Bayesian PCA
+    loadings                # factor loadings matrix
 
 
     ## source files
@@ -105,5 +113,6 @@ module MultivariateStats
     include("cmds.jl")
     include("lda.jl")
     include("ica.jl")
+    include("ppca.jl")
 
 end # module
