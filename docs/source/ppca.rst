@@ -132,7 +132,7 @@ One can use the ``fit`` method to perform PCA over a given dataset.
 Core Algorithms
 ~~~~~~~~~~~~~~~~~
 
-Two algorithms are implemented in this package: ``ppcaml``, ``ppcaem``, and ``bayespca``.
+Three algorithms are implemented in this package: ``ppcaml``, ``ppcaem``, and ``bayespca``.
 
 .. function:: ppcaml(Z, mean, tw; ...)
 
@@ -179,7 +179,7 @@ Two algorithms are implemented in this package: ``ppcaml``, ``ppcaem``, and ``ba
 
     **Additional notes:**
 
-    - Function uses the ``maxoutdim`` parameter as an upper boundary when it automatically determs the latent space dimensionality.
+    - Function uses the ``maxoutdim`` parameter as an upper boundary when it automatically determines the latent space dimensionality.
 
 References
 ~~~~~~~~~~
