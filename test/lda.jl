@@ -23,7 +23,7 @@ X = rand(5, 8)
 Y = evaluate(f, X)
 @test size(Y) == (8,)
 for i = 1:8
-	@test_approx_eq Y[i] evaluate(f, X[:,i])
+    @test Y[i] ≈ evaluate(f, X[:,i])
 end
 @test predict(f, X) == (Y .> 0)
 
@@ -41,32 +41,27 @@ Xn = Diagonal([2.8, 1.8]) * randn(2, n) .+ [-5.0, 2.0]
 
 up = vec(mean(Xp, 2))
 un = vec(mean(Xn, 2))
-if VERSION < v"0.5.0-dev+660"
-    Cp = cov(Xp; vardim=2)
-    Cn = cov(Xn; vardim=2)
-else
-    Cp = cov(Xp, 2)
-    Cn = cov(Xn, 2)
-end
+Cp = cov(Xp, 2)
+Cn = cov(Xn, 2)
 C = 0.5 * (Cp + Cn)
 
 w_gt = C \ (up - un)
 w_gt .*= (2 / (dot(w_gt, up) - dot(w_gt, un)))
 b_gt = 1.0 - dot(w_gt, up)
 
-@test_approx_eq dot(w_gt, up) + b_gt 1.0
-@test_approx_eq dot(w_gt, un) + b_gt -1.0
+@test dot(w_gt, up) + b_gt ≈ 1.0
+@test dot(w_gt, un) + b_gt ≈ -1.0
 
 ## LDA
 
 f = ldacov(C, up, un)
-@test_approx_eq f.w w_gt
-@test_approx_eq f.b b_gt
+@test f.w ≈ w_gt
+@test f.b ≈ b_gt
 
 f = ldacov(Cp, Cn, up, un)
-@test_approx_eq f.w w_gt
-@test_approx_eq f.b b_gt
+@test f.w ≈ w_gt
+@test f.b ≈ b_gt
 
 f = fit(LinearDiscriminant, Xp, Xn)
-@test_approx_eq f.w w_gt
-@test_approx_eq f.b b_gt
+@test f.w ≈ w_gt
+@test f.b ≈ b_gt

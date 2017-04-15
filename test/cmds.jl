@@ -5,10 +5,10 @@ using Compat
 ## testing data
 
 function pwdists(X)
-	S = Base.sumabs2(X, 1)
-	D2 = S .+ S' - 2 * (X'X)
-	D2[diagind(D2)] = 0.0
-	return sqrt(D2)
+    S = sum(abs2, X, 1)
+    D2 = S .+ S' - 2 * (X'X)
+    D2[diagind(D2)] = 0.0
+    return sqrt.(D2)
 end
 
 X0 = randn(3, 5)
@@ -22,16 +22,16 @@ D0 = pwdists(X0)
 
 D = gram2dmat(G0)
 @test issymmetric(D)
-@test_approx_eq D D0
+@test D ≈ D0
 
 G = dmat2gram(D0)
 @test issymmetric(G)
-@test_approx_eq gram2dmat(G) D0
+@test gram2dmat(G) ≈ D0
 
 ## classical MDS
 
 X = classical_mds(D0, 3)
-@test_approx_eq pwdists(X) D0
+@test pwdists(X) ≈ D0
 
 #Test MDS embeddings in dimensions >= number of points
 @test classical_mds([0 1; 1 0], 2, dowarn=false) == [-0.5 0.5; 0 0]
@@ -52,12 +52,7 @@ let
  0.38095238095238093 0.4 0.21052631578947367 0.5454545454545454 0.3333333333333333 0.3181818181818182 0.23529411764705882 0.5555555555555556 0.4 1.0]
     X =  [-0.27529104101488666 0.006134513718202863 0.33298809606740326 0.2608994458893664 -0.46185275796909575 -0.23734315039370618 0.29972782027671513 0.03827901455843394 -0.04096713097883363 0.07742518984640051
  -0.08177061420820278 -0.0044504235228030225 -0.3271919093638943 0.28206254638779243 -0.0954706915166714 -0.07137742126520012 -0.30754933764853587 0.18582658369448027 -0.03715307349750036 0.45707434094053534]
-    if VERSION < v"0.4.0"
-        #Don't have correct eigenvector testing; run a cruder test
-        @test_approx_eq abs(classical_mds(D, 2)) abs(X)
-    else
-        Test.test_approx_eq_modphase(classical_mds(D, 2)', X')
-    end
+    Test.test_approx_eq_modphase(classical_mds(D, 2)', X')
 end
 
 #10 - test degenerate problem

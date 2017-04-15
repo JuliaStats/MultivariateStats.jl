@@ -37,7 +37,7 @@ function dmat2gram!{GT}(G::AbstractMatrix{GT}, D::AbstractMatrix)
     u = zeros(GT, n)
     s = 0.0
     for j = 1:n
-        s += (u[j] = Base.sumabs2(view(D,:,j)) / n)
+        s += (u[j] = sum(abs2, view(D,:,j)) / n)
     end
     s /= n
 
@@ -98,8 +98,8 @@ function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Int;
 
     #Check if the last considered eigenvalue is degenerate
     if m>0
-        nevalsmore = sum(abs(E[:values][ord[m+1:end]] .- v[m]^2) .< n*eps())
-        nevals = sum(abs(E[:values] .- v[m]^2) .< n*eps())
+        nevalsmore = sum(abs.(E[:values][ord[m+1:end]] .- v[m]^2) .< n*eps())
+        nevals = sum(abs.(E[:values] .- v[m]^2) .< n*eps())
         if nevalsmore > 1
             dowarn && warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
         end

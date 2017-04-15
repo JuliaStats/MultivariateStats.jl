@@ -24,7 +24,7 @@ transform(M::ICA, x::AbstractVecOrMat) = At_mul_B(M.W, centralize(x, M.mean))
 #
 # It returns a function value v, and derivative d
 #
-abstract ICAGDeriv
+@compat abstract type ICAGDeriv end
 
 immutable Tanh <: ICAGDeriv
     a::Float64
@@ -76,15 +76,15 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
     end
 
     # pre-allocated storage
-    Wp = Array(Float64, m, k)    # to store previous version of W
-    U  = Array(Float64, n, k)    # to store w'x & g(w'x)
-    Y  = Array(Float64, m, k)    # to store E{x g(w'x)} for components
-    E1 = Array(Float64, k)       # store E{g'(w'x)} for components
+    Wp = Matrix{Float64}(m, k)    # to store previous version of W
+    U  = Matrix{Float64}(n, k)    # to store w'x & g(w'x)
+    Y  = Matrix{Float64}(m, k)    # to store E{x g(w'x)} for components
+    E1 = Vector{Float64}(k)       # store E{g'(w'x)} for components
 
     # normalize each column
     for j = 1:k
         w = view(W,:,j)
-        scale!(w, 1.0 / sqrt(sumabs2(w)))
+        scale!(w, 1.0 / sqrt(sum(abs2, w)))
     end
 
     # main loop
@@ -178,14 +178,14 @@ function fit(::Type{ICA}, X::DenseMatrix{Float64},          # sample matrix, siz
         Efac = eigfact(C)
         ord = sortperm(Efac.values; rev=true)
         (v, P) = extract_kv(Efac, ord, k)
-        W0 = scale!(P, 1.0 ./ sqrt(v))
+        W0 = scale!(P, 1.0 ./ sqrt.(v))
         # println(W0' * C * W0)
         Z = W0'Z
     end
 
     # initialize
     W = (isempty(winit) ? randn(size(Z,1), k) : copy(winit))::Matrix{Float64}
-    
+
     # invoke core algorithm
     fastica!(W, Z, fun, maxiter, tol, verbose)
 

@@ -148,11 +148,7 @@ function fit{T<:AbstractFloat}(::Type{PCA}, X::DenseMatrix{T};
 
     # delegate to core
     if method == :cov
-        if VERSION < v"0.5.0-dev+660"
-            C = cov(X; vardim=2, mean=isempty(mv) ? 0 : mv)::Matrix{T}
-        else
-            C = Base.covm(X, isempty(mv) ? 0 : mv, 2)
-        end
+        C = Base.covm(X, isempty(mv) ? 0 : mv, 2)
         M = pcacov(C, mv; maxoutdim=maxoutdim, pratio=pratio)
     elseif method == :svd
         Z = centralize(X, mv)

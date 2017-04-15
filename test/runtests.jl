@@ -1,10 +1,10 @@
 tests = ["lreg",
-  		 "whiten",
-         "pca", 
-         "cca", 
-         "cmds", 
-         "lda", 
-         "mclda", 
+         "whiten",
+         "pca",
+         "cca",
+         "cmds",
+         "lda",
+         "mclda",
          "ica",
          "ppca"]
 

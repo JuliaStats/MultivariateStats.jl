@@ -180,11 +180,7 @@ function fit{T<:AbstractFloat}(::Type{PPCA}, X::DenseMatrix{T};
         Z = centralize(X, mv)
         M = ppcaml(Z, mv, maxoutdim=maxoutdim, tol=tol)
     elseif method == :em || method == :bayes
-        S = if VERSION < v"0.5.0-dev+660"
-            cov(X; vardim=2, mean=isempty(mv) ? 0 : mv)::Matrix{T}
-        else
-            Base.covm(X, isempty(mv) ? 0 : mv, 2)
-        end
+        S = Base.covm(X, isempty(mv) ? 0 : mv, 2)
         if method == :em
             M = ppcaem(S, mv, n, maxoutdim=maxoutdim, tol=tol, tot=tot)
         elseif method == :bayes

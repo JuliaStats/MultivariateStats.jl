@@ -2,7 +2,7 @@
 
 #### Type to represent a linear discriminant functional
 
-abstract Discriminant{T}
+@compat abstract type Discriminant{T} end
 
 immutable LinearDiscriminant{T<:AbstractFloat} <: Discriminant{T}
     w::Vector{T}
@@ -105,7 +105,7 @@ function multiclass_lda_stats{T<:AbstractFloat}(nc::Int, X::DenseMatrix{T}, y::A
 
     # compute between-class scattering
     mean = cmeans * (cweights ./ n)
-    U = scale!(cmeans .- mean, sqrt(cweights))
+    U = scale!(cmeans .- mean, sqrt.(cweights))
     Sb = A_mul_Bt(U, U)
 
     return MulticlassLDAStats(Vector{T}(cweights), mean, cmeans, Sw, Sb)
@@ -229,7 +229,7 @@ function fit{T,F<:SubspaceLDA}(::Type{F}, X::AbstractMatrix{T}, label::AbstractV
     # Note Sb = Hb*Hb', Sw = Hw*Hw'
     cmeans, cweights, Hw = center(X, label, nc)
     dmeans = cmeans .- (normalize ? mean(cmeans, 2) : cmeans * (cweights / n))
-    Hb = normalize ? dmeans : dmeans * Diagonal(sqrt(cweights))
+    Hb = normalize ? dmeans : dmeans * Diagonal(sqrt.(cweights))
     if normalize
         Hw /= sqrt(n)
     end
@@ -260,7 +260,7 @@ function lda_gsvd{T}(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::Abs
     # Normalize
     Gw = G' * Hw
     nrm = Gw * Gw'
-    G = G ./ reshape(sqrt(diag(nrm)), 1, ncnz-1)
+    G = G ./ reshape(sqrt.(diag(nrm)), 1, ncnz-1)
     # Also get the eigenvalues
     Gw = G' * Hw
     Gb = G' * Hb
@@ -288,7 +288,7 @@ function center{T}(X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(
         end
     end
     # Compute differences from the means
-    dX = Array(T, d, n)
+    dX = Matrix{T}(d, n)
     for j = 1:n
         k = label[j]
         for i = 1:d
