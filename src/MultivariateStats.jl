@@ -101,7 +101,13 @@ module MultivariateStats
     ppcaml,                 # Maximum likelihood probabilistic PCA
     ppcaem,                 # EM algorithm for probabilistic PCA
     bayespca,               # Bayesian PCA
-    loadings                # factor loadings matrix
+    loadings,               # factor loadings matrix
+
+    ## fa
+    FactorAnalysis,         # Type: the Factor Analysis model
+
+    faem,                   # Maximum likelihood probabilistic PCA
+    facm                    # EM algorithm for probabilistic PCA
 
 
     ## source files
@@ -114,5 +120,6 @@ module MultivariateStats
     include("lda.jl")
     include("ica.jl")
     include("ppca.jl")
+    include("fa.jl")
 
 end # module
