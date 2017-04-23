@@ -104,7 +104,7 @@ function multiclass_lda_stats{T<:AbstractFloat}(nc::Int, X::DenseMatrix{T}, y::A
     Sw = A_mul_Bt(Z, Z)
 
     # compute between-class scattering
-    mean = cmeans * (cweights ./ n)
+    mean = cmeans * (cweights ./ T(n))
     U = scale!(cmeans .- mean, sqrt.(cweights))
     Sb = A_mul_Bt(U, U)
 
@@ -137,7 +137,7 @@ transform{T<:AbstractFloat}(M::MulticlassLDA, x::AbstractVecOrMat{T}) = M.proj'x
 function fit{T<:AbstractFloat}(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
              method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
-             regcoef::T=1.0e-6)
+             regcoef::T=T(1.0e-6))
 
     multiclass_lda(multiclass_lda_stats(nc, X, y);
                    method=method,
@@ -148,7 +148,7 @@ end
 function multiclass_lda{T<:AbstractFloat}(S::MulticlassLDAStats{T};
                         method::Symbol=:gevd,
                         outdim::Int=min(size(X,1), S.nclasses-1),
-                        regcoef::T=1.0e-6)
+                        regcoef::T=T(1.0e-6))
 
     P = mclda_solve(S.Sb, S.Sw, method, outdim, regcoef)
     MulticlassLDA(P, P'S.cmeans, S)

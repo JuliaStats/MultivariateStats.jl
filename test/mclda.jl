@@ -111,19 +111,21 @@ test_approx_eq_vecs(P1, P2)
 
 ## LDA
 
-M = fit(MulticlassLDA, nc, X, y; method=:gevd, regcoef=lambda)
-@test indim(M) == d
-@test outdim(M) == nc - 1
-@test projection(M) ≈ P1
-@test M.pmeans ≈ M.proj'cmeans
-@test transform(M, X) ≈ M.proj'X
+for T in (Float32, Float64)
+    M = fit(MulticlassLDA, nc, convert(Matrix{T}, X), y; method=:gevd, regcoef=convert(T, lambda))
+    @test indim(M) == d
+    @test outdim(M) == nc - 1
+    @test projection(M) ≈ P1
+    @test M.pmeans ≈ M.proj'cmeans
+    @test transform(M, X) ≈ M.proj'X
 
-M = fit(MulticlassLDA, nc, X, y; method=:whiten, regcoef=lambda)
-@test indim(M) == d
-@test outdim(M) == nc - 1
-# @test projection(M) P2  # signs may change
-@test M.pmeans ≈ M.proj'cmeans
-@test transform(M, X) ≈ M.proj'X
+    M = fit(MulticlassLDA, nc, convert(Matrix{T}, X), y; method=:whiten, regcoef=convert(T, lambda))
+    @test indim(M) == d
+    @test outdim(M) == nc - 1
+    # @test projection(M) P2  # signs may change
+    @test M.pmeans ≈ M.proj'cmeans
+    @test transform(M, X) ≈ M.proj'X
+end
 
 
 ## High-dimensional LDA (subspace LDA)
