@@ -1,5 +1,6 @@
 using MultivariateStats
 using Base.Test
+import StatsBase
 
 srand(15678)
 
@@ -49,7 +50,7 @@ C = cov(X, 2)
 
 # FastICA
 
-M = fit(ICA, X, k; do_whiten=false)
+M = fit(ICA, X, k; do_whiten=false, tol=Inf)
 @test isa(M, ICA)
 @test indim(M) == m
 @test outdim(M) == k
@@ -58,7 +59,7 @@ W = M.W
 @test transform(M, X) ≈ W' * (X .- mv)
 @test W'W ≈ eye(k)
 
-M = fit(ICA, X, k; do_whiten=true)
+M = fit(ICA, X, k; do_whiten=true, tol=Inf)
 @test isa(M, ICA)
 @test indim(M) == m
 @test outdim(M) == k
@@ -66,3 +67,4 @@ M = fit(ICA, X, k; do_whiten=true)
 W = M.W
 @test W'C * W ≈ eye(k)
 
+@test_throws StatsBase.ConvergenceException fit(ICA, X, k; do_whiten=true, tol=1)
