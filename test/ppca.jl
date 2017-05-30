@@ -1,5 +1,6 @@
 using MultivariateStats
 using Base.Test
+import StatsBase
 
 srand(34568)
 
@@ -111,6 +112,8 @@ P = projection(M)
 @test outdim(M) == 3
 @test P'P ≈ eye(3)
 
+@test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:em, tot=1)
+
 # bayespca
 M0 = fit(PCA, X; mean=mv, maxoutdim = 3)
 
@@ -136,6 +139,8 @@ P = projection(M)
 @test indim(M) == 5
 @test outdim(M) == 2
 @test P'P ≈ eye(2)
+
+@test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:bayes, tot=1)
 
 # test that fit works with Float32 values
 X2 = convert(Array{Float32,2}, X)
