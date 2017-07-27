@@ -107,7 +107,7 @@ One can use the ``fit`` method to perform CCA over given datasets.
 Core Algorithms
 ~~~~~~~~~~~~~~~~
 
-Two algorithms are implemented in this package: ``pcacov`` and ``pcastd``. 
+Two algorithms are implemented in this package: ``ccacov`` and ``ccasvd``. 
 
 .. function:: ccacov(Cxx, Cyy, Cxy, xmean, ymean, p)
 
