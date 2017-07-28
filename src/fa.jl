@@ -1,7 +1,7 @@
 # Factor Analysis
 
 """Factor Analysis type"""
-type FactorAnalysis{T<:AbstractFloat}
+immutable FactorAnalysis{T<:AbstractFloat}
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     W::Matrix{T}          # factor loadings matrix: of size d x p
     Ψ::Vector{T}          # noise covariance: diagonal of size d x d
@@ -102,7 +102,7 @@ function facm{T<:AbstractFloat}(S::DenseMatrix{T}, mv::Vector{T}, n::Int;
     L_old = 0.
     for c in 1:tot
         # CM-step 1
-        Ψ⁻ʰ = Diagonal(1./sqrt(Ψ))
+        Ψ⁻ʰ = Diagonal(1./sqrt.(Ψ))
         S⁺ = Ψ⁻ʰ*S*Ψ⁻ʰ
 
         F = eigfact(S⁺)
@@ -148,7 +148,7 @@ function facm{T<:AbstractFloat}(S::DenseMatrix{T}, mv::Vector{T}, n::Int;
         L_old = L
     end
 
-    return FactorAnalysis(mv, Diagonal(sqrt(Ψ))*W, Ψ)
+    return FactorAnalysis(mv, Diagonal(sqrt.(Ψ))*W, Ψ)
 end
 
 
