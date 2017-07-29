@@ -18,6 +18,7 @@ Welcome to MultivariateStats's documentation
    lda.rst
    mclda.rst
    ica.rst
+   fa.rst
 
 **Notes:**
 
