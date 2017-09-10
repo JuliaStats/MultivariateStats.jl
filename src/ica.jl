@@ -60,7 +60,7 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
                   X::DenseMatrix{Float64},      # (whitened) observation sample matrix, size(m, n)
                   fun::ICAGDeriv,               # approximate neg-entropy functor
                   maxiter::Int,                 # maximum number of iterations
-                  tol::Real,                    # convergence tolerance
+                  tol::Float64,                    # convergence tolerance
                   verbose::Bool)                # whether to show iterative info
 
     # argument checking
@@ -88,6 +88,7 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
     end
 
     # main loop
+    chg = 0.0
     t = 0
     converged = false
     while !converged && t < maxiter
@@ -143,7 +144,7 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
             @printf("Iter %4d:  change = %.6e\n", t, chg)
         end
     end
-    converged || throw(ConvergenceException(maxiter))
+    converged || throw(ConvergenceException(maxiter, chg, tol))
     return W
 end
 
@@ -155,7 +156,7 @@ function fit(::Type{ICA}, X::DenseMatrix{Float64},          # sample matrix, siz
                           fun::ICAGDeriv=icagfun(:tanh),    # approx neg-entropy functor
                           do_whiten::Bool=true,             # whether to perform pre-whitening 
                           maxiter::Integer=100,             # maximum number of iterations
-                          tol::Real=1.0e-6,                 # convergence tolerance
+                          tol::Float64=1.0e-6,                 # convergence tolerance
                           mean=nothing,                     # pre-computed mean
                           winit::Matrix{Float64}=zeros(0,0),  # init guess of W, size (m, k)
                           verbose::Bool=false)              # whether to display iterations
@@ -196,4 +197,3 @@ function fit(::Type{ICA}, X::DenseMatrix{Float64},          # sample matrix, siz
     end
     return ICA(mv, W)
 end
-

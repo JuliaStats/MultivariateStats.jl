@@ -43,7 +43,7 @@ end
 
 function ppcaml{T<:AbstractFloat}(Z::DenseMatrix{T}, mean::Vector{T};
                 maxoutdim::Int=size(Z,1)-1,
-                tol::Real=1.0e-6) # convergence tolerance
+                tol::Float64=1.0e-6) # convergence tolerance
 
     check_pcaparams(size(Z,1), mean, maxoutdim, 1.)
 
@@ -75,7 +75,7 @@ end
 
 function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
                 maxoutdim::Int=size(S,1)-1,
-                tol::Real=1.0e-6,   # convergence tolerance
+                tol::Float64=1.0e-6,   # convergence tolerance
                 tot::Integer=1000)  # maximum number of iterations
 
     check_pcaparams(size(S,1), mean, maxoutdim, 1.)
@@ -86,8 +86,9 @@ function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
     σ² = 0.
     M⁻¹ = inv(W'W .+ σ²*eye(q))
 
-    i = 1
+    i = 0 
     L_old = 0.
+    chg = NaN
     converged = false
     while i < tot
         # EM-steps
@@ -103,21 +104,22 @@ function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
         C⁻¹ = (eye(d) - W*M⁻¹*W')/σ²
         L = (-n/2)*(log(det(C)) + trace(C⁻¹*S))  # (-n/2)*d*log(2π) omitted
         # println("$i] ΔL: $(abs(L_old - L)), L: $L")
-        if abs(L_old - L) < tol
+        chg = abs(L_old - L)
+        if chg < tol
             converged = true
             break
         end
         L_old = L
         i += 1
     end
-    converged || throw(ConvergenceException(tot))
+    converged || throw(ConvergenceException(tot, chg, tol))
 
     return PPCA(mean, W, σ²)
 end
 
 function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
                  maxoutdim::Int=size(S,1)-1,
-                 tol::Real=1.0e-6,   # convergence tolerance
+                 tol::Float64=1.0e-6,   # convergence tolerance
                  tot::Integer=1000)  # maximum number of iterations
 
     check_pcaparams(size(S,1), mean, maxoutdim, 1.)
@@ -131,7 +133,8 @@ function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
     M⁻¹ = inv(M)
     α = zeros(q)
 
-    i = 1
+    i = 0 
+    chg = NaN
     L_old = 0.
     converged = false
     while i < tot
@@ -153,14 +156,15 @@ function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
         C⁻¹ = (eye(d) - W*M⁻¹*W')/σ²
         L = (-n/2)*(log(det(C)) + trace(C⁻¹*S))  # (-n/2)*d*log(2π) omitted
         # println("$i] ΔL: $(abs(L_old - L)), L: $L")
-        if abs(L_old - L) < tol
+        chg = abs(L_old - L)
+        if chg < tol
             converged = true
             break
         end
         L_old = L
         i += 1
     end
-    converged || throw(ConvergenceException(tot))
+    converged || throw(ConvergenceException(tot,chg,tol))
 
     return PPCA(mean, W[:,wnorm .> 0.], σ²)
 end
@@ -171,7 +175,7 @@ function fit{T<:AbstractFloat}(::Type{PPCA}, X::DenseMatrix{T};
              method::Symbol=:ml,
              maxoutdim::Int=size(X,1)-1,
              mean=nothing,
-             tol::Real=1.0e-6,   # convergence tolerance
+             tol::Float64=1.0e-6,   # convergence tolerance
              tot::Integer=1000)  # maximum number of iterations
 
     d, n = size(X)
