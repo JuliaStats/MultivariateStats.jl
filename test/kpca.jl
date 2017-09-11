@@ -40,8 +40,8 @@ KC = fit(MultivariateStats.KernelCenter, K)
 
 ## check different parameters
 X = randn(d, n)
-M = fit(KernelPCA, X)
-M2 = fit(PCA, X, method=:cov)
+M = fit(KernelPCA, X, maxoutdim=d)
+M2 = fit(PCA, X, method=:cov, pratio=1.0)
 @test indim(M) == d
 @test outdim(M) == d
 @test abs.(transform(M, X)) ≈ abs.(transform(M2, X))
@@ -54,12 +54,25 @@ M2 = fit(PCA, X, method=:cov, maxoutdim=3)
 @test abs.(transform(M, X)) ≈ abs.(transform(M2, X))
 @test abs.(transform(M, X[:,1])) ≈ abs.(transform(M2, X[:,1]))
 
+# reconstruction
+@test_throws AssertionError reconstruct(M, X)
+M = fit(KernelPCA, X, inverse=true)
+@test all(isapprox.(reconstruct(M, transform(M, X)), X, atol=0.75))
+
 # use rbf kernel
 γ = 10.
 rbf=(x,y)->exp(-γ*norm(x-y)^2.0)
 M = fit(KernelPCA, X, kernel=rbf)
 @test indim(M) == d
 @test outdim(M) == d
+
+# use precomputed kernel
+K = MultivariateStats.pairwise((x,y)->x'*y, X)
+@test_throws AssertionError fit(KernelPCA, rand(1,10), kernel=nothing) # symmetric kernel
+M = fit(KernelPCA, K, maxoutdim = 5, kernel=nothing, inverse=true) # use precomputed kernel
+M2 = fit(PCA, X, method=:cov, pratio=1.0)
+@test_throws AssertionError reconstruct(M, X) # no reconstruction for precomputed kernel
+@test abs.(transform(M)) ≈ abs.(transform(M2, X))
 
 # fit a Float32 matrix
 X = randn(Float32, d, n)

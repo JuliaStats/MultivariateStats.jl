@@ -8,9 +8,9 @@ end
 
 """Fit `KernelCenter` object"""
 function fit{T<:AbstractFloat}(::Type{KernelCenter}, K::AbstractMatrix{T})
-    n = size(K,1)
-    means = vec(mean(K,2))
-    KernelCenter(means, sum(means)/n)
+    n = size(K, 1)
+    means = vec(mean(K, 2))
+    KernelCenter(means, sum(means) / n)
 end
 
 """Center kernel matrix."""
@@ -18,7 +18,7 @@ function transform!{T<:AbstractFloat}(C::KernelCenter{T}, K::AbstractMatrix{T})
     n, m = size(K)
     @simd for i in 1:n
         for j in 1:m
-            @inbounds K[i,j] -= C.means[i] + C.means[j] - C.total
+            @inbounds K[i, j] -= C.means[i] + C.means[j] - C.total
         end
     end
     return K
@@ -31,6 +31,7 @@ immutable KernelPCA{T<:AbstractFloat}
     center::KernelCenter  # kernel center
     λ::DenseVector{T}     # eigenvalues  in feature space
     α::DenseMatrix{T}     # eigenvectors in feature space
+    inv::DenseMatrix{T}   # inverse transform coefficients
 end
 
 ## properties
@@ -38,16 +39,30 @@ end
 indim(M::KernelPCA) = size(M.X, 1)
 outdim(M::KernelPCA) = length(M.λ)
 
-projection(M::KernelPCA) = M.α
+projection(M::KernelPCA) = M.α ./ sqrt.(M.λ')
 principalvars(M::KernelPCA) = M.λ
 
 ## use
 
+"""Calculate transformation to kernel space"""
 function transform{T<:AbstractFloat}(M::KernelPCA{T}, x::AbstractVecOrMat{T})
-    k = MultivariateStats.pairwise(M.ker, M.X, x)
+    k = pairwise(M.ker, M.X, x)
     transform!(M.center, k)
-    return (M.α')./sqrt.(M.λ)*k
+    return projection(M)'*k
 end
+
+function transform{T<:AbstractFloat}(M::KernelPCA{T})
+    return projection(M)'*M.X
+end
+
+"""Calculate inverse transformation to original space"""
+function reconstruct{T<:AbstractFloat}(M::KernelPCA{T}, y::AbstractVecOrMat{T})
+    @assert size(M.inv, 1) > 0 "Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"
+    Pᵗ = M.α' .* sqrt.(M.λ)
+    k = MultivariateStats.pairwise(M.ker, Pᵗ, y)
+    return M.inv*k
+end
+
 
 ## show
 
@@ -63,10 +78,10 @@ function pairwise!{T<:AbstractFloat}(K::AbstractVecOrMat{T}, kernel::Function,
     m = size(Y, 2)
     for j = 1:m
         aj = view(Y, :, j)
-        for i = j:n
+        for i in j:n
             @inbounds K[i, j] = kernel(view(X, :, i), aj)
         end
-        j <= n && for i = 1:(j - 1)
+        j <= n && for i in 1:(j - 1)
             @inbounds K[i, j] = K[j, i]   # leveraging the symmetry
         end
     end
@@ -89,19 +104,33 @@ pairwise{T<:AbstractFloat}(kernel::Function, X::AbstractVecOrMat{T}) =
 ## interface functions
 
 function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
-                               kernel::Function=(x,y)->x'*y,
-                               maxoutdim::Int=min(size(X)...),
-                               remove_zero_eig::Bool=false,
+                               kernel = (x,y)->x'*y,
+                               maxoutdim::Int = min(size(X)...),
+                               remove_zero_eig::Bool = false,
                                solver::Symbol = :eig,
+                               inverse::Bool = false,  β::Real = 1.0,
                                tol::Real = 1e-12, tot::Real = 300)
     d, n = size(X)
+    iskernelfunc = false
+
     maxoutdim = min(min(d, n), maxoutdim)
 
-    K = similar(X, n, n)
-    pairwise!(K, kernel, X)
+    K, Kfunc = if isa(kernel, Function)
+        iskernelfunc = true
+        pairwise(kernel, X), kernel
+    elseif kernel == nothing
+        @assert issymmetric(X) "Kernel matrix must be symmetric."
+        inverse = false
+        X, (x,y)->error("Kernel is precomputed.")
+    else
+        error("Incorrect kernel type. Use function or symmetric matrix.")
+    end
+
+    # center kernel
     center = fit(KernelCenter, K)
     transform!(center, K)
 
+    # perform eigenvalue decomposition
     evl, evc = if solver == :eigs || issparse(K)
         evl, evc = eigs(K, nev=maxoutdim, which=:LR, v0=2.0*rand(n)-1.0, tol=tol, maxiter=tot)
         real.(evl), real.(evc)
@@ -121,5 +150,13 @@ function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
         evl[ord], evc[:, ord]
     end
 
-    KernelPCA(X, kernel, center, λ, α)
+    # calculate inverse transform coefficients
+    Q = zeros(T, 0, 0)
+    if inverse
+        Pᵗ = α' .* sqrt.(λ)
+        KT = pairwise(Kfunc, Pᵗ)
+        Q = (KT + diagm(fill(β, size(KT,1)))) \ X'
+    end
+
+    KernelPCA(X, Kfunc, center, λ, α, Q')
 end
