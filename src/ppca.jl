@@ -43,7 +43,7 @@ end
 
 function ppcaml{T<:AbstractFloat}(Z::DenseMatrix{T}, mean::Vector{T};
                 maxoutdim::Int=size(Z,1)-1,
-                tol::Float64=1.0e-6) # convergence tolerance
+                tol::Real=1.0e-6) # convergence tolerance
 
     check_pcaparams(size(Z,1), mean, maxoutdim, 1.)
 
@@ -75,7 +75,7 @@ end
 
 function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
                 maxoutdim::Int=size(S,1)-1,
-                tol::Float64=1.0e-6,   # convergence tolerance
+                tol::Real=1.0e-6,   # convergence tolerance
                 tot::Integer=1000)  # maximum number of iterations
 
     check_pcaparams(size(S,1), mean, maxoutdim, 1.)
@@ -119,7 +119,7 @@ end
 
 function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
                  maxoutdim::Int=size(S,1)-1,
-                 tol::Float64=1.0e-6,   # convergence tolerance
+                 tol::Real=1.0e-6,   # convergence tolerance
                  tot::Integer=1000)  # maximum number of iterations
 
     check_pcaparams(size(S,1), mean, maxoutdim, 1.)
@@ -164,7 +164,7 @@ function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
         L_old = L
         i += 1
     end
-    converged || throw(ConvergenceException(tot,chg,tol))
+    converged || throw(ConvergenceException(tot, chg, Float64(tol)))
 
     return PPCA(mean, W[:,wnorm .> 0.], σ²)
 end
@@ -175,7 +175,7 @@ function fit{T<:AbstractFloat}(::Type{PPCA}, X::DenseMatrix{T};
              method::Symbol=:ml,
              maxoutdim::Int=size(X,1)-1,
              mean=nothing,
-             tol::Float64=1.0e-6,   # convergence tolerance
+             tol::Real=1.0e-6,   # convergence tolerance
              tot::Integer=1000)  # maximum number of iterations
 
     d, n = size(X)
