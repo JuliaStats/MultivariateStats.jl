@@ -144,7 +144,7 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
             @printf("Iter %4d:  change = %.6e\n", t, chg)
         end
     end
-    converged || throw(ConvergenceException(maxiter, chg, Float64(tol)))
+    converged || throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
     return W
 end
 

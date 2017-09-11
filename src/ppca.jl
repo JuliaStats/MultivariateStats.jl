@@ -112,7 +112,7 @@ function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
         L_old = L
         i += 1
     end
-    converged || throw(ConvergenceException(tot, chg, tol))
+    converged || throw(ConvergenceException(tot, chg, oftype(chg,tol)))
 
     return PPCA(mean, W, σ²)
 end
@@ -164,7 +164,7 @@ function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
         L_old = L
         i += 1
     end
-    converged || throw(ConvergenceException(tot, chg, Float64(tol)))
+    converged || throw(ConvergenceException(tot, chg, oftype(chg, tol)))
 
     return PPCA(mean, W[:,wnorm .> 0.], σ²)
 end
