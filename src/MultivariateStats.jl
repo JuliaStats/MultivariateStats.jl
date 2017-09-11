@@ -107,7 +107,10 @@ module MultivariateStats
     FactorAnalysis,         # Type: the Factor Analysis model
 
     faem,                   # Maximum likelihood probabilistic PCA
-    facm                    # EM algorithm for probabilistic PCA
+    facm,                   # EM algorithm for probabilistic PCA
+
+    ## fa
+    KernelPCA               # Type: the Kernel PCA model
 
 
     ## source files
@@ -121,5 +124,6 @@ module MultivariateStats
     include("ica.jl")
     include("ppca.jl")
     include("fa.jl")
+    include("kpca.jl")
 
 end # module
