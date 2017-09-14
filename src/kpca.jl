@@ -79,7 +79,7 @@ function pairwise!{T<:AbstractFloat}(K::AbstractVecOrMat{T}, kernel::Function,
     for j = 1:m
         aj = view(Y, :, j)
         for i in j:n
-            @inbounds K[i, j] = kernel(view(X, :, i), aj)
+            @inbounds K[i, j] = kernel(view(X, :, i), aj)[]
         end
         j <= n && for i in 1:(j - 1)
             @inbounds K[i, j] = K[j, i]   # leveraging the symmetry
@@ -104,12 +104,12 @@ pairwise{T<:AbstractFloat}(kernel::Function, X::AbstractVecOrMat{T}) =
 ## interface functions
 
 function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
-                               kernel = (x,y)->x'*y,
+                               kernel = (x,y)->x'y,
                                maxoutdim::Int = min(size(X)...),
-                               remove_zero_eig::Bool = false,
+                               remove_zero_eig::Bool = false, atol::Real = 1e-10,
                                solver::Symbol = :eig,
                                inverse::Bool = false,  β::Real = 1.0,
-                               tol::Real = 1e-12, tot::Real = 300)
+                               etol::Real = 0.0, etot::Real = 300)
     d, n = size(X)
     iskernelfunc = false
 
@@ -132,7 +132,7 @@ function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
 
     # perform eigenvalue decomposition
     evl, evc = if solver == :eigs || issparse(K)
-        evl, evc = eigs(K, nev=maxoutdim, which=:LR, v0=2.0*rand(n)-1.0, tol=tol, maxiter=tot)
+        evl, evc = eigs(K, nev=maxoutdim, which=:LR, v0=2.0*rand(n)-1.0, tol=etol, maxiter=etot)
         real.(evl), real.(evc)
     else
         Eg = eigfact(Hermitian(K))
@@ -144,7 +144,7 @@ function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
 
     # remove zero eigenvalues
     λ, α = if remove_zero_eig
-        ez = .!isapprox.(evl[ord], zero(T), atol=tol)
+        ez = map(!, isapprox.(evl[ord], zero(T), atol=atol))
         evl[ord[ez]], evc[:, ord[ez]]
     else
         evl[ord], evc[:, ord]
