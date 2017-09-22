@@ -55,7 +55,7 @@ M2 = fit(PCA, X, method=:cov, maxoutdim=3)
 @test abs.(transform(M, X[:,1])) ≈ abs.(transform(M2, X[:,1]))
 
 # reconstruction
-@test_throws AssertionError reconstruct(M, X)
+@test_throws ArgumentError reconstruct(M, X)
 M = fit(KernelPCA, X, inverse=true)
 @test all(isapprox.(reconstruct(M, transform(M, X)), X, atol=0.75))
 
@@ -71,8 +71,10 @@ K = MultivariateStats.pairwise((x,y)->x'*y, X)
 @test_throws AssertionError fit(KernelPCA, rand(1,10), kernel=nothing) # symmetric kernel
 M = fit(KernelPCA, K, maxoutdim = 5, kernel=nothing, inverse=true) # use precomputed kernel
 M2 = fit(PCA, X, method=:cov, pratio=1.0)
-@test_throws AssertionError reconstruct(M, X) # no reconstruction for precomputed kernel
+@test_throws ArgumentError reconstruct(M, X) # no reconstruction for precomputed kernel
 @test abs.(transform(M)) ≈ abs.(transform(M2, X))
+
+@test_throws ArgumentError fit(KernelPCA, rand(1,10), kernel=1)
 
 # fit a Float32 matrix
 X = randn(Float32, d, n)

@@ -76,15 +76,15 @@ One can use the ``fit`` method to perform kernel PCA over a given dataset.
     ----------- --------------------------------------------------------------- ---------------
      maxoutdim  Maximum output dimension.                                        ``min(d, n)``
     ----------- --------------------------------------------------------------- ---------------
-     inverse    Performs calculation for inverse transform for non-precomputed   ``false``
-                kernels.
+     inverse    Whether to perform calculation for inverse transform for         ``false``
+                non-precomputed kernels.
     ----------- --------------------------------------------------------------- ---------------
      β          Hyperparameter of the ridge regression that learns the           ``1.0``
                 inverse transform (when ``inverse`` is ``true``).
     ----------- --------------------------------------------------------------- ---------------
-     etol        Convergence tolerance for ``eigs`` solver                       ``0.0``
+     tol        Convergence tolerance for ``eigs`` solver                        ``0.0``
     ----------- --------------------------------------------------------------- ---------------
-     etot        Maximum number of iterations for ``eigs`` solver                ``300``
+     maxiter    Maximum number of iterations for ``eigs`` solver                 ``300``
     =========== =============================================================== ===============
 
 Kernels
@@ -99,7 +99,7 @@ List of the commonly used kernels:
     -------------------------------------------------- ----------------------------------------
      ``(x,y)->(x'y+c)^d``                                Polynomial
     -------------------------------------------------- ----------------------------------------
-     ``(x,y)->exp(-γ*norm(x-y)^2.0)``                     Radial basis function (RBF)
+     ``(x,y)->exp(-γ*norm(x-y)^2.0)``                    Radial basis function (RBF)
     ================================================== ========================================
 
 **Example:**

@@ -57,12 +57,13 @@ end
 
 """Calculate inverse transformation to original space"""
 function reconstruct{T<:AbstractFloat}(M::KernelPCA{T}, y::AbstractVecOrMat{T})
-    @assert size(M.inv, 1) > 0 "Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"
+    if size(M.inv, 1) == 0
+        throw(ArgumentError("Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"))
+    end
     Pᵗ = M.α' .* sqrt.(M.λ)
-    k = MultivariateStats.pairwise(M.ker, Pᵗ, y)
+    k = pairwise(M.ker, Pᵗ, y)
     return M.inv*k
 end
-
 
 ## show
 
@@ -73,7 +74,7 @@ end
 ## core algorithms
 
 function pairwise!{T<:AbstractFloat}(K::AbstractVecOrMat{T}, kernel::Function,
-    X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T})
+                                     X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T})
     n = size(X, 2)
     m = size(Y, 2)
     for j = 1:m
@@ -109,21 +110,25 @@ function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
                                remove_zero_eig::Bool = false, atol::Real = 1e-10,
                                solver::Symbol = :eig,
                                inverse::Bool = false,  β::Real = 1.0,
-                               etol::Real = 0.0, etot::Real = 300)
+                               tol::Real = 0.0, maxiter::Real = 300)
     d, n = size(X)
-    iskernelfunc = false
+    Kfunc = (x,y)->error("Kernel is precomputed.")
 
     maxoutdim = min(min(d, n), maxoutdim)
 
-    K, Kfunc = if isa(kernel, Function)
-        iskernelfunc = true
-        pairwise(kernel, X), kernel
-    elseif kernel == nothing
-        @assert issymmetric(X) "Kernel matrix must be symmetric."
+    K = if isa(kernel, Function)
+        pairwise(kernel, X)
+    elseif kernel === nothing
+        @assert issymmetric(X) "Precomputed kernel matrix must be symmetric."
         inverse = false
-        X, (x,y)->error("Kernel is precomputed.")
+        X
     else
-        error("Incorrect kernel type. Use function or symmetric matrix.")
+        throw(ArgumentError("Incorrect kernel type. Use function or symmetric matrix."))
+    end
+
+    # set kernel function if available
+    if isa(kernel, Function)
+        Kfunc = kernel
     end
 
     # center kernel
@@ -132,7 +137,7 @@ function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
 
     # perform eigenvalue decomposition
     evl, evc = if solver == :eigs || issparse(K)
-        evl, evc = eigs(K, nev=maxoutdim, which=:LR, v0=2.0*rand(n)-1.0, tol=etol, maxiter=etot)
+        evl, evc = eigs(K, nev=maxoutdim, which=:LR, v0=2.0*rand(n)-1.0, tol=tol, maxiter=maxiter)
         real.(evl), real.(evc)
     else
         Eg = eigfact(Hermitian(K))
