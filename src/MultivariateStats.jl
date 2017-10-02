@@ -49,6 +49,17 @@ module MultivariateStats
     tresidualvar,       # total residual variance
     tvar,               # total variance
 
+    ## ppca
+    PPCA,               # Type: the Probabilistic PCA model
+
+    ppcaml,             # Maximum likelihood probabilistic PCA
+    ppcaem,             # EM algorithm for probabilistic PCA
+    bayespca,           # Bayesian PCA
+    loadings,           # factor loadings matrix
+
+    ## kpca
+    KernelPCA,          # Type: the Kernel PCA model
+
     ## cca
     CCA,                # Type: Correlation Component Analysis model
 
@@ -95,14 +106,6 @@ module MultivariateStats
     icagfun,                # a function to get a ICA approx neg-entropy functor
     fastica!,               # core algorithm function for the Fast ICA
 
-    ## ppca
-    PPCA,                   # Type: the Probabilistic PCA model
-
-    ppcaml,                 # Maximum likelihood probabilistic PCA
-    ppcaem,                 # EM algorithm for probabilistic PCA
-    bayespca,               # Bayesian PCA
-    loadings,               # factor loadings matrix
-
     ## fa
     FactorAnalysis,         # Type: the Factor Analysis model
 
@@ -115,11 +118,12 @@ module MultivariateStats
     include("lreg.jl")
     include("whiten.jl")
     include("pca.jl")
+    include("ppca.jl")
+    include("kpca.jl")
     include("cca.jl")
     include("cmds.jl")
     include("lda.jl")
     include("ica.jl")
-    include("ppca.jl")
     include("fa.jl")
 
 end # module
