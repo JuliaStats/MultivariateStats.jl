@@ -86,7 +86,7 @@ function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
     σ² = 0.
     M⁻¹ = inv(W'W .+ σ²*eye(q))
 
-    i = 0
+    i = 1
     L_old = 0.
     chg = NaN
     converged = false
@@ -133,7 +133,7 @@ function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
     M⁻¹ = inv(M)
     α = zeros(q)
 
-    i = 0
+    i = 1
     chg = NaN
     L_old = 0.
     converged = false
