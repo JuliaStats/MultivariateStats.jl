@@ -50,7 +50,7 @@ C = cov(X, 2)
 
 # FastICA
 
-M = fit(ICA, X, k; do_whiten=false, tol=Inf)
+M = fit(ICA, X, k; do_whiten=false)
 @test isa(M, ICA)
 @test indim(M) == m
 @test outdim(M) == k
@@ -59,7 +59,7 @@ W = M.W
 @test transform(M, X) ≈ W' * (X .- mv)
 @test W'W ≈ eye(k)
 
-M = fit(ICA, X, k; do_whiten=true, tol=Inf)
+M = fit(ICA, X, k; do_whiten=true)
 @test isa(M, ICA)
 @test indim(M) == m
 @test outdim(M) == k
@@ -67,4 +67,4 @@ M = fit(ICA, X, k; do_whiten=true, tol=Inf)
 W = M.W
 @test W'C * W ≈ eye(k)
 
-@test_throws StatsBase.ConvergenceException fit(ICA, X, k; do_whiten=true, tol=1)
+@test_throws StatsBase.ConvergenceException fit(ICA, X, k; do_whiten=true, tol=1e-12, maxiter=2)
