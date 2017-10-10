@@ -88,6 +88,8 @@ function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
 
     i = 1
     L_old = 0.
+    chg = NaN
+    converged = false
     while i < tot
         # EM-steps
         SW = S*W
@@ -102,12 +104,15 @@ function ppcaem{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
         C⁻¹ = (eye(d) - W*M⁻¹*W')/σ²
         L = (-n/2)*(log(det(C)) + trace(C⁻¹*S))  # (-n/2)*d*log(2π) omitted
         # println("$i] ΔL: $(abs(L_old - L)), L: $L")
-        if abs(L_old - L) < tol
+        chg = abs(L_old - L)
+        if chg < tol
+            converged = true
             break
         end
         L_old = L
         i += 1
     end
+    converged || throw(ConvergenceException(tot, chg, oftype(chg, tol)))
 
     return PPCA(mean, W, σ²)
 end
@@ -129,7 +134,9 @@ function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
     α = zeros(q)
 
     i = 1
+    chg = NaN
     L_old = 0.
+    converged = false
     while i < tot
         # EM-steps
         SW = S*W
@@ -149,12 +156,15 @@ function bayespca{T<:AbstractFloat}(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
         C⁻¹ = (eye(d) - W*M⁻¹*W')/σ²
         L = (-n/2)*(log(det(C)) + trace(C⁻¹*S))  # (-n/2)*d*log(2π) omitted
         # println("$i] ΔL: $(abs(L_old - L)), L: $L")
-        if abs(L_old - L) < tol
+        chg = abs(L_old - L)
+        if chg < tol
+            converged = true
             break
         end
         L_old = L
         i += 1
     end
+    converged || throw(ConvergenceException(tot, chg, oftype(chg, tol)))
 
     return PPCA(mean, W[:,wnorm .> 0.], σ²)
 end

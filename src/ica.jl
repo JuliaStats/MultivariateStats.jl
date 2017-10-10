@@ -88,6 +88,7 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
     end
 
     # main loop
+    chg = NaN
     t = 0
     converged = false
     while !converged && t < maxiter
@@ -143,6 +144,7 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
             @printf("Iter %4d:  change = %.6e\n", t, chg)
         end
     end
+    converged || throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
     return W
 end
 
@@ -195,4 +197,3 @@ function fit(::Type{ICA}, X::DenseMatrix{Float64},          # sample matrix, siz
     end
     return ICA(mv, W)
 end
-
