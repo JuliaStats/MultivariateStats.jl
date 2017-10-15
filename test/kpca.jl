@@ -8,6 +8,24 @@ n = 10
 d = 5
 X = randn(d, n)
 
+# step-by-step kernel centralization
+for K in [
+    reshape(1.:12., 3, 4),
+    reshape(1.:9., 3, 3),
+    reshape(1.:12., 4, 3),
+    rand(n,d),
+    rand(d,d),
+    rand(d,n) ]
+
+    x, y = size(K)
+    I1 = ones(x,x)/x
+    I2 = ones(y,y)/y
+    Z = K - I1*K - K*I2 + I1*K*I2
+
+    KC = fit(MultivariateStats.KernelCenter, K)
+    @test all(isapprox.(Z, MultivariateStats.transform!(KC, copy(K))))
+end
+
 # kernel calculations
 K = MultivariateStats.pairwise((x,y)->norm(x-y), X, X[:,1:2])
 @test size(K) == (n, 2)
@@ -35,8 +53,7 @@ K = MultivariateStats.pairwise((x,y)->norm(x-y), X, X[:,1])
 @test K[2,1] == norm(X[:,2] - X[:,1])
 
 KC = fit(MultivariateStats.KernelCenter, K)
-@test all(x->x==KC.total, MultivariateStats.transform!(KC, copy(K)))
-
+@test all(isapprox.(MultivariateStats.transform!(KC, copy(K)), 0.0, atol=10e-7))
 
 ## check different parameters
 X = randn(d, n)
@@ -53,6 +70,10 @@ M2 = fit(PCA, X, method=:cov, maxoutdim=3)
 @test outdim(M) == 3
 @test abs.(transform(M, X)) ≈ abs.(transform(M2, X))
 @test abs.(transform(M, X[:,1])) ≈ abs.(transform(M2, X[:,1]))
+
+# issue #44
+Y = randn(d, 2*n)
+@test size(transform(M, Y)) == size(transform(M2, Y))
 
 # reconstruction
 @test_throws ArgumentError reconstruct(M, X)
