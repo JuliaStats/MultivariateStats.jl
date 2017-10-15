@@ -15,10 +15,12 @@ end
 
 """Center kernel matrix."""
 function transform!{T<:AbstractFloat}(C::KernelCenter{T}, K::AbstractMatrix{T})
-    n, m = size(K)
-    @simd for i in 1:n
-        for j in 1:m
-            @inbounds K[i, j] -= C.means[i] + C.means[j] - C.total
+    r, c = size(K)
+    tot = C.total
+    means = mean(K, 1)
+    @simd for i in 1:r
+        for j in 1:c
+            @inbounds K[i, j] -= C.means[i] + means[j] - tot
         end
     end
     return K
