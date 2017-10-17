@@ -2,9 +2,9 @@
 
 #### FastICA type
 
-type ICA
-    mean::Vector{Float64}   # mean vector, of length m (or empty to indicate zero mean)
-    W::Matrix{Float64}      # component coefficient matrix, of size (m, k)
+mutable struct ICA{T<:Real}
+    mean::Vector{T}   # mean vector, of length m (or empty to indicate zero mean)
+    W::Matrix{T}      # component coefficient matrix, of size (m, k)
 end
 
 indim(M::ICA) = size(M.W, 1)
@@ -24,26 +24,25 @@ transform(M::ICA, x::AbstractVecOrMat) = At_mul_B(M.W, centralize(x, M.mean))
 #
 # It returns a function value v, and derivative d
 #
-@compat abstract type ICAGDeriv end
+abstract type ICAGDeriv{T<:Real} end
 
-immutable Tanh <: ICAGDeriv
-    a::Float64
+struct Tanh{T} <: ICAGDeriv{T}
+    a::T
 end
 
-Tanh() = Tanh(1.0)
-evaluate(f::Tanh, x::Float64) = (a = f.a; t = tanh(a * x); (t, a * (1.0 - t * t)))
+evaluate(f::Tanh{T}, x::T) where {T<:Real} = (a = f.a; t = tanh(a * x); (t, a * (1 - t * t)))
 
-immutable Gaus <: ICAGDeriv end
-evaluate(f::Gaus, x::Float64) = (x2 = x * x; e = exp(-0.5 * x2); (x * e, (1.0 - x2) * e))
+struct Gaus{T} <: ICAGDeriv{T} end
+evaluate(f::Gaus{T}, x::T) where {T<:Real} = (x2 = x * x; e = exp(-x2/2); (x * e, (1 - x2) * e))
 
 ## a function to get a g-fun
 
-icagfun(fname::Symbol) = 
-    fname == :tanh ? Tanh() :
-    fname == :gaus ? Gaus() :
+icagfun(fname::Symbol, ::Type{T} = Float64) where {T<:Real}=
+    fname == :tanh ? Tanh{T}(1.0) :
+    fname == :gaus ? Gaus{T}() :
     error("Unknown gfun $(fname)")
 
-icagfun(fname::Symbol, a::Float64) = 
+icagfun(fname::Symbol, a::T) where {T<:Real} =
     fname == :tanh ? Tanh(a) :
     fname == :gaus ? error("The gfun $(fname) has no parameters") :
     error("Unknown gfun $(fname)")
@@ -56,12 +55,12 @@ icagfun(fname::Symbol, a::Float64) =
 #   Independent Component Analysis: Algorithms and Applications.
 #   Neural Network 13(4-5), 2000.
 #
-function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, size (m, k)
-                  X::DenseMatrix{Float64},      # (whitened) observation sample matrix, size(m, n)
-                  fun::ICAGDeriv,               # approximate neg-entropy functor
-                  maxiter::Int,                 # maximum number of iterations
-                  tol::Real,                    # convergence tolerance
-                  verbose::Bool)                # whether to show iterative info
+function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (m, k)
+                  X::DenseMatrix{T},      # (whitened) observation sample matrix, size(m, n)
+                  fun::ICAGDeriv{T},      # approximate neg-entropy functor
+                  maxiter::Int,           # maximum number of iterations
+                  tol::Real,              # convergence tolerance
+                  verbose::Bool) where {T<:Real}          # whether to show iterative info
 
     # argument checking
     m = size(W, 1)
@@ -72,14 +71,14 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
 
     if verbose
         @printf("FastICA Algorithm (m = %d, n = %d, k = %d)\n", m, n, k)
-        println("============================================")  
+        println("============================================")
     end
 
     # pre-allocated storage
-    Wp = Matrix{Float64}(m, k)    # to store previous version of W
-    U  = Matrix{Float64}(n, k)    # to store w'x & g(w'x)
-    Y  = Matrix{Float64}(m, k)    # to store E{x g(w'x)} for components
-    E1 = Vector{Float64}(k)       # store E{g'(w'x)} for components
+    Wp = Matrix{T}(m, k)    # to store previous version of W
+    U  = Matrix{T}(n, k)    # to store w'x & g(w'x)
+    Y  = Matrix{T}(m, k)    # to store E{x g(w'x)} for components
+    E1 = Vector{T}(k)       # store E{g'(w'x)} for components
 
     # normalize each column
     for j = 1:k
@@ -134,7 +133,7 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
             for i = 1:m
                 s += abs(w[i] - wp[i])
             end
-            if s > chg 
+            if s > chg
                 chg = s
             end
         end
@@ -148,18 +147,18 @@ function fastica!(W::DenseMatrix{Float64},      # initialized component matrix, 
     return W
 end
 
-#### interface function 
+#### interface function
 
-function fit(::Type{ICA}, X::DenseMatrix{Float64},          # sample matrix, size (m, n)
+function fit(::Type{ICA}, X::DenseMatrix{T},                # sample matrix, size (m, n)
                           k::Int;                           # number of independent components
                           alg::Symbol=:fastica,             # choice of algorithm
-                          fun::ICAGDeriv=icagfun(:tanh),    # approx neg-entropy functor
-                          do_whiten::Bool=true,             # whether to perform pre-whitening 
+                          fun::ICAGDeriv=icagfun(:tanh, T), # approx neg-entropy functor
+                          do_whiten::Bool=true,             # whether to perform pre-whitening
                           maxiter::Integer=100,             # maximum number of iterations
                           tol::Real=1.0e-6,                 # convergence tolerance
                           mean=nothing,                     # pre-computed mean
-                          winit::Matrix{Float64}=zeros(0,0),  # init guess of W, size (m, k)
-                          verbose::Bool=false)              # whether to display iterations
+                          winit::Matrix{T}=zeros(T,0,0),    # init guess of W, size (m, k)
+                          verbose::Bool=false) where {T<:Real}             # whether to display iterations
 
     # check input arguments
     m, n = size(X)
@@ -172,21 +171,21 @@ function fit(::Type{ICA}, X::DenseMatrix{Float64},          # sample matrix, siz
 
     # preprocess data
     mv = preprocess_mean(X, mean)
-    Z::Matrix{Float64} = centralize(X, mv)
+    Z::Matrix{T} = centralize(X, mv)
 
-    W0::Matrix{Float64} = zeros(0,0)    # whitening matrix
+    W0= zeros(T, 0,0)    # whitening matrix
     if do_whiten
         C = scale!(A_mul_Bt(Z, Z), 1.0 / (n - 1))
         Efac = eigfact(C)
         ord = sortperm(Efac.values; rev=true)
         (v, P) = extract_kv(Efac, ord, k)
-        W0 = scale!(P, 1.0 ./ sqrt.(v))
+        W0 = scale!(P, 1 ./ sqrt.(v))
         # println(W0' * C * W0)
         Z = W0'Z
     end
 
     # initialize
-    W = (isempty(winit) ? randn(size(Z,1), k) : copy(winit))::Matrix{Float64}
+    W = (isempty(winit) ? randn(T, size(Z,1), k) : copy(winit))
 
     # invoke core algorithm
     fastica!(W, Z, fun, maxiter, tol, verbose)
