@@ -2,7 +2,7 @@
 Welcome to MultivariateStats's documentation
 =============================================
 
-*MultivariateStats.jl* is a Julia package for multivariate statistical analysis. It provides a rich set of useful analysis techniques, such as PCA, CCA, LDA, PLS, etc. 
+*MultivariateStats.jl* is a Julia package for multivariate statistical analysis. It provides a rich set of useful analysis techniques, such as PCA, CCA, LDA, PLS, etc.
 
 **Contents:**
 
@@ -13,11 +13,13 @@ Welcome to MultivariateStats's documentation
    whiten.rst
    pca.rst
    ppca.rst
+   kpca.rst
    cca.rst
    cmds.rst
    lda.rst
    mclda.rst
    ica.rst
+   fa.rst
 
 **Notes:**
 

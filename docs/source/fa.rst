@@ -1,14 +1,14 @@
-Probabilistic Principal Component Analysis
-==========================================
+Factor Analysis
+===============
 
-`Probabilistic Principal Component Analysis <https://www.microsoft.com/en-us/research/publication/probabilistic-principal-component-analysis/>`_ (PPCA) represents a constrained form of the Gaussian distribution in which the number of free parameters can be restricted while still allowing the model to capture the dominant correlations in a data set. It is expressed as the maximum likelihood solution of a probabilistic latent variable model [BSHP06]_.
+`Factor Analysis <https://en.wikipedia.org/wiki/Factor_analysis>`_ (FA) is a linear-Gaussian latent variable model that is closely related to probabilistic PCA. In contrast to the probabilistic PCA model, the covariance of conditional distribution of the observed variable  given the latent variable is diagonal rather than isotropic [BSHP06]_.
 
-This package defines a ``PPCA`` type to represent a probabilistic PCA model, and provides a set of methods to access the properties.
+This package defines a ``FactorAnalysis`` type to represent a factor analysis model, and provides a set of methods to access the properties.
 
 Properties
 ~~~~~~~~~~~
 
-Let ``M`` be an instance of ``PPCA``, ``d`` be the dimension of observations, and ``p`` be the output dimension (*i.e* the dimension of the principal subspace)
+Let ``M`` be an instance of ``FactorAnalysis``, ``d`` be the dimension of observations, and ``p`` be the output dimension (*i.e* the dimension of the principal subspace)
 
 .. function:: indim(M)
 
@@ -32,9 +32,9 @@ Let ``M`` be an instance of ``PPCA``, ``d`` be the dimension of observations, an
 
     The factor loadings matrix (of size ``(d, p)``).
 
-.. function:: var(M)
+.. function:: cov(M)
 
-    The total residual variance.
+    The diagonal covariance matrix.
 
 
 Transformation and Construction
@@ -44,15 +44,15 @@ Given a probabilistic PCA model ``M``, one can use it to transform observations 
 
 .. math::
 
-    \mathbf{z} = (\mathbf{W}^T \mathbf{W} + \sigma^2 \mathbf{I}) \mathbf{W}^T (\mathbf{x} - \boldsymbol{\mu})
+    \mathbf{z} =  \mathbf{W}^T \mathbf{\Sigma}^{-1} (\mathbf{x} - \boldsymbol{\mu})
 
 or use it to reconstruct (approximately) the observations from latent variables, as
 
 .. math::
 
-    \tilde{\mathbf{x}} = \mathbf{W} \mathbb{E}[\mathbf{z}] + \boldsymbol{\mu}
+    \tilde{\mathbf{x}} = \mathbf{\Sigma} \mathbf{W} (\mathbf{W}^T \mathbf{W})^{-1} \mathbf{z} + \boldsymbol{\mu}
 
-Here, :math:`\mathbf{W}` is the factor loadings or weight matrix.
+Here, :math:`\mathbf{W}` is the factor loadings or weight matrix, :math:`\mathbf{\Sigma} = \mathbf{\Psi} + \mathbf{W}^T \mathbf{W}` is the covariance matrix.
 
 The package provides methods to do so:
 
@@ -72,13 +72,13 @@ The package provides methods to do so:
 Data Analysis
 ~~~~~~~~~~~~~~~
 
-One can use the ``fit`` method to perform PCA over a given dataset.
+One can use the ``fit`` method to perform factor analysis over a given dataset.
 
-.. function:: fit(PPCA, X; ...)
+.. function:: fit(FactorAnalysis, X; ...)
 
-    Perform probabilistic PCA over the data given in a matrix ``X``. Each column of ``X`` is an observation.
+    Perform factor analysis over the data given in a matrix ``X``. Each column of ``X`` is an observation.
 
-    This method returns an instance of ``PCA``.
+    This method returns an instance of ``FactorAnalysis``.
 
     **Keyword arguments:**
 
@@ -87,13 +87,12 @@ One can use the ``fit`` method to perform PCA over a given dataset.
     =========== =============================================================== ===============
       name         description                                                   default
     =========== =============================================================== ===============
-     method     The choice of methods:                                           ``:ml``
+     method     The choice of methods:                                           ``:cm``
 
-                - ``:ml``: use maximum likelihood version of probabilistic PCA
-                - ``:em``: use EM version of probabilistic PCA
-                - ``:bayes``: use Bayesian PCA
+                - ``:em``: use EM version of factor analysis
+                - ``:cm``: use CM version of factor analysis
     ----------- --------------------------------------------------------------- ---------------
-     maxoutdim  Maximum output dimension.                                        ``d-1``
+     maxoutdim  Maximum output dimension                                         ``d-1``
     ----------- --------------------------------------------------------------- ---------------
      mean       The mean vector, which can be either of:                         ``nothing``
 
@@ -104,11 +103,13 @@ One can use the ``fit`` method to perform PCA over a given dataset.
      tol        Convergence tolerance                                            ``1.0e-6``
     ----------- --------------------------------------------------------------- ---------------
      tot        Maximum number of iterations                                     ``1000``
+    ----------- --------------------------------------------------------------- ---------------
+     η          Variance low bound                                               ``1.0e-6``
     =========== =============================================================== ===============
 
     **Notes:**
 
-    - This function calls ``ppcaml``, ``ppcaem`` or ``bayespca`` internally, depending on the choice of method.
+    - This function calls ``facm`` or ``faem`` internally, depending on the choice of method.
 
 **Example:**
 
@@ -119,10 +120,10 @@ One can use the ``fit`` method to perform PCA over a given dataset.
     # suppose Xtr and Xte are training and testing data matrix,
     # with each observation in a column
 
-    # train a PCA model
-    M = fit(PPCA, Xtr; maxoutdim=100)
+    # train a FactorAnalysis model
+    M = fit(FactorAnalysis, Xtr; maxoutdim=100)
 
-    # apply PCA model to testing set
+    # apply FactorAnalysis model to testing set
     Yte = transform(M, Xte)
 
     # reconstruct testing observations (approximately)
@@ -132,24 +133,11 @@ One can use the ``fit`` method to perform PCA over a given dataset.
 Core Algorithms
 ~~~~~~~~~~~~~~~~~
 
-Three algorithms are implemented in this package: ``ppcaml``, ``ppcaem``, and ``bayespca``.
+Two algorithms are implemented in this package: ``faem`` and ``facm``.
 
-.. function:: ppcaml(Z, mean, tw; ...)
+.. function:: faem(S, mean, n; ...)
 
-    Compute probabilistic PCA using on maximum likelihood formulation for a centralized sample matrix ``Z``.
-
-    :param Z: provides centralized samples.
-
-    :param mean: The mean vector of the **original** samples, which can be a vector of length ``d``,
-                 or an empty vector ``Float64[]`` indicating a zero mean.
-
-    :return: The resultant PPCA model.
-
-    :note: This function accepts two keyword arguments: ``maxoutdim`` and ``tol``.
-
-.. function:: ppcaem(S, mean, n; ...)
-
-    Compute probabilistic PCA based on expectation-maximization algorithm for a given sample covariance matrix ``S``.
+    Perform factor analysis using an expectation-maximization algorithm for a given sample covariance matrix ``S`` [RUBN82]_.
 
     :param S: The sample covariance matrix.
 
@@ -158,13 +146,13 @@ Three algorithms are implemented in this package: ``ppcaml``, ``ppcaem``, and ``
 
     :param n: The number of observations.
 
-    :return: The resultant PPCA model.
+    :return: The resultant FactorAnalysis model.
 
-    :note: This function accepts two keyword arguments: ``maxoutdim``, ``tol``,  and ``tot``.
+    :note: This function accepts two keyword arguments: ``maxoutdim``,``tol``, and ``tot``.
 
-.. function:: bayespca(S, mean, n; ...)
+.. function:: facm(S, mean, n; ...)
 
-    Compute probabilistic PCA based on Bayesian algorithm for a given sample covariance matrix ``S``.
+    Perform factor analysis using an fast conditional maximization algorithm for a given sample covariance matrix ``S`` [ZHAO08]_.
 
     :param S: The sample covariance matrix.
 
@@ -173,15 +161,13 @@ Three algorithms are implemented in this package: ``ppcaml``, ``ppcaem``, and ``
 
     :param n: The number of observations.
 
-    :return: The resultant PPCA model.
+    :return: The resultant FactorAnalysis model.
 
-    :note: This function accepts two keyword arguments: ``maxoutdim``, ``tol``,  and ``tot``.
+    :note: This function accepts two keyword arguments: ``maxoutdim``, ``tol``, ``tot``, and ``η``.
 
-    **Additional notes:**
-
-    - Function uses the ``maxoutdim`` parameter as an upper boundary when it automatically determines the latent space dimensionality.
 
 References
 ~~~~~~~~~~
 
-.. [BSHP06] Bishop, C. M. Pattern Recognition and Machine Learning, 2006.
+.. [RUBN82] Rubin, Donald B., and Dorothy T. Thayer. EM algorithms for ML factor analysis. Psychometrika 47.1 (1982): 69-76.
+.. [ZHAO08] Zhao, J-H., Philip LH Yu, and Qibao Jiang. ML estimation for factor analysis: EM or non-EM?. Statistics and computing 18.2 (2008): 109-123.

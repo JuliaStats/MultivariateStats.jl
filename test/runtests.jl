@@ -6,7 +6,9 @@ tests = ["lreg",
          "lda",
          "mclda",
          "ica",
-         "ppca"]
+         "ppca",
+         "kpca",
+         "fa"]
 
 println("Running tests:")
 
