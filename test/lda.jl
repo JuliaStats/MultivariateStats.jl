@@ -65,3 +65,7 @@ f = ldacov(Cp, Cn, up, un)
 f = fit(LinearDiscriminant, Xp, Xn)
 @test f.w ≈ w_gt
 @test f.b ≈ b_gt
+
+# input of Float32 type
+L = fit(LinearDiscriminant, [1 2 3 4f0], [5 6 7 8f0])
+@test isa(L.b, Float32)
