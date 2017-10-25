@@ -2,9 +2,9 @@
 
 #### Type to represent a linear discriminant functional
 
-@compat abstract type Discriminant{T} end
+abstract type Discriminant{T} end
 
-immutable LinearDiscriminant{T<:AbstractFloat} <: Discriminant{T}
+struct LinearDiscriminant{T<:Real} <: Discriminant{T}
     w::Vector{T}
     b::T
 end
@@ -28,9 +28,9 @@ predict(f::Discriminant, X::AbstractMatrix) = (Y = evaluate(f, X); Bool[y > 0 fo
 
 #### function to solve linear discriminant
 
-function ldacov{T<:AbstractFloat}(C::DenseMatrix{T},
+function ldacov(C::DenseMatrix{T},
                 μp::DenseVector{T},
-                μn::DenseVector{T})
+                μn::DenseVector{T})  where {T<:Real}
 
     w = cholfact(C) \ (μp - μn)
     ap = w ⋅ μp
@@ -39,14 +39,14 @@ function ldacov{T<:AbstractFloat}(C::DenseMatrix{T},
     LinearDiscriminant(scale!(w, c), 1 - c * ap)
 end
 
-ldacov{T<:AbstractFloat}(Cp::DenseMatrix{T},
+ldacov(Cp::DenseMatrix{T},
        Cn::DenseMatrix{T},
        μp::DenseVector{T},
-       μn::DenseVector{T}) = ldacov(Cp + Cn, μp, μn)
+       μn::DenseVector{T})  where {T<:Real} = ldacov(Cp + Cn, μp, μn)
 
 #### interface functions
 
-function fit{T<:AbstractFloat}(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T})
+function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T})  where {T<:Real}
     μp = vec(mean(Xp, 2))
     μn = vec(mean(Xn, 2))
     Zp = Xp .- μp
@@ -59,7 +59,7 @@ end
 
 #### Multiclass LDA Stats
 
-type MulticlassLDAStats{T<:AbstractFloat}
+mutable struct MulticlassLDAStats{T<:Real}
     dim::Int              # sample dimensions
     nclasses::Int         # number of classes
     cweights::Vector{T}   # class weights
@@ -77,11 +77,11 @@ classmeans(S::MulticlassLDAStats) = S.cmeans
 withclass_scatter(S::MulticlassLDAStats) = S.Sw
 betweenclass_scatter(S::MulticlassLDAStats) = S.Sb
 
-function MulticlassLDAStats{T<:AbstractFloat}(cweights::Vector{T},
+function MulticlassLDAStats(cweights::Vector{T},
                             mean::Vector{T},
                             cmeans::Matrix{T},
                             Sw::Matrix{T},
-                            Sb::Matrix{T})
+                            Sb::Matrix{T}) where {T<:Real}
     d, nc = size(cmeans)
     length(mean) == d || throw(DimensionMismatch("Incorrect length of mean"))
     length(cweights) == nc || throw(DimensionMismatch("Incorrect length of cweights"))
@@ -91,7 +91,7 @@ function MulticlassLDAStats{T<:AbstractFloat}(cweights::Vector{T},
     MulticlassLDAStats(d, nc, cweights, tw, mean, cmeans, Sw, Sb)
 end
 
-function multiclass_lda_stats{T<:AbstractFloat}(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int})
+function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}) where {T<:Real}
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
@@ -114,7 +114,7 @@ end
 
 #### Multiclass LDA
 
-type MulticlassLDA{T<:AbstractFloat}
+mutable struct MulticlassLDA{T<:Real}
     proj::Matrix{T}
     pmeans::Matrix{T}
     stats::MulticlassLDAStats{T}
@@ -132,12 +132,12 @@ classweights(M::MulticlassLDA) = classweights(M.stats)
 withclass_scatter(M::MulticlassLDA) = withclass_scatter(M.stats)
 betweenclass_scatter(M::MulticlassLDA) = betweenclass_scatter(M.stats)
 
-transform{T<:AbstractFloat}(M::MulticlassLDA, x::AbstractVecOrMat{T}) = M.proj'x
+transform(M::MulticlassLDA, x::AbstractVecOrMat{T}) where {T<:Real} = M.proj'x
 
-function fit{T<:AbstractFloat}(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
+function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
              method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
-             regcoef::T=T(1.0e-6))
+             regcoef::T=T(1.0e-6))  where {T<:Real}
 
     multiclass_lda(multiclass_lda_stats(nc, X, y);
                    method=method,
@@ -145,21 +145,21 @@ function fit{T<:AbstractFloat}(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}
                    outdim=outdim)
 end
 
-function multiclass_lda{T<:AbstractFloat}(S::MulticlassLDAStats{T};
+function multiclass_lda(S::MulticlassLDAStats{T};
                         method::Symbol=:gevd,
                         outdim::Int=min(size(X,1), S.nclasses-1),
-                        regcoef::T=T(1.0e-6))
+                        regcoef::T=T(1.0e-6)) where {T<:Real}
 
     P = mclda_solve(S.Sb, S.Sw, method, outdim, regcoef)
     MulticlassLDA(P, P'S.cmeans, S)
 end
 
-mclda_solve{T<:AbstractFloat}(Sb::DenseMatrix{T}, Sw::DenseMatrix{T}, method::Symbol, p::Int, regcoef::T) =
+mclda_solve(Sb::DenseMatrix{T}, Sw::DenseMatrix{T}, method::Symbol, p::Int, regcoef::T)  where {T<:Real} =
     mclda_solve!(copy(Sb), copy(Sw), method, p, regcoef)
 
-function mclda_solve!{T<:AbstractFloat}(Sb::Matrix{T},
+function mclda_solve!(Sb::Matrix{T},
                       Sw::Matrix{T},
-                      method::Symbol, p::Int, regcoef::T)
+                      method::Symbol, p::Int, regcoef::T) where {T<:Real}
 
     p <= size(Sb, 1) || throw(ArgumentError("p cannot exceed sample dimension."))
 
@@ -182,7 +182,7 @@ function mclda_solve!{T<:AbstractFloat}(Sb::Matrix{T},
     return P::Matrix{T}
 end
 
-function _lda_whitening!{T<:AbstractFloat}(C::Matrix{T}, regcoef::T)
+function _lda_whitening!(C::Matrix{T}, regcoef::T) where {T<:Real}
     n = size(C,1)
     E = eigfact!(Symmetric(C))
     v = E.values
@@ -199,7 +199,7 @@ end
 # it makes more sense to perform LDA on the space spanned by the
 # within-group scatter.
 
-immutable SubspaceLDA{T<:AbstractFloat}
+struct SubspaceLDA{T<:Real}
     projw::Matrix{T}
     projLDA::Matrix{T}
     λ::Vector{T}
@@ -218,10 +218,13 @@ classweights(M::SubspaceLDA) = M.cweights
 
 transform(M::SubspaceLDA, x) = M.projLDA' * (M.projw' * x)
 
-fit{T,F<:SubspaceLDA}(::Type{F}, X::AbstractMatrix{T}, nc::Int, label::AbstractVector{Int})=
+fit(::Type{F}, X::AbstractMatrix{T}, nc::Int, label::AbstractVector{Int}) where {T<:Real, F<:SubspaceLDA} =
     fit(F, X, label, nc)
 
-function fit{T,F<:SubspaceLDA}(::Type{F}, X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label); normalize::Bool=false)
+function fit(::Type{F}, X::AbstractMatrix{T},
+             label::AbstractVector{Int},
+             nc=maximum(label);
+             normalize::Bool=false) where {T<:Real, F<:SubspaceLDA}
     d, n = size(X, 1), size(X, 2)
     n ≥ nc || throw(ArgumentError("The number of samples is less than the number of classes"))
     length(label) == n || throw(DimensionMismatch("Inconsistent array sizes."))
@@ -247,7 +250,7 @@ end
 # Reference: Howland & Park (2006), "Generalizing discriminant analysis
 # using the generalized singular value decomposition", IEEE
 # Trans. Patt. Anal. & Mach. Int., 26: 995-1006.
-function lda_gsvd{T}(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::AbstractVector{Int})
+function lda_gsvd(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::AbstractVector{Int}) where {T<:Real}
     nc = length(cweights)
     K = vcat(Hb', Hw')
     P, R, Q = svd(K, thin=true)
@@ -268,7 +271,7 @@ function lda_gsvd{T}(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::Abs
     λ, G
 end
 
-function center{T}(X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label))
+function center(X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label)) where {T<:Real}
     d, n = size(X,1), size(X,2)
     # Calculate the class weights and means
     cmeans = zeros(T, d, nc)
