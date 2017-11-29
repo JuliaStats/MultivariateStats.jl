@@ -189,8 +189,8 @@ function _ccasvd(Zx, Zy, xmean, ymean, p::Int)
     # compute Px and Py
     ord = sortperm(S.S; rev=true)
     si = ord[1:p]
-    Px = scale!(Sx.U, 1.0 ./ Sx.S) * S.U[:, si]
-    Py = A_mul_Bt(scale!(Sy.U, 1.0 ./ Sy.S), S.Vt[si, :])
+    Px = scale!(Sx.U, inv.(Sx.S)) * S.U[:, si]
+    Py = A_mul_Bt(scale!(Sy.U, inv.(Sy.S)), S.Vt[si, :])
 
     # scale so that Px' * Cxx * Py == I 
     #           and Py' * Cyy * Py == I, 
@@ -215,7 +215,6 @@ function fit(::Type{CCA{<:Real}}, X::DenseMatrix{<:Real}, Y::DenseMatrix{<:Real}
              method::Symbol=:svd, 
              xmean=nothing, 
              ymean=nothing)
-
     dx, n = size(X)
     dy, n2 = size(Y)
 
