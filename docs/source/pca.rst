@@ -163,8 +163,8 @@ One can use the ``fit`` method to perform PCA over a given dataset.
     # suppose Xtr and Xte are training and testing data matrix,
     # with each observation in a column
 
-    # train a PCA model
-    M = fit(PCA, Xtr; maxoutdim=100)
+    # train a PCA model, allowing up to 3 dimensions
+    M = fit(PCA, Xtr; maxoutdim=3)
 
     # apply PCA model to testing set
     Yte = transform(M, Xte)
@@ -172,10 +172,10 @@ One can use the ``fit`` method to perform PCA over a given dataset.
     # reconstruct testing observations (approximately)
     Xr = reconstruct(M, Yte)
 
-    # group results by testing set labels for color coding, and select first 3 dimensions
-    setosa = Yte[1:3,Xte_labels.=="setosa"]
-    versicolor = Yte[1:3,Xte_labels.=="versicolor"]
-    virginica = Yte[1:3,Xte_labels.=="virginica"]
+    # group results by testing set labels for color coding
+    setosa = Yte[:,Xte_labels.=="setosa"]
+    versicolor = Yte[:,Xte_labels.=="versicolor"]
+    virginica = Yte[:,Xte_labels.=="virginica"]
 
     # visualize first 3 principal components in 3D interacive plot
     p = scatter(setosa[1,:],setosa[2,:],setosa[3,:],marker=:circle,linewidth=0)
