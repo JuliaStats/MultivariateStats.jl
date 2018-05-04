@@ -130,10 +130,8 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
             s = 0.0
             w = view(W,:,j)
             wp = view(Wp,:,j)
-            for i = 1:m
-                s += abs(w[i] - wp[i])
-            end
-            if s > chg
+            s = abs(abs(dot(w, wp))-1)
+            if s > chg 
                 chg = s
             end
         end

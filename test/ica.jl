@@ -82,7 +82,7 @@ M = fit(ICA, X, k; do_whiten=true, tol=Inf)
 W = M.W
 @test W'C * W ≈ eye(k)
 
-@test_throws StatsBase.ConvergenceException fit(ICA, X, k; do_whiten=true, tol=1)
+@test_throws StatsBase.ConvergenceException fit(ICA, X, k; do_whiten=true, tol=1e-12, maxiter=2)
 
 # Use data of different type
 
