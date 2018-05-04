@@ -35,4 +35,7 @@ A Julia package for multivariate statistics and data analysis (e.g. dimensionali
 
 ## Resources
 
-- **Documentation:** <http://multivariatestatsjl.readthedocs.org/en/latest/index.html>
+#### Documentation
+
+- Stable : <http://multivariatestatsjl.readthedocs.org/en/stable/index.html>
+- Latest : <http://multivariatestatsjl.readthedocs.org/en/latest/index.html>
