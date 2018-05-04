@@ -9,45 +9,46 @@ dx = 5
 dy = 6
 p = 3
 
-# CCA with zero means
+for T in (Float16, Float64)
+    # CCA with zero means
 
-X = rand(dx, 100)
-Y = rand(dy, 100)
+    X = rand(T, (dx, 100))
+    Y = rand(T, (dy, 100))
 
-Px = qr(randn(dx, dx))[1][:, 1:p]
-Py = qr(randn(dy, dy))[1][:, 1:p]
+    Px = qr(randn(T, (dx, dx)))[1][:, 1:p]
+    Py = qr(randn(T, (dy, dy)))[1][:, 1:p]
 
-M = CCA(Float64[], Float64[], Px, Py, [0.8, 0.6, 0.4])
+    M = CCA(T[], T[], Px, Py, T[0.8, 0.6, 0.4])
 
-@test xindim(M) == dx
-@test yindim(M) == dy
-@test xmean(M) == zeros(dx)
-@test ymean(M) == zeros(dy)
-@test xprojection(M) == Px
-@test yprojection(M) == Py
-@test correlations(M) == [0.8, 0.6, 0.4]
+    @test xindim(M) == dx
+    @test yindim(M) == dy
+    @test xmean(M) == zeros(dx)
+    @test ymean(M) == zeros(dy)
+    @test xprojection(M) == Px
+    @test yprojection(M) == Py
+    @test correlations(M) == T[0.8, 0.6, 0.4]
 
-@test xtransform(M, X) ≈ Px'X
-@test ytransform(M, Y) ≈ Py'Y
+    @test xtransform(M, X) ≈ Px'X
+    @test ytransform(M, Y) ≈ Py'Y
 
-## CCA with nonzero means
+    ## CCA with nonzero means
 
-ux = randn(dx)
-uy = randn(dy)
+    ux = randn(T, dx)
+    uy = randn(T, dy)
 
-M = CCA(ux, uy, Px, Py, [0.8, 0.6, 0.4])
+    M = CCA(ux, uy, Px, Py, T[0.8, 0.6, 0.4])
 
-@test xindim(M) == dx
-@test yindim(M) == dy
-@test xmean(M) == ux
-@test ymean(M) == uy
-@test xprojection(M) == Px
-@test yprojection(M) == Py
-@test correlations(M) == [0.8, 0.6, 0.4]
+    @test xindim(M) == dx
+    @test yindim(M) == dy
+    @test xmean(M) == ux
+    @test ymean(M) == uy
+    @test xprojection(M) == Px
+    @test yprojection(M) == Py
+    @test correlations(M) == T[0.8, 0.6, 0.4]
 
-@test xtransform(M, X) ≈ Px' * (X .- ux)
-@test ytransform(M, Y) ≈ Py' * (Y .- uy)
-
+    @test xtransform(M, X) ≈ Px' * (X .- ux)
+    @test ytransform(M, Y) ≈ Py' * (Y .- uy)
+end
 
 ## prepare data
 
