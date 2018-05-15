@@ -110,7 +110,8 @@ function pcacov{T<:AbstractFloat}(C::DenseMatrix{T}, mean::Vector{T};
     PCA(mean, P, v, vsum)
 end
 
-function pcasvd{T<:AbstractFloat}(Z::DenseMatrix{T}, mean::Vector{T}, tw::Real;
+
+function pcasvd{T<:AbstractFloat}(Z::AbstractMatrix{T}, mean::Vector{T}, tw::Real;
                 maxoutdim::Int=min(size(Z)...),
                 pratio::AbstractFloat=default_pca_pratio)
 
@@ -130,7 +131,7 @@ end
 
 ## interface functions
 
-function fit{T<:AbstractFloat}(::Type{PCA}, X::DenseMatrix{T};
+function fit{T<:AbstractFloat}(::Type{PCA}, X::AbstractMatrix{T};
              method::Symbol=:auto,
              maxoutdim::Int=size(X,1),
              pratio::AbstractFloat=default_pca_pratio,
