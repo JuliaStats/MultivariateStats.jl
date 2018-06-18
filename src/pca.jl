@@ -110,7 +110,8 @@ function pcacov{T<:AbstractFloat}(C::DenseMatrix{T}, mean::Vector{T};
     PCA(mean, P, v, vsum)
 end
 
-function pcasvd{T<:AbstractFloat}(Z::DenseMatrix{T}, mean::Vector{T}, tw::Real;
+
+function pcasvd{T<:AbstractFloat}(Z::AbstractMatrix{T}, mean::Vector{T}, tw::Real;
                 maxoutdim::Int=min(size(Z)...),
                 pratio::AbstractFloat=default_pca_pratio)
 
@@ -130,7 +131,7 @@ end
 
 ## interface functions
 
-function fit{T<:AbstractFloat}(::Type{PCA}, X::DenseMatrix{T};
+function fit{T<:AbstractFloat}(::Type{PCA}, X::AbstractMatrix{T};
              method::Symbol=:auto,
              maxoutdim::Int=size(X,1),
              pratio::AbstractFloat=default_pca_pratio,
@@ -148,7 +149,12 @@ function fit{T<:AbstractFloat}(::Type{PCA}, X::DenseMatrix{T};
 
     # delegate to core
     if method == :cov
-        C = Base.covm(X, isempty(mv) ? 0 : mv, 2)
+        #This if-else saves an incredible amount of memory
+        if isempty(mv)
+            C = Base.covzm(X, 2)
+        else
+            C = Base.covm(X, mv, 2)
+        end
         M = pcacov(C, mv; maxoutdim=maxoutdim, pratio=pratio)
     elseif method == :svd
         Z = centralize(X, mv)

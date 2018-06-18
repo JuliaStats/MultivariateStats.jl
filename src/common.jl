@@ -10,20 +10,20 @@ printvec(io::IO, a::AbstractVector) = printarr(io, a')
 printarrln(io::IO, a::AbstractArray) = (printarr(io, a); println(io))
 printvecln(io::IO, a::AbstractVector) = (printvec(io, a); println(io))
 
-# centralize 
+# centralize
 
-centralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x - m)::typeof(x)
-centralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .- m)::typeof(x)
+centralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x - m)#::typeof(x)
+centralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .- m)#::typeof(x)
 
-decentralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x + m)::typeof(x)
-decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)::typeof(x)
+decentralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x + m)#::typeof(x)
+decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)#::typeof(x)
 
-# get a full mean vector 
+# get a full mean vector
 
-fullmean{T}(d::Int, mv::Vector{T}) = (isempty(mv) ? zeros(T, d) : mv)::Vector{T} 
+fullmean{T}(d::Int, mv::Vector{T}) = (isempty(mv) ? zeros(T, d) : mv)::Vector{T}
 
-preprocess_mean{T<:AbstractFloat}(X::Matrix{T}, m) = (m == nothing ? vec(Base.mean(X, 2)) :
-                                                      m == 0 ? T[] : 
+preprocess_mean{T<:AbstractFloat}(X::AbstractMatrix{T}, m) = (m == nothing ? vec(Base.mean(X, 2)) :
+                                                      m == 0 ? T[] :
                                                       m)::Vector{T}
 
 # choose the first k values and columns
@@ -100,9 +100,8 @@ end
 # regularize a symmetric matrix
 function regularize_symmat!{T<:AbstractFloat}(A::Matrix{T}, lambda::Real)
     if lambda > 0
-        emax = eigmax(Symmetric(A)) 
+        emax = eigmax(Symmetric(A))
         add_diag!(A, emax * lambda)
     end
     return A
 end
-
