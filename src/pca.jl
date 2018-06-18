@@ -149,7 +149,12 @@ function fit{T<:AbstractFloat}(::Type{PCA}, X::AbstractMatrix{T};
 
     # delegate to core
     if method == :cov
-        C = Base.covm(X, isempty(mv) ? 0 : mv, 2)
+        #This if-else saves an incredible amount of memory
+        if isempty(mv)
+            C = Base.covzm(X, 2)
+        else
+            C = Base.covm(X, mv, 2)
+        end
         M = pcacov(C, mv; maxoutdim=maxoutdim, pratio=pratio)
     elseif method == :svd
         Z = centralize(X, mv)
