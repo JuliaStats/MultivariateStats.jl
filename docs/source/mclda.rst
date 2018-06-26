@@ -16,7 +16,7 @@ The **within-class scatter matrix** is defined as:
 
 .. math::
 
-    \mathbf{S}_w = \sum_{i=1}^n (\mathbf{x}_i - \boldsymbol{\mu}_{y_i}) (\mathbf{x}_i - \boldsymbol{\mu}_{y_i})^T
+    \mathbf{S}_w = \sum_{i=1}^n (\mathbf{x}_i - \boldsymbol{\mu}_{y_k}) (\mathbf{x}_i - \boldsymbol{\mu}_{y_k})^T
 
 Here, :math:`\boldsymbol{\mu}_k` is the sample mean of the ``k``-th class.
 
