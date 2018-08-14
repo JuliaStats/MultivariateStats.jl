@@ -1,5 +1,7 @@
 # Independent Component Analysis
 
+import Printf
+
 #### FastICA type
 
 mutable struct ICA{T<:Real}
@@ -9,9 +11,9 @@ end
 
 indim(M::ICA) = size(M.W, 1)
 outdim(M::ICA) = size(M.W, 2)
-Base.mean(M::ICA) = fullmean(indim(M), M.mean)
+mean(M::ICA) = fullmean(indim(M), M.mean)
 
-transform(M::ICA, x::AbstractVecOrMat) = At_mul_B(M.W, centralize(x, M.mean))
+transform(M::ICA, x::AbstractVecOrMat) = transpose(M.W) * centralize(x, M.mean)
 
 
 #### core algorithm
@@ -30,19 +32,19 @@ struct Tanh{T} <: ICAGDeriv{T}
     a::T
 end
 
-evaluate(f::Tanh{T}, x::T) where {T<:Real} = (a = f.a; t = tanh(a * x); (t, a * (1 - t * t)))
+evaluate(f::Tanh{T}, x::T) where T<:Real = (a = f.a; t = tanh(a * x); (t, a * (1 - t * t)))
 
 struct Gaus{T} <: ICAGDeriv{T} end
-evaluate(f::Gaus{T}, x::T) where {T<:Real} = (x2 = x * x; e = exp(-x2/2); (x * e, (1 - x2) * e))
+evaluate(f::Gaus{T}, x::T) where T<:Real = (x2 = x * x; e = exp(-x2/2); (x * e, (1 - x2) * e))
 
 ## a function to get a g-fun
 
-icagfun(fname::Symbol, ::Type{T} = Float64) where {T<:Real}=
+icagfun(fname::Symbol, ::Type{T} = Float64) where T<:Real=
     fname == :tanh ? Tanh{T}(1.0) :
     fname == :gaus ? Gaus{T}() :
     error("Unknown gfun $(fname)")
 
-icagfun(fname::Symbol, a::T) where {T<:Real} =
+icagfun(fname::Symbol, a::T) where T<:Real =
     fname == :tanh ? Tanh(a) :
     fname == :gaus ? error("The gfun $(fname) has no parameters") :
     error("Unknown gfun $(fname)")
@@ -60,7 +62,7 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
                   fun::ICAGDeriv{T},      # approximate neg-entropy functor
                   maxiter::Int,           # maximum number of iterations
                   tol::Real,              # convergence tolerance
-                  verbose::Bool) where {T<:Real}          # whether to show iterative info
+                  verbose::Bool) where T<:Real          # whether to show iterative info
 
     # argument checking
     m = size(W, 1)
@@ -70,20 +72,20 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
     k <= min(m, n) || throw(DimensionMismatch("k must not exceed min(m, n)."))
 
     if verbose
-        @printf("FastICA Algorithm (m = %d, n = %d, k = %d)\n", m, n, k)
+        Printf.@printf("FastICA Algorithm (m = %d, n = %d, k = %d)\n", m, n, k)
         println("============================================")
     end
 
     # pre-allocated storage
-    Wp = Matrix{T}(m, k)    # to store previous version of W
-    U  = Matrix{T}(n, k)    # to store w'x & g(w'x)
-    Y  = Matrix{T}(m, k)    # to store E{x g(w'x)} for components
-    E1 = Vector{T}(k)       # store E{g'(w'x)} for components
+    Wp = Matrix{T}(undef, m, k)    # to store previous version of W
+    U  = Matrix{T}(undef, n, k)    # to store w'x & g(w'x)
+    Y  = Matrix{T}(undef, m, k)    # to store E{x g(w'x)} for components
+    E1 = Vector{T}(undef, k)       # store E{g'(w'x)} for components
 
     # normalize each column
     for j = 1:k
         w = view(W,:,j)
-        scale!(w, 1.0 / sqrt(sum(abs2, w)))
+        rmul!(w, 1.0 / sqrt(sum(abs2, w)))
     end
 
     # main loop
@@ -92,10 +94,10 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
     converged = false
     while !converged && t < maxiter
         t += 1
-        copy!(Wp, W)
+        copyto!(Wp, W)
 
         # apply W of previous step
-        At_mul_B!(U, X, W)  # u <- w'x
+        mul!(U, transpose(X), W) # u <- w'x
 
         # compute g(w'x) --> U and E{g'(w'x)} --> E1
         _s = 0.0
@@ -109,7 +111,7 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
         end
 
         # compute E{x g(w'x)} --> Y
-        scale!(A_mul_B!(Y, X, U), 1.0 / n)
+        rmul!(mul!(Y, X, U), 1.0 / n)
 
         # update w: E{x g(w'x)} - E{g'(w'x)} w := y - e1 * w
         for j = 1:k
@@ -122,7 +124,7 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
         end
 
         # symmetric decorrelation: W <- W * (W'W)^{-1/2}
-        copy!(W, W * _invsqrtm!(W'W))
+        copyto!(W, W * _invsqrtm!(W'W))
 
         # compare with Wp
         chg = 0.0
@@ -140,7 +142,7 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
         converged = (chg < tol)
 
         if verbose
-            @printf("Iter %4d:  change = %.6e\n", t, chg)
+            Printf.@printf("Iter %4d:  change = %.6e\n", t, chg)
         end
     end
     converged || throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
@@ -158,7 +160,7 @@ function fit(::Type{ICA}, X::DenseMatrix{T},                # sample matrix, siz
                           tol::Real=1.0e-6,                 # convergence tolerance
                           mean=nothing,                     # pre-computed mean
                           winit::Matrix{T}=zeros(T,0,0),    # init guess of W, size (m, k)
-                          verbose::Bool=false) where {T<:Real}             # whether to display iterations
+                          verbose::Bool=false) where T<:Real             # whether to display iterations
 
     # check input arguments
     m, n = size(X)
@@ -175,12 +177,11 @@ function fit(::Type{ICA}, X::DenseMatrix{T},                # sample matrix, siz
 
     W0= zeros(T, 0,0)    # whitening matrix
     if do_whiten
-        C = scale!(A_mul_Bt(Z, Z), 1.0 / (n - 1))
-        Efac = eigfact(C)
+        C = rmul!(Z * transpose(Z), 1.0 / (n - 1))
+        Efac = eigen(C)
         ord = sortperm(Efac.values; rev=true)
         (v, P) = extract_kv(Efac, ord, k)
-        W0 = scale!(P, 1 ./ sqrt.(v))
-        # println(W0' * C * W0)
+        W0 = rmul!(P, Diagonal(1 ./ sqrt.(v)))
         Z = W0'Z
     end
 
