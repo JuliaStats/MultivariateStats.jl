@@ -2,7 +2,7 @@
 
 ## convert Gram matrix to Distance matrix
 
-function gram2dmat!{DT}(D::AbstractMatrix{DT}, G::AbstractMatrix)
+function gram2dmat!(D::AbstractMatrix{DT}, G::AbstractMatrix) where DT
     # argument checking
     m = size(G, 1)
     n = size(G, 2)
@@ -23,13 +23,13 @@ function gram2dmat!{DT}(D::AbstractMatrix{DT}, G::AbstractMatrix)
     return D
 end
 
-gram2dmat{T<:Real}(G::AbstractMatrix{T}) = gram2dmat!(similar(G, Base.momenttype(T)), G)
+gram2dmat(G::AbstractMatrix{T}) where T<:Real = gram2dmat!(similar(G, T), G)
 
 ## convert Distance matrix to Gram matrix
 
-function dmat2gram!{GT}(G::AbstractMatrix{GT}, D::AbstractMatrix)
+function dmat2gram!(G::AbstractMatrix{GT}, D::AbstractMatrix) where GT
     # argument checking
-    n = Compat.LinAlg.checksquare(D)
+    n = LinearAlgebra.checksquare(D)
     size(G) == (n, n) ||
         throw(DimensionMismatch("Sizes of G and D do not match."))
 
@@ -52,12 +52,13 @@ function dmat2gram!{GT}(G::AbstractMatrix{GT}, D::AbstractMatrix)
     return G
 end
 
-dmat2gram{T<:Real}(D::AbstractMatrix{T}) = dmat2gram!(similar(D, Base.momenttype(T)), D)
+momenttype(T) = typeof((zero(T) * zero(T) + zero(T) * zero(T))/ 2)
+dmat2gram(D::AbstractMatrix{T}) where T<:Real = dmat2gram!(similar(D, momenttype(T)), D)
 
 ## classical MDS
 
-function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Int;
-        dowarn::Bool=true)
+function classical_mds(D::AbstractMatrix{T}, p::Int;
+                       dowarn::Bool=true) where T<:Real
 
     n = size(D, 1)
     m = min(p, n) #Actual number of eigenpairs wanted
@@ -65,21 +66,21 @@ function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Int;
     G = dmat2gram(D)
 
     #Get m largest eigenpairs
-    E = eigfact!(Symmetric(G))
+    E = eigen!(Symmetric(G))
 
     #Sometimes dmat2gram produces a negative definite matrix, and the sign just
     #needs to be flipped. The heuristic to check for this robustly is to check
     #if there is a negative eigenvalue of magnitude larger than the largest
     #positive eigenvalue, and flip the sign of eigenvalues if necessary.
 
-    mineig, maxeig = extrema(E[:values])
+    mineig, maxeig = extrema(E.values)
     if mineig < 0 && abs(mineig) > abs(maxeig)
         #do flip
         ord = sortperm(E.values)
-        v = -E[:values][ord[1:m]]
+        v = -E.values[ord[1:m]]
     else
         ord = sortperm(E.values; rev=true)
-        v = E[:values][ord[1:m]]
+        v = E.values[ord[1:m]]
     end
 
     for i = 1:m
@@ -98,14 +99,14 @@ function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Int;
 
     #Check if the last considered eigenvalue is degenerate
     if m>0
-        nevalsmore = sum(abs.(E[:values][ord[m+1:end]] .- v[m]^2) .< n*eps())
-        nevals = sum(abs.(E[:values] .- v[m]^2) .< n*eps())
+        nevalsmore = sum(abs.(E.values[ord[m+1:end]] .- v[m]^2) .< n*eps())
+        nevals = sum(abs.(E.values .- v[m]^2) .< n*eps())
         if nevalsmore > 1
             dowarn && warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
         end
     end
-    U = E[:vectors][:, ord[1:m]]
-    scale!(U, v)
+    U = E.vectors[:, ord[1:m]]
+    rmul!(U, Diagonal(v))
 
     #Add trailing zero coordinates if dimension of embedding space (p) exceeds
     #number of eigenpairs used (m)
@@ -115,4 +116,3 @@ function classical_mds{T<:Real}(D::AbstractMatrix{T}, p::Int;
 
     U' #Return each coordinate in a column
 end
-
