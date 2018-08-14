@@ -1,7 +1,11 @@
 using MultivariateStats
-using Base.Test
+using LinearAlgebra
+using SparseArrays
+using Test
+import Statistics: mean, cov
+import Random
 
-srand(34568)
+Random.seed!(34568)
 
 ## data
 n = 10
