@@ -10,7 +10,7 @@ printvec(io::IO, a::AbstractVector) = printarr(io, a')
 printarrln(io::IO, a::AbstractArray) = (printarr(io, a); println(io))
 printvecln(io::IO, a::AbstractVector) = (printvec(io, a); println(io))
 
-# centralize 
+# centralize
 
 centralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x - m)::typeof(x)
 centralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .- m)::typeof(x)
@@ -18,19 +18,18 @@ centralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .- m)::ty
 decentralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x + m)::typeof(x)
 decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)::typeof(x)
 
-# get a full mean vector 
+# get a full mean vector
 
-fullmean{T}(d::Int, mv::Vector{T}) = (isempty(mv) ? zeros(T, d) : mv)::Vector{T} 
+fullmean(d::Int, mv::Vector{T}) where T = (isempty(mv) ? zeros(T, d) : mv)::Vector{T}
 
-preprocess_mean{T<:AbstractFloat}(X::Matrix{T}, m) = (m == nothing ? vec(Base.mean(X, 2)) :
-                                                      m == 0 ? T[] : 
-                                                      m)::Vector{T}
+preprocess_mean(X::Matrix{T}, m) where T<:AbstractFloat =
+    (m == nothing ? vec(mean(X, dims=2)) : m == 0 ? T[] :  m)::Vector{T}
 
 # choose the first k values and columns
 #
 # S must have fields: values & vectors
 
-function extract_kv{T}(fac::Factorization{T}, ord::AbstractVector{Int}, k::Int)
+function extract_kv(fac::Factorization{T}, ord::AbstractVector{Int}, k::Int) where T
     si = ord[1:k]
     vals = fac.values[si]::Vector{T}
     vecs = fac.vectors[:, si]::Matrix{T}
@@ -56,7 +55,7 @@ end
 
 # percolumn dot
 
-function coldot(X::Matrix, Y::Matrix)
+function coldot(X::AbstractMatrix, Y::AbstractMatrix)
     m = size(X, 1)
     n = size(X, 2)
     @assert size(Y) == (m, n)
@@ -77,7 +76,7 @@ function qnormalize!(X, C)
     for j = 1:n
         x = view(X,:,j)
         cx = view(CX,:,j)
-        scale!(x, inv(sqrt(dot(x, cx))))
+        rmul!(x, inv(sqrt(dot(x, cx))))
     end
     return X
 end
@@ -98,9 +97,9 @@ function add_diag!(A::AbstractMatrix, v::Real)
 end
 
 # regularize a symmetric matrix
-function regularize_symmat!{T<:AbstractFloat}(A::Matrix{T}, lambda::Real)
+function regularize_symmat!(A::Matrix{T}, lambda::Real) where T<:AbstractFloat
     if lambda > 0
-        emax = eigmax(Symmetric(A)) 
+        emax = eigmax(Symmetric(A))
         add_diag!(A, emax * lambda)
     end
     return A
