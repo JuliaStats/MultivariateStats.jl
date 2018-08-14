@@ -14,7 +14,7 @@ length(f::LinearDiscriminant) = length(f.w)
 evaluate(f::LinearDiscriminant, x::AbstractVector) = dot(f.w, x) + f.b
 
 function evaluate(f::LinearDiscriminant, X::AbstractMatrix)
-    R = At_mul_B(X, f.w)
+    R = transpose(X) * f.w
     if f.b != 0
         broadcast!(+, R, R, f.b)
     end
@@ -30,29 +30,29 @@ predict(f::Discriminant, X::AbstractMatrix) = (Y = evaluate(f, X); Bool[y > 0 fo
 
 function ldacov(C::DenseMatrix{T},
                 μp::DenseVector{T},
-                μn::DenseVector{T})  where {T<:Real}
+                μn::DenseVector{T}) where T<:Real
 
-    w = cholfact(C) \ (μp - μn)
+    w = cholesky(C) \ (μp - μn)
     ap = w ⋅ μp
     an = w ⋅ μn
     c = 2 / (ap - an)
-    LinearDiscriminant(scale!(w, c), 1 - c * ap)
+    LinearDiscriminant(rmul!(w, c), 1 - c * ap)
 end
 
 ldacov(Cp::DenseMatrix{T},
        Cn::DenseMatrix{T},
        μp::DenseVector{T},
-       μn::DenseVector{T})  where {T<:Real} = ldacov(Cp + Cn, μp, μn)
+       μn::DenseVector{T}) where T<:Real = ldacov(Cp + Cn, μp, μn)
 
 #### interface functions
 
-function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T})  where {T<:Real}
-    μp = vec(mean(Xp, 2))
-    μn = vec(mean(Xn, 2))
+function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T}) where T<:Real
+    μp = vec(mean(Xp, dims=2))
+    μn = vec(mean(Xn, dims=2))
     Zp = Xp .- μp
     Zn = Xn .- μn
-    Cp = A_mul_Bt(Zp, Zp)
-    Cn = A_mul_Bt(Zn, Zn)
+    Cp = Zp * transpose(Zp)
+    Cn = Zn * transpose(Zn)
     ldacov(Cp, Cn, μp, μn)
 end
 
@@ -70,7 +70,7 @@ mutable struct MulticlassLDAStats{T<:Real}
     Sb::Matrix{T}         # between-class scatter matrix
 end
 
-Base.mean(S::MulticlassLDAStats) = S.mean
+mean(S::MulticlassLDAStats) = S.mean
 classweights(S::MulticlassLDAStats) = S.cweights
 classmeans(S::MulticlassLDAStats) = S.cmeans
 
@@ -81,7 +81,7 @@ function MulticlassLDAStats(cweights::Vector{T},
                             mean::Vector{T},
                             cmeans::Matrix{T},
                             Sw::Matrix{T},
-                            Sb::Matrix{T}) where {T<:Real}
+                            Sb::Matrix{T}) where T<:Real
     d, nc = size(cmeans)
     length(mean) == d || throw(DimensionMismatch("Incorrect length of mean"))
     length(cweights) == nc || throw(DimensionMismatch("Incorrect length of cweights"))
@@ -91,7 +91,7 @@ function MulticlassLDAStats(cweights::Vector{T},
     MulticlassLDAStats(d, nc, cweights, tw, mean, cmeans, Sw, Sb)
 end
 
-function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}) where {T<:Real}
+function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}) where T<:Real
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
@@ -101,12 +101,12 @@ function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}
     # compute class-specific weights and means
     cmeans, cweights, Z = center(X, y, nc)
 
-    Sw = A_mul_Bt(Z, Z)
+    Sw = Z * transpose(Z)
 
     # compute between-class scattering
     mean = cmeans * (cweights ./ T(n))
-    U = scale!(cmeans .- mean, sqrt.(cweights))
-    Sb = A_mul_Bt(U, U)
+    U = rmul!(cmeans .- mean, Diagonal(sqrt.(cweights)))
+    Sb = U * transpose(U)
 
     return MulticlassLDAStats(Vector{T}(cweights), mean, cmeans, Sw, Sb)
 end
@@ -125,19 +125,19 @@ outdim(M::MulticlassLDA) = size(M.proj, 2)
 
 projection(M::MulticlassLDA) = M.proj
 
-Base.mean(M::MulticlassLDA) = mean(M.stats)
+mean(M::MulticlassLDA) = mean(M.stats)
 classmeans(M::MulticlassLDA) = classmeans(M.stats)
 classweights(M::MulticlassLDA) = classweights(M.stats)
 
 withclass_scatter(M::MulticlassLDA) = withclass_scatter(M.stats)
 betweenclass_scatter(M::MulticlassLDA) = betweenclass_scatter(M.stats)
 
-transform(M::MulticlassLDA, x::AbstractVecOrMat{T}) where {T<:Real} = M.proj'x
+transform(M::MulticlassLDA, x::AbstractVecOrMat{T}) where T<:Real = M.proj'x
 
 function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
              method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
-             regcoef::T=T(1.0e-6))  where {T<:Real}
+             regcoef::T=T(1.0e-6)) where T<:Real
 
     multiclass_lda(multiclass_lda_stats(nc, X, y);
                    method=method,
@@ -148,31 +148,31 @@ end
 function multiclass_lda(S::MulticlassLDAStats{T};
                         method::Symbol=:gevd,
                         outdim::Int=min(size(X,1), S.nclasses-1),
-                        regcoef::T=T(1.0e-6)) where {T<:Real}
+                        regcoef::T=T(1.0e-6)) where T<:Real
 
     P = mclda_solve(S.Sb, S.Sw, method, outdim, regcoef)
     MulticlassLDA(P, P'S.cmeans, S)
 end
 
-mclda_solve(Sb::DenseMatrix{T}, Sw::DenseMatrix{T}, method::Symbol, p::Int, regcoef::T)  where {T<:Real} =
+mclda_solve(Sb::DenseMatrix{T}, Sw::DenseMatrix{T}, method::Symbol, p::Int, regcoef::T) where T<:Real =
     mclda_solve!(copy(Sb), copy(Sw), method, p, regcoef)
 
 function mclda_solve!(Sb::Matrix{T},
                       Sw::Matrix{T},
-                      method::Symbol, p::Int, regcoef::T) where {T<:Real}
+                      method::Symbol, p::Int, regcoef::T) where T<:Real
 
     p <= size(Sb, 1) || throw(ArgumentError("p cannot exceed sample dimension."))
 
     if method == :gevd
         regularize_symmat!(Sw, regcoef)
-        E = eigfact!(Symmetric(Sb), Symmetric(Sw))
+        E = eigen!(Symmetric(Sb), Symmetric(Sw))
         ord = sortperm(E.values; rev=true)
         P = E.vectors[:, ord[1:p]]
 
     elseif method == :whiten
         W = _lda_whitening!(Sw, regcoef)
-        wSb = At_mul_B(W, Sb * W)
-        Eb = eigfact!(Symmetric(wSb))
+        wSb = transpose(W) * (Sb * W)
+        Eb = eigen!(Symmetric(wSb))
         ord = sortperm(Eb.values; rev=true)
         P = W * Eb.vectors[:, ord[1:p]]
 
@@ -182,15 +182,15 @@ function mclda_solve!(Sb::Matrix{T},
     return P::Matrix{T}
 end
 
-function _lda_whitening!(C::Matrix{T}, regcoef::T) where {T<:Real}
+function _lda_whitening!(C::Matrix{T}, regcoef::T) where T<:Real
     n = size(C,1)
-    E = eigfact!(Symmetric(C))
+    E = eigen!(Symmetric(C))
     v = E.values
     a = regcoef * maximum(v)
     for i = 1:n
         @inbounds v[i] = 1.0 / sqrt(v[i] + a)
     end
-    return scale!(E.vectors, v)
+    return rmul!(E.vectors,  Diagonal(v))
 end
 
 #### SubspaceLDA
@@ -212,7 +212,7 @@ outdim(M::SubspaceLDA) = size(M.projLDA, 2)
 
 projection(M::SubspaceLDA) = M.projw * M.projLDA
 
-Base.mean(M::SubspaceLDA) = vec(sum(M.cmeans * Diagonal(M.cweights / sum(M.cweights)), 2))
+mean(M::SubspaceLDA) = vec(sum(M.cmeans * Diagonal(M.cweights / sum(M.cweights)), dims=2))
 classmeans(M::SubspaceLDA) = M.cmeans
 classweights(M::SubspaceLDA) = M.cweights
 
@@ -231,14 +231,14 @@ function fit(::Type{F}, X::AbstractMatrix{T},
     # Compute centroids, class weights, and deviation from centroids
     # Note Sb = Hb*Hb', Sw = Hw*Hw'
     cmeans, cweights, Hw = center(X, label, nc)
-    dmeans = cmeans .- (normalize ? mean(cmeans, 2) : cmeans * (cweights / n))
+    dmeans = cmeans .- (normalize ? mean(cmeans, dims=2) : cmeans * (cweights / n))
     Hb = normalize ? dmeans : dmeans * Diagonal(sqrt.(cweights))
     if normalize
         Hw /= sqrt(n)
     end
     # Project to the subspace spanned by the within-class scatter
     # (essentially, PCA before LDA)
-    Uw, Σw, _ = svd(Hw, thin=true)
+    Uw, Σw, _ = svd(Hw, full=false)
     keep = Σw .> sqrt(eps(T)) * maximum(Σw)
     projw = Uw[:,keep]
     pHb = projw' * Hb
@@ -250,16 +250,16 @@ end
 # Reference: Howland & Park (2006), "Generalizing discriminant analysis
 # using the generalized singular value decomposition", IEEE
 # Trans. Patt. Anal. & Mach. Int., 26: 995-1006.
-function lda_gsvd(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::AbstractVector{Int}) where {T<:Real}
+function lda_gsvd(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::AbstractVector{Int}) where T<:Real
     nc = length(cweights)
     K = vcat(Hb', Hw')
-    P, R, Q = svd(K, thin=true)
+    P, R, Q = svd(K, full=false)
     keep = R .> sqrt(eps(T))*maximum(R)
     R = R[keep]
     Pk = P[1:nc, keep]
     U, ΣA, W = svd(Pk)
     ncnz = sum(cweights .> 0)
-    G = Q[:,keep]*(Diagonal(1./R) * W[:,1:ncnz-1])
+    G = Q[:,keep]*(Diagonal(1 ./ R) * W[:,1:ncnz-1])
     # Normalize
     Gw = G' * Hw
     nrm = Gw * Gw'
@@ -271,7 +271,7 @@ function lda_gsvd(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::Abstra
     λ, G
 end
 
-function center(X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label)) where {T<:Real}
+function center(X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label)) where T<:Real
     d, n = size(X,1), size(X,2)
     # Calculate the class weights and means
     cmeans = zeros(T, d, nc)
@@ -291,7 +291,7 @@ function center(X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(lab
         end
     end
     # Compute differences from the means
-    dX = Matrix{T}(d, n)
+    dX = Matrix{T}(undef, d, n)
     for j = 1:n
         k = label[j]
         for i = 1:d

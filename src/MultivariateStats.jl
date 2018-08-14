@@ -1,13 +1,9 @@
-__precompile__()
-
 module MultivariateStats
-    using Compat
-    using StatsBase
-
+    using LinearAlgebra
+    import Statistics: mean, var, cov, covm
     import Base: length, size, show, dump
-    import Base.LinAlg: Cholesky
-    import StatsBase: fit, predict
-    using  Compat: view
+    import StatsBase: fit, predict, ConvergenceException
+    import SparseArrays
 
     export
 

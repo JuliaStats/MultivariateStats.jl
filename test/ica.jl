@@ -1,8 +1,11 @@
 using MultivariateStats
-using Base.Test
+using LinearAlgebra
+using Test
+import Statistics: mean, cov
+import Random
 import StatsBase
 
-srand(15678)
+Random.seed!(15678)
 
 ## icagfun
 
@@ -44,9 +47,9 @@ n = 1000
 k = 3
 m = 8
 
-t = linspace(0.0, 10.0, n)
+t = range(0.0, step=10.0, length=n)
 s1 = sin.(t * 2)
-s2 = s2 = 1.0 - 2.0 * Bool[isodd(floor(Int, x / 3)) for x in t]
+s2 = s2 = 1.0 .- 2.0 * Bool[isodd(floor(Int, x / 3)) for x in t]
 s3 = Float64[mod(x, 5.0) for x in t]
 
 s1 += 0.1 * randn(n)
@@ -59,9 +62,9 @@ S = hcat(s1, s2, s3)'
 A = randn(m, k)
 
 X = A * S
-mv = vec(mean(X,2))
+mv = vec(mean(X, dims=2))
 @assert size(X) == (m, n)
-C = cov(X, 2)
+C = cov(X, dims=2)
 
 # FastICA
 
@@ -72,7 +75,7 @@ M = fit(ICA, X, k; do_whiten=false, tol=Inf)
 @test mean(M) == mv
 W = M.W
 @test transform(M, X) ≈ W' * (X .- mv)
-@test W'W ≈ eye(k)
+@test W'W ≈ Matrix(I, k, k)
 
 M = fit(ICA, X, k; do_whiten=true, tol=Inf)
 @test isa(M, ICA)
@@ -80,7 +83,7 @@ M = fit(ICA, X, k; do_whiten=true, tol=Inf)
 @test outdim(M) == k
 @test mean(M) == mv
 W = M.W
-@test W'C * W ≈ eye(k)
+@test W'C * W ≈ Matrix(I, k, k)
 
 @test_throws StatsBase.ConvergenceException fit(ICA, X, k; do_whiten=true, tol=1)
 
@@ -98,4 +101,4 @@ M = fit(ICA, XX, k; do_whiten=false, tol=Inf)
 @test eltype(M.W) == Float32
 W = M.W
 @test transform(M, X) ≈ W' * convert(Matrix{Float32}, (X .- mv))
-@test W'W ≈ eye(k)
+@test W'W ≈ Matrix{Float32}(I, k, k)

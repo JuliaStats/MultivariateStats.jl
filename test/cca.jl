@@ -1,9 +1,10 @@
 using MultivariateStats
-using Base.Test
+using LinearAlgebra
+using Test
+import Statistics: mean, cov
+import Random
 
-import MultivariateStats: qnormalize!
-
-srand(34568)
+Random.seed!(34568)
 
 dx = 5
 dy = 6
@@ -14,8 +15,8 @@ p = 3
 X = rand(dx, 100)
 Y = rand(dy, 100)
 
-Px = qr(randn(dx, dx))[1][:, 1:p]
-Py = qr(randn(dy, dy))[1][:, 1:p]
+Px = qr(randn(dx, dx)).Q[:, 1:p]
+Py = qr(randn(dy, dy)).Q[:, 1:p]
 
 M = CCA(Float64[], Float64[], Px, Py, [0.8, 0.6, 0.4])
 
@@ -57,14 +58,14 @@ G = randn(dg, n)
 
 X = randn(dx, dg) * G + 0.2 * randn(dx, n)
 Y = randn(dy, dg) * G + 0.2 * randn(dy, n)
-xm = vec(mean(X, 2))
-ym = vec(mean(Y, 2))
+xm = vec(mean(X, dims=2))
+ym = vec(mean(Y, dims=2))
 Zx = X .- xm
 Zy = Y .- ym
 
-Cxx = cov(X, 2)
-Cyy = cov(Y, 2)
-Cxy = cov(X, Y, 2)
+Cxx = cov(X, dims=2)
+Cyy = cov(Y, dims=2)
+Cxy = cov(X, Y, dims=2)
 Cyx = Cxy'
 
 ## ccacov
@@ -81,12 +82,12 @@ rho = correlations(M)
 @test ymean(M) == ym
 @test issorted(rho; rev=true)
 
-@test Px' * Cxx * Px ≈ eye(p)
-@test Py' * Cyy * Py ≈ eye(p)
+@test Px' * Cxx * Px ≈ Matrix(I, p, p)
+@test Py' * Cyy * Py ≈ Matrix(I, p, p)
 @test Cxy * (Cyy \ Cyx) * Px ≈ Cxx * Px * Diagonal(rho.^2)
 @test Cyx * (Cxx \ Cxy) * Py ≈ Cyy * Py * Diagonal(rho.^2)
-@test Px ≈ qnormalize!(Cxx \ (Cxy * Py), Cxx)
-@test Py ≈ qnormalize!(Cyy \ (Cyx * Px), Cyy)
+@test Px ≈ MultivariateStats.qnormalize!(Cxx \ (Cxy * Py), Cxx)
+@test Py ≈ MultivariateStats.qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
 # Y ~ X
 M = fit(CCA, Y, X; method=:cov, outdim=p)
@@ -100,12 +101,12 @@ rho = correlations(M)
 @test ymean(M) == xm
 @test issorted(rho; rev=true)
 
-@test Px' * Cxx * Px ≈ eye(p)
-@test Py' * Cyy * Py ≈ eye(p)
+@test Px' * Cxx * Px ≈ Matrix(I, p, p)
+@test Py' * Cyy * Py ≈ Matrix(I, p, p)
 @test Cxy * (Cyy \ Cyx) * Px ≈ Cxx * Px * Diagonal(rho.^2)
 @test Cyx * (Cxx \ Cxy) * Py ≈ Cyy * Py * Diagonal(rho.^2)
-@test Px ≈ qnormalize!(Cxx \ (Cxy * Py), Cxx)
-@test Py ≈ qnormalize!(Cyy \ (Cyx * Px), Cyy)
+@test Px ≈ MultivariateStats.qnormalize!(Cxx \ (Cxy * Py), Cxx)
+@test Py ≈ MultivariateStats.qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
 
 ## ccasvd
@@ -122,9 +123,9 @@ rho = correlations(M)
 @test ymean(M) == ym
 @test issorted(rho; rev=true)
 
-@test Px' * Cxx * Px ≈ eye(p)
-@test Py' * Cyy * Py ≈ eye(p)
+@test Px' * Cxx * Px ≈ Matrix(I, p, p)
+@test Py' * Cyy * Py ≈ Matrix(I, p, p)
 @test Cxy * (Cyy \ Cyx) * Px ≈ Cxx * Px * Diagonal(rho.^2)
 @test Cyx * (Cxx \ Cxy) * Py ≈ Cyy * Py * Diagonal(rho.^2)
-@test Px ≈ qnormalize!(Cxx \ (Cxy * Py), Cxx)
-@test Py ≈ qnormalize!(Cyy \ (Cyx * Px), Cyy)
+@test Px ≈ MultivariateStats.qnormalize!(Cxx \ (Cxy * Py), Cxx)
+@test Py ≈ MultivariateStats.qnormalize!(Cyy \ (Cyx * Px), Cyy)

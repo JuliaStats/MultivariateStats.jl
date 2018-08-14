@@ -1,8 +1,10 @@
 # Principal Component Analysis
 
+import Printf
+
 #### PCA type
 
-type PCA{T<:AbstractFloat}
+struct PCA{T<:AbstractFloat}
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     proj::Matrix{T}       # projection matrix: of size d x p
     prinvars::Vector{T}   # principal variances: of length p
@@ -12,7 +14,7 @@ end
 
 ## constructor
 
-function PCA{T<:AbstractFloat}(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T)
+function PCA(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T) where T<:AbstractFloat
     d, p = size(proj)
     (isempty(mean) || length(mean) == d) ||
         throw(DimensionMismatch("Dimensions of mean and proj are inconsistent."))
@@ -28,7 +30,7 @@ end
 indim(M::PCA) = size(M.proj, 1)
 outdim(M::PCA) = size(M.proj, 2)
 
-Base.mean(M::PCA) = fullmean(indim(M), M.mean)
+mean(M::PCA) = fullmean(indim(M), M.mean)
 
 projection(M::PCA) = M.proj
 
@@ -43,13 +45,13 @@ principalratio(M::PCA) = M.tprinvar / M.tvar
 
 ## use
 
-transform{T<:AbstractFloat}(M::PCA{T}, x::AbstractVecOrMat{T}) = At_mul_B(M.proj, centralize(x, M.mean))
-reconstruct{T<:AbstractFloat}(M::PCA{T}, y::AbstractVecOrMat{T}) = decentralize(M.proj * y, M.mean)
+transform(M::PCA{T}, x::AbstractVecOrMat{T}) where T<:AbstractFloat = transpose(M.proj) * centralize(x, M.mean)
+reconstruct(M::PCA{T}, y::AbstractVecOrMat{T}) where T<:AbstractFloat = decentralize(M.proj * y, M.mean)
 
 ## show & dump
 
 function show(io::IO, M::PCA)
-    pr = @sprintf("%.5f", principalratio(M))
+    pr = Printf.@sprintf("%.5f", principalratio(M))
     print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $pr)")
 end
 
@@ -74,15 +76,15 @@ end
 
 const default_pca_pratio = 0.99
 
-function check_pcaparams{T<:AbstractFloat}(d::Int, mean::Vector{T}, md::Int, pr::AbstractFloat)
+function check_pcaparams(d::Int, mean::Vector{T}, md::Int, pr::AbstractFloat) where T<:AbstractFloat
     isempty(mean) || length(mean) == d ||
         throw(DimensionMismatch("Incorrect length of mean."))
     md >= 1 || error("maxoutdim must be a positive integer.")
     0.0 < pr <= 1.0 || throw(ArgumentError("pratio must be a positive real value with pratio ≤ 1.0."))
 end
 
-
-function choose_pcadim{T<:AbstractFloat}(v::AbstractVector{T}, ord::Vector{Int}, vsum::T, md::Int, pr::AbstractFloat)
+function choose_pcadim(v::AbstractVector{T}, ord::Vector{Int}, vsum::T, md::Int,
+                       pr::AbstractFloat) where T<:AbstractFloat
     md = min(length(v), md)
     k = 1
     a = v[ord[1]]
@@ -96,12 +98,12 @@ end
 
 ## core algorithms
 
-function pcacov{T<:AbstractFloat}(C::DenseMatrix{T}, mean::Vector{T};
+function pcacov(C::AbstractMatrix{T}, mean::Vector{T};
                 maxoutdim::Int=size(C,1),
-                pratio::AbstractFloat=default_pca_pratio)
+                pratio::AbstractFloat=default_pca_pratio) where T<:AbstractFloat
 
     check_pcaparams(size(C,1), mean, maxoutdim, pratio)
-    Eg = eigfact(Symmetric(C))
+    Eg = eigen(Symmetric(C))
     ev = Eg.values
     ord = sortperm(ev; rev=true)
     vsum = sum(ev)
@@ -110,12 +112,12 @@ function pcacov{T<:AbstractFloat}(C::DenseMatrix{T}, mean::Vector{T};
     PCA(mean, P, v, vsum)
 end
 
-function pcasvd{T<:AbstractFloat}(Z::DenseMatrix{T}, mean::Vector{T}, tw::Real;
+function pcasvd(Z::AbstractMatrix{T}, mean::Vector{T}, tw::Real;
                 maxoutdim::Int=min(size(Z)...),
-                pratio::AbstractFloat=default_pca_pratio)
+                pratio::AbstractFloat=default_pca_pratio) where T<:AbstractFloat
 
     check_pcaparams(size(Z,1), mean, maxoutdim, pratio)
-    Svd = svdfact(Z)
+    Svd = svd(Z)
     v = Svd.S::Vector{T}
     U = Svd.U::Matrix{T}
     for i = 1:length(v)
@@ -130,11 +132,13 @@ end
 
 ## interface functions
 
-function fit{T<:AbstractFloat}(::Type{PCA}, X::DenseMatrix{T};
+function fit(::Type{PCA}, X::AbstractMatrix{T};
              method::Symbol=:auto,
              maxoutdim::Int=size(X,1),
              pratio::AbstractFloat=default_pca_pratio,
-             mean=nothing)
+             mean=nothing) where T<:AbstractFloat
+
+    @assert !SparseArrays.issparse(X) "Use Kernel PCA for sparce arrays"
 
     d, n = size(X)
 
@@ -148,7 +152,7 @@ function fit{T<:AbstractFloat}(::Type{PCA}, X::DenseMatrix{T};
 
     # delegate to core
     if method == :cov
-        C = Base.covm(X, isempty(mv) ? 0 : mv, 2)
+        C = covm(X, isempty(mv) ? 0 : mv, 2)
         M = pcacov(C, mv; maxoutdim=maxoutdim, pratio=pratio)
     elseif method == :svd
         Z = centralize(X, mv)

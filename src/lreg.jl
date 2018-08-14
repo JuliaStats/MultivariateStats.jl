@@ -10,17 +10,17 @@ function lreg_chkdims(X::AbstractMatrix, Y::AbstractVecOrMat, trans::Bool)
     return dX
 end
 
-lrsoltype{T}(::DenseVector{T}) = Vector{T}
-lrsoltype{T}(::DenseMatrix{T}) = Matrix{T}
+lrsoltype(::AbstractVector{T}) where T = Vector{T}
+lrsoltype(::AbstractMatrix{T}) where T = Matrix{T}
 
-_vaug{T}(X::DenseMatrix{T}) = vcat(X, ones(T, 1, size(X,2)))::Matrix{T}
-_haug{T}(X::DenseMatrix{T}) = hcat(X, ones(T, size(X,1), 1))::Matrix{T}
+_vaug(X::AbstractMatrix{T}) where T = vcat(X, ones(T, 1, size(X,2)))::Matrix{T}
+_haug(X::AbstractMatrix{T}) where T = hcat(X, ones(T, size(X,1), 1))::Matrix{T}
 
 
 ## linear least square
 
-function llsq{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T};
-                                trans::Bool=false, bias::Bool=true)
+function llsq(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T};
+              trans::Bool=false, bias::Bool=true) where T<:AbstractFloat
     if trans
         mX, nX = size(X)
         size(Y, 1) == nX || throw(DimensionMismatch("Dimensions of X and Y mismatch."))
@@ -35,22 +35,22 @@ end
 
 ## ridge regression
 
-function ridge{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::Real;
-                                trans::Bool=false, bias::Bool=true)
+function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::Real;
+               trans::Bool=false, bias::Bool=true) where T<:AbstractFloat
     lreg_chkdims(X, Y, trans)
     r >= zero(r) || error("r must be non-negative.")
     _ridge(X, Y, convert(T, r), trans, bias)
 end
 
-function ridge{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseVector{T};
-                                trans::Bool=false, bias::Bool=true)
+function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::AbstractVector{T};
+               trans::Bool=false, bias::Bool=true) where T<:AbstractFloat
     d = lreg_chkdims(X, Y, trans)
     length(r) == d || throw(DimensionMismatch("Incorrect length of r."))
     _ridge(X, Y, r, trans, bias)
 end
 
-function ridge{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T}, r::DenseMatrix{T};
-                                trans::Bool=false, bias::Bool=true)
+function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::AbstractMatrix{T};
+               trans::Bool=false, bias::Bool=true) where T<:AbstractFloat
     d = lreg_chkdims(X, Y, trans)
     size(r) == (d, d) || throw(DimensionMismatch("Incorrect size of r."))
     _ridge(X, Y, r, trans, bias)
@@ -58,21 +58,21 @@ end
 
 ## implementation
 
-@compat function _ridge{T<:AbstractFloat}(X::DenseMatrix{T}, Y::DenseVecOrMat{T},
-                                  r::Union{Real, DenseVecOrMat}, trans::Bool, bias::Bool)
+function _ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T},
+                r::Union{Real, AbstractVecOrMat}, trans::Bool, bias::Bool) where T<:AbstractFloat
     if bias
         if trans
             X_ = _vaug(X)
-            A = cholfact!(_ridge_reg!(A_mul_Bt(X_, X_), r, bias)) \ (X_ * Y)
+            A = cholesky!(Hermitian(_ridge_reg!(X_ * transpose(X_), r, bias))) \ (X_ * Y)
         else
             X_ = _haug(X)
-            A = cholfact!(_ridge_reg!(X_'X_, r, bias)) \ (X_'Y)
+            A = cholesky!(Hermitian(_ridge_reg!(X_'X_, r, bias))) \ (X_'Y)
         end
     else
         if trans
-            A = cholfact!(_ridge_reg!(A_mul_Bt(X, X), r, bias)) \ (X * Y)
+            A = cholesky!(Hermitian(_ridge_reg!(X * X', r, bias))) \ (X * Y)
         else
-            A = cholfact!(_ridge_reg!(X'X, r, bias)) \ (X'Y)
+            A = cholesky!(Hermitian(_ridge_reg!(X'X, r, bias))) \ (X'Y)
         end
     end
     return A::lrsoltype(Y)
@@ -80,7 +80,7 @@ end
 
 function _ridge_reg!(Q::Matrix, r::Real, bias::Bool)
     if r > zero(r)
-        n = size(Q, 1) - @compat Int(bias)
+        n = size(Q, 1) - Int(bias)
         for i = 1:n
             @inbounds Q[i,i] += r
         end
@@ -88,8 +88,8 @@ function _ridge_reg!(Q::Matrix, r::Real, bias::Bool)
     return Q
 end
 
-function _ridge_reg!(Q::Matrix, r::DenseVector, bias::Bool)
-    n = size(Q, 1) - @compat Int(bias)
+function _ridge_reg!(Q::AbstractMatrix, r::AbstractVector, bias::Bool)
+    n = size(Q, 1) - Int(bias)
     @assert length(r) == n
     for i = 1:n
         @inbounds Q[i,i] += r[i]
@@ -97,12 +97,11 @@ function _ridge_reg!(Q::Matrix, r::DenseVector, bias::Bool)
     return Q
 end
 
-function _ridge_reg!(Q::Matrix, r::Matrix, bias::Bool)
-    n = size(Q, 1) - @compat Int(bias)
+function _ridge_reg!(Q::AbstractMatrix, r::AbstractMatrix, bias::Bool)
+    n = size(Q, 1) - Int(bias)
     @assert size(r) == (n, n)
     for j = 1:n, i = 1:n
         @inbounds Q[i,j] += r[i,j]
     end
     return Q
 end
-

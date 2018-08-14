@@ -1,23 +1,25 @@
 # Kernel Principal Component Analysis
 
+import Arpack
+
 """Center a kernel matrix"""
-immutable KernelCenter{T<:AbstractFloat}
+struct KernelCenter{T<:AbstractFloat}
     means::AbstractVector{T}
     total::T
 end
 
 """Fit `KernelCenter` object"""
-function fit{T<:AbstractFloat}(::Type{KernelCenter}, K::AbstractMatrix{T})
+function fit(::Type{KernelCenter}, K::AbstractMatrix{T}) where T<:AbstractFloat
     n = size(K, 1)
-    means = vec(mean(K, 2))
+    means = vec(mean(K, dims=2))
     KernelCenter(means, sum(means) / n)
 end
 
 """Center kernel matrix."""
-function transform!{T<:AbstractFloat}(C::KernelCenter{T}, K::AbstractMatrix{T})
+function transform!(C::KernelCenter{T}, K::AbstractMatrix{T}) where T<:AbstractFloat
     r, c = size(K)
     tot = C.total
-    means = mean(K, 1)
+    means = mean(K, dims=1)
     @simd for i in 1:r
         for j in 1:c
             @inbounds K[i, j] -= C.means[i] + means[j] - tot
@@ -27,13 +29,13 @@ function transform!{T<:AbstractFloat}(C::KernelCenter{T}, K::AbstractMatrix{T})
 end
 
 """Kernel PCA type"""
-immutable KernelPCA{T<:AbstractFloat}
+struct KernelPCA{T<:AbstractFloat}
     X::AbstractMatrix{T}  # fitted data
     ker::Function         # kernel function
     center::KernelCenter  # kernel center
-    λ::DenseVector{T}     # eigenvalues  in feature space
-    α::DenseMatrix{T}     # eigenvectors in feature space
-    inv::DenseMatrix{T}   # inverse transform coefficients
+    λ::AbstractVector{T}     # eigenvalues  in feature space
+    α::AbstractMatrix{T}     # eigenvectors in feature space
+    inv::AbstractMatrix{T}   # inverse transform coefficients
 end
 
 ## properties
@@ -47,18 +49,18 @@ principalvars(M::KernelPCA) = M.λ
 ## use
 
 """Calculate transformation to kernel space"""
-function transform{T<:AbstractFloat}(M::KernelPCA{T}, x::AbstractVecOrMat{T})
+function transform(M::KernelPCA{T}, x::AbstractVecOrMat{T}) where T<:AbstractFloat
     k = pairwise(M.ker, M.X, x)
     transform!(M.center, k)
     return projection(M)'*k
 end
 
-function transform{T<:AbstractFloat}(M::KernelPCA{T})
+function transform(M::KernelPCA{T}) where T<:AbstractFloat
     return projection(M)'*M.X
 end
 
 """Calculate inverse transformation to original space"""
-function reconstruct{T<:AbstractFloat}(M::KernelPCA{T}, y::AbstractVecOrMat{T})
+function reconstruct(M::KernelPCA{T}, y::AbstractVecOrMat{T}) where T<:AbstractFloat
     if size(M.inv, 1) == 0
         throw(ArgumentError("Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"))
     end
@@ -75,8 +77,8 @@ end
 
 ## core algorithms
 
-function pairwise!{T<:AbstractFloat}(K::AbstractVecOrMat{T}, kernel::Function,
-                                     X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T})
+function pairwise!(K::AbstractVecOrMat{T}, kernel::Function,
+                   X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where T<:AbstractFloat
     n = size(X, 2)
     m = size(Y, 2)
     for j = 1:m
@@ -91,28 +93,29 @@ function pairwise!{T<:AbstractFloat}(K::AbstractVecOrMat{T}, kernel::Function,
     K
 end
 
-pairwise!{T<:AbstractFloat}(K::AbstractVecOrMat{T}, kernel::Function, X::AbstractVecOrMat{T}) =
+pairwise!(K::AbstractVecOrMat{T}, kernel::Function, X::AbstractVecOrMat{T}) where T<:AbstractFloat =
     pairwise!(K, kernel, X, X)
 
-function pairwise{T<:AbstractFloat}(kernel::Function, X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T})
+function pairwise(kernel::Function, X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where T<:AbstractFloat
     n = size(X, 2)
     m = size(Y, 2)
     K = similar(X, n, m)
     pairwise!(K, kernel, X, Y)
 end
 
-pairwise{T<:AbstractFloat}(kernel::Function, X::AbstractVecOrMat{T}) =
+pairwise(kernel::Function, X::AbstractVecOrMat{T}) where T<:AbstractFloat =
     pairwise(kernel, X, X)
 
 ## interface functions
 
-function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
-                               kernel = (x,y)->x'y,
-                               maxoutdim::Int = min(size(X)...),
-                               remove_zero_eig::Bool = false, atol::Real = 1e-10,
-                               solver::Symbol = :eig,
-                               inverse::Bool = false,  β::Real = 1.0,
-                               tol::Real = 0.0, maxiter::Real = 300)
+function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
+             kernel = (x,y)->x'y,
+             maxoutdim::Int = min(size(X)...),
+             remove_zero_eig::Bool = false, atol::Real = 1e-10,
+             solver::Symbol = :eig,
+             inverse::Bool = false,  β::Real = 1.0,
+             tol::Real = 0.0, maxiter::Real = 300) where T<:AbstractFloat
+
     d, n = size(X)
     Kfunc = (x,y)->error("Kernel is precomputed.")
 
@@ -138,12 +141,12 @@ function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
     transform!(center, K)
 
     # perform eigenvalue decomposition
-    evl, evc = if solver == :eigs || issparse(K)
-        evl, evc = eigs(K, nev=maxoutdim, which=:LR, v0=2.0*rand(n)-1.0, tol=tol, maxiter=maxiter)
+    evl, evc = if solver == :eigs || SparseArrays.issparse(K)
+        evl, evc = Arpack.eigs(K, nev=maxoutdim, which=:LR, v0=2.0*rand(n) .- 1.0, tol=tol, maxiter=maxiter)
         real.(evl), real.(evc)
     else
-        Eg = eigfact(Hermitian(K))
-        Eg[:values], Eg[:vectors]
+        Eg = eigen(Hermitian(K))
+        Eg.values, Eg.vectors
     end
 
     # sort eigenvalues in descending order
@@ -162,7 +165,7 @@ function fit{T<:AbstractFloat}(::Type{KernelPCA}, X::AbstractMatrix{T};
     if inverse
         Pᵗ = α' .* sqrt.(λ)
         KT = pairwise(Kfunc, Pᵗ)
-        Q = (KT + diagm(fill(β, size(KT,1)))) \ X'
+        Q = (KT + diagm(0 => fill(β, size(KT,1)))) \ X'
     end
 
     KernelPCA(X, Kfunc, center, λ, α, Q')

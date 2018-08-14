@@ -1,7 +1,10 @@
 using MultivariateStats
-using Base.Test
+using LinearAlgebra
+using Test
+import Statistics: mean, cov
+import Random
 
-srand(34568)
+Random.seed!(34568)
 
 ## LinearDiscriminant
 
@@ -39,10 +42,10 @@ n = 20
 Xp = Diagonal([1.2, 3.6]) * randn(2, n) .+ [1.0, -3.0]
 Xn = Diagonal([2.8, 1.8]) * randn(2, n) .+ [-5.0, 2.0]
 
-up = vec(mean(Xp, 2))
-un = vec(mean(Xn, 2))
-Cp = cov(Xp, 2)
-Cn = cov(Xn, 2)
+up = vec(mean(Xp, dims=2))
+un = vec(mean(Xn, dims=2))
+Cp = cov(Xp, dims=2)
+Cn = cov(Xn, dims=2)
 C = 0.5 * (Cp + Cn)
 
 w_gt = C \ (up - un)
