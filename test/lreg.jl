@@ -1,7 +1,9 @@
 using MultivariateStats
-using Base.Test
+using Test
+using LinearAlgebra
+import Random
 
-srand(34568)
+Random.seed!(34568)
 
 ## data
 
@@ -64,7 +66,7 @@ r = 0.1
 A = ridge(X, Y0, r; trans=false, bias=false)
 A_r = copy(A)
 @test size(A) == (n, n2)
-@test X'Y0 ≈ (X'X + r * eye(n)) * A
+@test X'Y0 ≈ (X'X + r * I) * A
 
 a = ridge(X, y0, r; trans=false, bias=false)
 @test size(a) == (n,)
@@ -82,7 +84,7 @@ Aa = ridge(X, Y1, r; trans=false, bias=true)
 Aa_r = copy(Aa)
 @test size(Aa) == (n+1, n2)
 A, b = Aa[1:end-1,:], Aa[end:end,:]
-@test X' * (Y1 .- b) ≈ (X'X + r * eye(n)) * A
+@test X' * (Y1 .- b) ≈ (X'X + r * I) * A
 
 aa = ridge(X, y1, r; trans=false, bias=true)
 @test aa ≈ Aa[:,1]
@@ -96,12 +98,12 @@ aa = ridge(Xt, y1, r; trans=true, bias=true)
 
 ## ridge (with diagonal r)
 
-r = 0.05 + 0.1 * rand(n)
+r = 0.05 .+ 0.1 .* rand(n)
 
 A = ridge(X, Y0, r; trans=false, bias=false)
 A_r = copy(A)
 @test size(A) == (n, n2)
-@test X'Y0 ≈ (X'X + diagm(r)) * A
+@test X'Y0 ≈ (X'X + diagm(0=>r)) * A
 
 a = ridge(X, y0, r; trans=false, bias=false)
 @test size(a) == (n,)
@@ -119,7 +121,7 @@ Aa = ridge(X, Y1, r; trans=false, bias=true)
 Aa_r = copy(Aa)
 @test size(Aa) == (n+1, n2)
 A, b = Aa[1:end-1,:], Aa[end:end,:]
-@test X' * (Y1 .- b) ≈ (X'X + diagm(r)) * A
+@test X' * (Y1 .- b) ≈ (X'X + diagm(0=>r)) * A
 
 aa = ridge(X, y1, r; trans=false, bias=true)
 @test aa ≈ Aa[:,1]
@@ -133,8 +135,8 @@ aa = ridge(Xt, y1, r; trans=true, bias=true)
 
 ## ridge (with qudratic r matrix)
 
-Q = qr(randn(n, n))[1]
-r = Q' * diagm(r) * Q
+Q = qr(randn(n, n)).Q
+r = Q' * diagm(0=>r) * Q
 
 A = ridge(X, Y0, r; trans=false, bias=false)
 A_r = copy(A)
@@ -167,4 +169,3 @@ Aa = ridge(Xt, Y1, r; trans=true, bias=true)
 
 aa = ridge(Xt, y1, r; trans=true, bias=true)
 @test aa ≈ Aa[:,1]
-
