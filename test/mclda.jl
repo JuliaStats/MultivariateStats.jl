@@ -24,7 +24,7 @@ end
 Random.seed!(34568)
 
 ## prepare data
-
+let
 d = 5
 ns = [10, 15, 20]
 nc = length(ns)
@@ -226,4 +226,5 @@ for n2 in (100, 1000, 10000)
     Sb = Hb*Hb'
     Sw = dX*dX'/(n1+n2)
     @test Sb*proj ≈ Sw*proj*Diagonal(M.λ)
+end
 end
