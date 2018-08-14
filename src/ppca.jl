@@ -43,7 +43,7 @@ end
 
 ## core algorithms
 
-function ppcaml(Z::DenseMatrix{T}, mean::Vector{T};
+function ppcaml(Z::AbstractMatrix{T}, mean::Vector{T};
                 tol::Real=1.0e-6, # convergence tolerance
                 maxoutdim::Int=size(Z,1)-1) where T<:AbstractFloat
 
@@ -74,7 +74,7 @@ function ppcaml(Z::DenseMatrix{T}, mean::Vector{T};
     return PPCA(mean, W, σ²)
 end
 
-function ppcaem(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
+function ppcaem(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
                 maxoutdim::Int=size(S,1)-1,
                 tol::Real=1.0e-6,   # convergence tolerance
                 maxiter::Integer=1000) where T<:AbstractFloat
@@ -86,7 +86,7 @@ function ppcaem(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
     Iq = Matrix{T}(I, q, q)
     Id = Matrix{T}(I, d, d)
     W = Matrix{T}(I, d, q)
-    σ² = 0.
+    σ² = zero(T)
     M⁻¹ = inv(W'W .+ σ² * Iq)
 
     i = 1
@@ -120,7 +120,7 @@ function ppcaem(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
     return PPCA(mean, W, σ²)
 end
 
-function bayespca(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
+function bayespca(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
                  maxoutdim::Int=size(S,1)-1,
                  tol::Real=1.0e-6,   # convergence tolerance
                  maxiter::Integer=1000) where T<:AbstractFloat
@@ -132,11 +132,11 @@ function bayespca(S::DenseMatrix{T}, mean::Vector{T}, n::Int;
     Iq = Matrix{T}(I, q, q)
     Id = Matrix{T}(I, d, d)
     W = Matrix{T}(I, d, q)
-    wnorm = zeros(q)
-    σ² = 0.
+    wnorm = zeros(T, q)
+    σ² = zero(T)
     M = W'*W .+ σ²*Iq
     M⁻¹ = inv(M)
-    α = zeros(q)
+    α = zeros(T, q)
 
     i = 1
     chg = NaN
@@ -176,12 +176,14 @@ end
 
 ## interface functions
 
-function fit(::Type{PPCA}, X::DenseMatrix{T};
+function fit(::Type{PPCA}, X::AbstractMatrix{T};
              method::Symbol=:ml,
              maxoutdim::Int=size(X,1)-1,
              mean=nothing,
              tol::Real=1.0e-6,   # convergence tolerance
              maxiter::Integer=1000) where T<:AbstractFloat
+
+    @assert !SparseArrays.issparse(X) "Use Kernel PCA for sparce arrays"
 
     d, n = size(X)
 

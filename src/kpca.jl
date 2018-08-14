@@ -1,7 +1,6 @@
 # Kernel Principal Component Analysis
 
 import Arpack
-import SparseArrays
 
 """Center a kernel matrix"""
 struct KernelCenter{T<:AbstractFloat}

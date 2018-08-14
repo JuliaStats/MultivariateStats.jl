@@ -149,6 +149,8 @@ M = fit(PCA, X; method=:svd, pratio=0.85)
 @test P'P ≈ Matrix(I, 3, 3)
 @test issorted(pvs; rev=true)
 
+# Different data types
+# --------------------
 # test that fit works with Float32 values
 X2 = convert(Array{Float32,2}, X)
 # Float32 input, default pratio
@@ -159,3 +161,8 @@ M = fit(PCA, X2, pratio=0.85)
 M = fit(PCA, X2, pratio=0.85f0)
 # Float64 input, specified Float32 pratio
 M = fit(PCA, X, pratio=0.85f0)
+
+# views
+M = fit(PCA, view(X, :, 1:500), pratio=0.85)
+# sparse
+@test_throws AssertionError fit(PCA, SparseArrays.sprandn(100d, n, 0.6))

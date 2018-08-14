@@ -3,6 +3,7 @@ using LinearAlgebra
 using Test
 import Statistics: mean, cov, var
 import Random
+import SparseArrays
 import StatsBase
 
 Random.seed!(34568)
@@ -149,3 +150,12 @@ P = projection(M)
 X2 = convert(Array{Float32,2}, X)
 # Float32 input, default pratio
 M = fit(PPCA, X2; maxoutdim=3)
+M = fit(PPCA, X2; maxoutdim=3, method=:em)
+M = fit(PPCA, X2; maxoutdim=3, method=:bayes)
+
+# views
+M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3)
+M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3, method=:em)
+M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3, method=:bayes)
+# sparse
+@test_throws AssertionError fit(PCA, SparseArrays.sprandn(100d, n, 0.6))

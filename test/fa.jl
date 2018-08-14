@@ -103,3 +103,7 @@ X2 = convert(Array{Float32,2}, X)
 # Float32 input
 M = fit(FactorAnalysis, X2; method=:cm, maxoutdim=3)
 M = fit(FactorAnalysis, X2; method=:em, maxoutdim=3)
+
+# views
+M = fit(FactorAnalysis, view(X2, :, 1:100), method=:cm, maxoutdim=3)
+M = fit(FactorAnalysis, view(X2, :, 1:100), method=:em, maxoutdim=3)

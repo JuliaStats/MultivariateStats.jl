@@ -43,7 +43,7 @@ end
 
     Rubin, Donald B., and Dorothy T. Thayer. "EM algorithms for ML factor analysis." Psychometrika 47.1 (1982): 69-76.
 """
-function faem(S::DenseMatrix{T}, mv::Vector{T}, n::Int;
+function faem(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
              maxoutdim::Int=size(X,1)-1,
              tol::Real=1.0e-6,   # convergence tolerance
              maxiter::Integer=1000) where T<:AbstractFloat
@@ -84,7 +84,7 @@ end
 
     Zhao, J-H., Philip LH Yu, and Qibao Jiang. "ML estimation for factor analysis: EM or non-EM?." Statistics and computing 18.2 (2008): 109-123.
 """
-function facm(S::DenseMatrix{T}, mv::Vector{T}, n::Int;
+function facm(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
              maxoutdim::Int=size(X,1)-1,
              tol::Real=1.0e-6,   # convergence tolerance
              η = tol,            # variance low bound
@@ -154,7 +154,7 @@ end
 
 
 ## interface functions
-function fit(::Type{FactorAnalysis}, X::DenseMatrix{T};
+function fit(::Type{FactorAnalysis}, X::AbstractMatrix{T};
              method::Symbol=:cm,
              maxoutdim::Int=size(X,1)-1,
              mean=nothing,

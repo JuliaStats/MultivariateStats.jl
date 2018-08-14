@@ -12,17 +12,17 @@ printvecln(io::IO, a::AbstractVector) = (printvec(io, a); println(io))
 
 # centralize
 
-centralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x - m)::typeof(x)
-centralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .- m)::typeof(x)
+centralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x - m)
+centralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .- m)
 
-decentralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x + m)::typeof(x)
-decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)::typeof(x)
+decentralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x + m)
+decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)
 
 # get a full mean vector
 
 fullmean(d::Int, mv::Vector{T}) where T = (isempty(mv) ? zeros(T, d) : mv)::Vector{T}
 
-preprocess_mean(X::Matrix{T}, m) where T<:AbstractFloat =
+preprocess_mean(X::AbstractMatrix{T}, m) where T<:AbstractFloat =
     (m == nothing ? vec(mean(X, dims=2)) : m == 0 ? T[] :  m)::Vector{T}
 
 # choose the first k values and columns

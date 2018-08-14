@@ -3,6 +3,7 @@ module MultivariateStats
     import Statistics: mean, var, cov, covm
     import Base: length, size, show, dump
     import StatsBase: fit, predict, ConvergenceException
+    import SparseArrays
 
     export
 

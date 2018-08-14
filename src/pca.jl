@@ -132,11 +132,13 @@ end
 
 ## interface functions
 
-function fit(::Type{PCA}, X::DenseMatrix{T};
+function fit(::Type{PCA}, X::AbstractMatrix{T};
              method::Symbol=:auto,
              maxoutdim::Int=size(X,1),
              pratio::AbstractFloat=default_pca_pratio,
              mean=nothing) where T<:AbstractFloat
+
+    @assert !SparseArrays.issparse(X) "Use Kernel PCA for sparce arrays"
 
     d, n = size(X)
 
