@@ -3,6 +3,7 @@ using LinearAlgebra
 using Test
 import Statistics: mean, cov
 import Random
+import SparseArrays
 
 Random.seed!(34568)
 
