@@ -12,9 +12,9 @@ The package uses a type ``ICA``, defined below, to represent an ICA model:
 
 .. code-block:: julia
 
-    type ICA
-        mean::Vector{Float64}   # mean vector, of length m (or empty to indicate zero mean)
-        W::Matrix{Float64}      # component coefficient matrix, of size (m, k)
+    mutable struct ICA{T<:Real}
+        mean::Vector{T}   # mean vector, of length m (or empty to indicate zero mean)
+        W::Matrix{T}      # component coefficient matrix, of size (m, k)
     end
 
 **Note:** Each column of ``W`` here corresponds to an independent component. 
