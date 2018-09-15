@@ -223,7 +223,7 @@ function fit(::Type{CCA}, X::DenseMatrix{Float64}, Y::DenseMatrix{Float64};
         throw(DimensionMismatch("X and Y should have the same number of columns."))
 
     (n >= dx && n >= dy) ||
-        warn("CCA would be numerically instable when n < dx or n < dy.")
+        @warn("CCA would be numerically instable when n < dx or n < dy.")
 
     xmv = preprocess_mean(X, xmean)
     ymv = preprocess_mean(Y, ymean)
