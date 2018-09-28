@@ -2,18 +2,18 @@
 
 #### CCA Type
 
-struct CCA
-    xmean::Vector{Float64}  # sample mean of X: of length dx (can be empty)
-    ymean::Vector{Float64}  # sample mean of Y: of length dy (can be empty)
-    xproj::Matrix{Float64}  # projection matrix for X, of size (dx, p)
-    yproj::Matrix{Float64}  # projection matrix for Y, of size (dy, p)
-    corrs::Vector{Float64}  # correlations, of length p
+struct CCA{T<:Real}
+    xmean::Vector{T}  # sample mean of X: of length dx (can be empty)
+    ymean::Vector{T}  # sample mean of Y: of length dy (can be empty)
+    xproj::Matrix{T}  # projection matrix for X, of size (dx, p)
+    yproj::Matrix{T}  # projection matrix for Y, of size (dy, p)
+    corrs::Vector{T}  # correlations, of length p
 
-    function CCA(xm::Vector{Float64},
-                 ym::Vector{Float64},
-                 xp::Matrix{Float64},
-                 yp::Matrix{Float64},
-                 crs::Vector{Float64})
+    function CCA(xm::Vector{T},
+                 ym::Vector{T},
+                 xp::Matrix{T},
+                 yp::Matrix{T},
+                 crs::Vector{T}) where T<:Real
 
         dx, px = size(xp)
         dy, py = size(yp)
@@ -30,7 +30,7 @@ struct CCA
         length(crs) == px ||
             throw(DimensionMismatch("Incorrect length of corrs."))
 
-        new(xm, ym, xp, yp, crs)
+        new{T}(xm, ym, xp, yp, crs)
     end
 end
 
@@ -79,12 +79,12 @@ end
 
 ## ccacov
 
-function ccacov(Cxx::DenseMatrix{Float64},
-                Cyy::DenseMatrix{Float64},
-                Cxy::DenseMatrix{Float64},
-                xmean::Vector{Float64},
-                ymean::Vector{Float64},
-                p::Int)
+function ccacov(Cxx::DenseMatrix{T},
+                Cyy::DenseMatrix{T},
+                Cxy::DenseMatrix{T},
+                xmean::Vector{T},
+                ymean::Vector{T},
+                p::Int) where T<:Real
 
     # argument checking
     dx, dx2 = size(Cxx)
@@ -143,11 +143,11 @@ end
 
 ## ccasvd
 
-function ccasvd(Zx::DenseMatrix{Float64},
-                Zy::DenseMatrix{Float64},
-                xmean::Vector{Float64},
-                ymean::Vector{Float64},
-                p::Int)
+function ccasvd(Zx::DenseMatrix{T},
+                Zy::DenseMatrix{T},
+                xmean::Vector{T},
+                ymean::Vector{T},
+                p::Int) where T<:Real
 
     dx, n = size(Zx)
     dy, n2 = size(Zy)
@@ -176,7 +176,7 @@ end
 #   Note: in this paper, each row is considered as an observation.
 #   The algorithm is adpated to the column-major format here.
 #
-function _ccasvd(Zx, Zy, xmean, ymean, p::Int)
+function _ccasvd(Zx::DenseMatrix{T}, Zy::DenseMatrix{T}, xmean::Vector{T}, ymean::Vector{T}, p::Int) where T<:Real
     # svd factorization of Z
 
     n = size(Zx, 2)
@@ -202,7 +202,7 @@ function _ccasvd(Zx, Zy, xmean, ymean, p::Int)
     rmul!(Py, sqrt(n-1))
 
     # compute correlations
-    crs = rmul!(coldot(Zx'Px, Zy'Py), inv(n-1))
+    crs = rmul!(coldot(Zx'Px, Zy'Py), one(T)/(n-1))
 
     # construct CCA model
     CCA(xmean, ymean, Px, Py, crs)
@@ -210,11 +210,11 @@ end
 
 ## interface functions
 
-function fit(::Type{CCA}, X::DenseMatrix{Float64}, Y::DenseMatrix{Float64};
+function fit(::Type{CCA}, X::AbstractMatrix{T}, Y::AbstractMatrix{T};
              outdim::Int=min(min(size(X)...), min(size(Y)...)),
              method::Symbol=:svd,
              xmean=nothing,
-             ymean=nothing)
+             ymean=nothing) where T<:Real
 
     dx, n = size(X)
     dy, n2 = size(Y)

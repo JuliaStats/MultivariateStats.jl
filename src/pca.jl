@@ -1,7 +1,5 @@
 # Principal Component Analysis
 
-import Printf
-
 #### PCA type
 
 struct PCA{T<:AbstractFloat}
@@ -51,8 +49,7 @@ reconstruct(M::PCA{T}, y::AbstractVecOrMat{T}) where T<:AbstractFloat = decentra
 ## show & dump
 
 function show(io::IO, M::PCA)
-    pr = Printf.@sprintf("%.5f", principalratio(M))
-    print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $pr)")
+    print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $(principalratio(M)))")
 end
 
 function dump(io::IO, M::PCA)
