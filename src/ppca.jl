@@ -106,7 +106,8 @@ function ppcaem(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
         M⁻¹ = inv(W'*W .+ σ²*Iq)
         C⁻¹ = (Id - W*M⁻¹*W')/σ²
         L = (-n/2)*(log(det(C)) + tr(C⁻¹*S))  # (-n/2)*d*log(2π) omitted
-        # println("$i] ΔL: $(abs(L_old - L)), L: $L")
+
+        @debug "Likelihood" iter=i L=L ΔL=abs(L_old - L)
         chg = abs(L_old - L)
         if chg < tol
             converged = true
@@ -160,7 +161,8 @@ function bayespca(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
         M⁻¹ = inv(M)
         C⁻¹ = (Id - W*M⁻¹*W')/σ²
         L = (-n/2)*(log(det(C)) + tr(C⁻¹*S))  # (-n/2)*d*log(2π) omitted
-        # println("$i] ΔL: $(abs(L_old - L)), L: $L")
+
+        @debug "Likelihood" iter=i L=L ΔL=abs(L_old - L)
         chg = abs(L_old - L)
         if chg < tol
             converged = true
