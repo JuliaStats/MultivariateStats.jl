@@ -1,3 +1,6 @@
+using MultivariateStats
+using Test
+
 tests = ["lreg",
          "whiten",
          "pca",
@@ -10,10 +13,6 @@ tests = ["lreg",
          "kpca",
          "fa"]
 
-println("Running tests:")
-
-for t in tests
-    fp = string(t, ".jl")
-    println(" * $(fp)")
-    include(fp)
+@testset for test in tests
+    include(test*".jl")
 end

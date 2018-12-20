@@ -6,156 +6,160 @@ import Random
 import SparseArrays
 import StatsBase
 
-Random.seed!(34568)
+@testset "Probabilistic PCA" begin
 
-## PCA with zero mean
+    Random.seed!(34568)
 
-X = randn(5, 10)
-Y = randn(3, 10)
+    ## PCA with zero mean
 
-W = qr(randn(5, 5)).Q[:, 1:3]
-σ² = 0.1
-M = PPCA(Float64[], W, σ²)
+    X = randn(5, 10)
+    Y = randn(3, 10)
 
-@test indim(M) == 5
-@test outdim(M) == 3
-@test mean(M) == zeros(5)
-@test loadings(M) == W
-@test var(M) == σ²
+    W = qr(randn(5, 5)).Q[:, 1:3]
+    σ² = 0.1
+    M = PPCA(Float64[], W, σ²)
 
-T = inv(W'*W .+ σ²*Matrix(I, 3, 3))*W'
-@test transform(M, X[:,1]) ≈ T * X[:,1]
-@test transform(M, X) ≈ T * X
+    @test indim(M) == 5
+    @test outdim(M) == 3
+    @test mean(M) == zeros(5)
+    @test loadings(M) == W
+    @test var(M) == σ²
 
-R = W*inv(W'W)*(W'W .+ σ²*Matrix(I, 3, 3))
-@test reconstruct(M, Y[:,1]) ≈ R * Y[:,1]
-@test reconstruct(M, Y) ≈ R * Y
+    T = inv(W'*W .+ σ²*Matrix(I, 3, 3))*W'
+    @test transform(M, X[:,1]) ≈ T * X[:,1]
+    @test transform(M, X) ≈ T * X
 
-
-## PCA with non-zero mean
-
-mval = rand(5)
-M = PPCA(mval, W, σ²)
-
-@test indim(M) == 5
-@test outdim(M) == 3
-@test mean(M) == mval
-@test loadings(M) == W
-@test var(M) == σ²
-
-@test transform(M, X[:,1]) ≈ T * (X[:,1] .- mval)
-@test transform(M, X) ≈ T * (X .- mval)
-
-@test reconstruct(M, Y[:,1]) ≈ R * Y[:,1] .+ mval
-@test reconstruct(M, Y) ≈ R * Y .+ mval
+    R = W*inv(W'W)*(W'W .+ σ²*Matrix(I, 3, 3))
+    @test reconstruct(M, Y[:,1]) ≈ R * Y[:,1]
+    @test reconstruct(M, Y) ≈ R * Y
 
 
-## prepare training data
+    ## PCA with non-zero mean
 
-d = 5
-n = 1000
+    mval = rand(5)
+    M = PPCA(mval, W, σ²)
 
-R = collect(qr(randn(d, d)).Q)
-@test R'R ≈ Matrix(I, 5, 5)
-rmul!(R, Diagonal(sqrt.([0.5, 0.3, 0.1, 0.05, 0.05])))
+    @test indim(M) == 5
+    @test outdim(M) == 3
+    @test mean(M) == mval
+    @test loadings(M) == W
+    @test var(M) == σ²
 
-X = R'randn(5, n) .+ randn(5)
-mval = vec(mean(X, dims=2))
-Z = X .- mval
+    @test transform(M, X[:,1]) ≈ T * (X[:,1] .- mval)
+    @test transform(M, X) ≈ T * (X .- mval)
 
-M0 = fit(PCA, X; mean=mval, maxoutdim = 4)
+    @test reconstruct(M, Y[:,1]) ≈ R * Y[:,1] .+ mval
+    @test reconstruct(M, Y) ≈ R * Y .+ mval
 
-## ppcaml (default)
 
-M = fit(PPCA, X)
-P = projection(M)
-W = loadings(M)
+    ## prepare training data
 
-@test indim(M) == 5
-@test outdim(M) == 4
-@test mean(M) == mval
-@test P'P ≈ Matrix(I, 4, 4)
-@test reconstruct(M, transform(M, X)) ≈ reconstruct(M0, transform(M0, X))
+    d = 5
+    n = 1000
 
-M = fit(PPCA, X; mean=mval)
-@test loadings(M) ≈ W
+    R = collect(qr(randn(d, d)).Q)
+    @test R'R ≈ Matrix(I, 5, 5)
+    rmul!(R, Diagonal(sqrt.([0.5, 0.3, 0.1, 0.05, 0.05])))
 
-M = fit(PPCA, Z; mean=0)
-@test loadings(M) ≈ W
+    X = R'randn(5, n) .+ randn(5)
+    mval = vec(mean(X, dims=2))
+    Z = X .- mval
 
-M = fit(PPCA, X; maxoutdim=3)
-P = projection(M)
-W = loadings(M)
+    M0 = fit(PCA, X; mean=mval, maxoutdim = 4)
 
-@test indim(M) == 5
-@test outdim(M) == 3
-@test P'P ≈ Matrix(I, 3, 3)
+    ## ppcaml (default)
 
-# ppcaem
+    M = fit(PPCA, X)
+    P = projection(M)
+    W = loadings(M)
 
-M = fit(PPCA, X; method=:em)
-P = projection(M)
-W = loadings(M)
+    @test indim(M) == 5
+    @test outdim(M) == 4
+    @test mean(M) == mval
+    @test P'P ≈ Matrix(I, 4, 4)
+    @test reconstruct(M, transform(M, X)) ≈ reconstruct(M0, transform(M0, X))
 
-@test indim(M) == 5
-@test outdim(M) == 4
-@test mean(M) == mval
-@test P'P ≈ Matrix(I, 4, 4)
-@test all(isapprox.(reconstruct(M, transform(M, X)), reconstruct(M0, transform(M0, X)), atol=1e-3))
+    M = fit(PPCA, X; mean=mval)
+    @test loadings(M) ≈ W
 
-M = fit(PPCA, X; method=:em, mean=mval)
-@test loadings(M) ≈ W
+    M = fit(PPCA, Z; mean=0)
+    @test loadings(M) ≈ W
 
-M = fit(PPCA, Z; method=:em, mean=0)
-@test loadings(M) ≈ W
+    M = fit(PPCA, X; maxoutdim=3)
+    P = projection(M)
+    W = loadings(M)
 
-M = fit(PPCA, X; method=:em, maxoutdim=3)
-P = projection(M)
+    @test indim(M) == 5
+    @test outdim(M) == 3
+    @test P'P ≈ Matrix(I, 3, 3)
 
-@test indim(M) == 5
-@test outdim(M) == 3
-@test P'P ≈ Matrix(I, 3, 3)
+    # ppcaem
 
-@test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:em, maxiter=1)
+    M = fit(PPCA, X; method=:em)
+    P = projection(M)
+    W = loadings(M)
 
-# bayespca
-M0 = fit(PCA, X; mean=mval, maxoutdim = 3)
+    @test indim(M) == 5
+    @test outdim(M) == 4
+    @test mean(M) == mval
+    @test P'P ≈ Matrix(I, 4, 4)
+    @test all(isapprox.(reconstruct(M, transform(M, X)), reconstruct(M0, transform(M0, X)), atol=1e-3))
 
-M = fit(PPCA, X; method=:bayes)
-P = projection(M)
-W = loadings(M)
+    M = fit(PPCA, X; method=:em, mean=mval)
+    @test loadings(M) ≈ W
 
-@test indim(M) == 5
-@test outdim(M) == 3
-@test mean(M) == mval
-@test P'P ≈ Matrix(I, 3, 3)
-@test reconstruct(M, transform(M, X)) ≈ reconstruct(M0, transform(M0, X))
+    M = fit(PPCA, Z; method=:em, mean=0)
+    @test loadings(M) ≈ W
 
-M = fit(PPCA, X; method=:bayes, mean=mval)
-@test loadings(M) ≈ W
+    M = fit(PPCA, X; method=:em, maxoutdim=3)
+    P = projection(M)
 
-M = fit(PPCA, Z; method=:bayes, mean=0)
-@test loadings(M) ≈ W
+    @test indim(M) == 5
+    @test outdim(M) == 3
+    @test P'P ≈ Matrix(I, 3, 3)
 
-M = fit(PPCA, X; method=:em, maxoutdim=2)
-P = projection(M)
+    @test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:em, maxiter=1)
 
-@test indim(M) == 5
-@test outdim(M) == 2
-@test P'P ≈ Matrix(I, 2, 2)
+    # bayespca
+    M0 = fit(PCA, X; mean=mval, maxoutdim = 3)
 
-@test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:bayes, maxiter=1)
+    M = fit(PPCA, X; method=:bayes)
+    P = projection(M)
+    W = loadings(M)
 
-# test that fit works with Float32 values
-X2 = convert(Array{Float32,2}, X)
-# Float32 input, default pratio
-M = fit(PPCA, X2; maxoutdim=3)
-M = fit(PPCA, X2; maxoutdim=3, method=:em)
-M = fit(PPCA, X2; maxoutdim=3, method=:bayes)
+    @test indim(M) == 5
+    @test outdim(M) == 3
+    @test mean(M) == mval
+    @test P'P ≈ Matrix(I, 3, 3)
+    @test reconstruct(M, transform(M, X)) ≈ reconstruct(M0, transform(M0, X))
 
-# views
-M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3)
-M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3, method=:em)
-M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3, method=:bayes)
-# sparse
-@test_throws AssertionError fit(PCA, SparseArrays.sprandn(100d, n, 0.6))
+    M = fit(PPCA, X; method=:bayes, mean=mval)
+    @test loadings(M) ≈ W
+
+    M = fit(PPCA, Z; method=:bayes, mean=0)
+    @test loadings(M) ≈ W
+
+    M = fit(PPCA, X; method=:em, maxoutdim=2)
+    P = projection(M)
+
+    @test indim(M) == 5
+    @test outdim(M) == 2
+    @test P'P ≈ Matrix(I, 2, 2)
+
+    @test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:bayes, maxiter=1)
+
+    # test that fit works with Float32 values
+    X2 = convert(Array{Float32,2}, X)
+    # Float32 input, default pratio
+    M = fit(PPCA, X2; maxoutdim=3)
+    M = fit(PPCA, X2; maxoutdim=3, method=:em)
+    M = fit(PPCA, X2; maxoutdim=3, method=:bayes)
+
+    # views
+    M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3)
+    M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3, method=:em)
+    M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3, method=:bayes)
+    # sparse
+    @test_throws AssertionError fit(PCA, SparseArrays.sprandn(100d, n, 0.6))
+
+end
