@@ -1,6 +1,3 @@
-using MultivariateStats
-using Test
-
 tests = ["lreg",
          "whiten",
          "pca",
@@ -13,6 +10,6 @@ tests = ["lreg",
          "kpca",
          "fa"]
 
-@testset for test in tests
+for test in tests
     include(test*".jl")
 end
