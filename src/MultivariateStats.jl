@@ -5,6 +5,7 @@ module MultivariateStats
     import Base: length, size, show, dump
     import StatsBase: fit, predict, ConvergenceException
     import SparseArrays
+    import LinearAlgebra: eigvals
 
     export
 
@@ -74,6 +75,7 @@ module MultivariateStats
     correlations,       # correlations of all projected directions
 
     ## cmds
+    MDS,
     classical_mds,      # perform classical MDS over a given distance matrix
 
     gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix
