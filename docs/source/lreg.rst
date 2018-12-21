@@ -11,15 +11,15 @@ Linear Least Square
 
 .. math::
 
-    \mathop{\mathrm{minimize}}_{(\mathbf{a}, b)} \ 
-    \frac{1}{2} \|\mathbf{y} - (\mathbf{X} \mathbf{a} + b)\|^2 
+    \mathop{\mathrm{minimize}}_{(\mathbf{a}, b)} \
+    \frac{1}{2} \|\mathbf{y} - (\mathbf{X} \mathbf{a} + b)\|^2
 
 Sometimes, the coefficient matrix is given in a transposed form, in which case, the optimization is modified as:
 
 .. math::
 
-    \mathop{\mathrm{minimize}}_{(\mathbf{a}, b)} \ 
-    \frac{1}{2} \|\mathbf{y} - (\mathbf{X}^T \mathbf{a} + b)\|^2 
+    \mathop{\mathrm{minimize}}_{(\mathbf{a}, b)} \
+    \frac{1}{2} \|\mathbf{y} - (\mathbf{X}^T \mathbf{a} + b)\|^2
 
 The package provides ``llsq`` to solve these problems:
 
@@ -34,7 +34,7 @@ The package provides ``llsq`` to solve these problems:
     - ``trans``: whether to use the transposed form. (default is ``false``)
     - ``bias``: whether to include the bias term ``b``. (default is ``true``)
 
-    The function results the solution ``a``. 
+    The function results the solution ``a``.
     In particular, when ``y`` is a vector (matrix), ``a`` is also a vector (matrix). If ``bias`` is true, then the returned array is augmented as ``[a; b]``.
 
 **Examples**
@@ -46,7 +46,7 @@ For a single response vector ``y`` (without using bias):
     using MultivariateStats
 
     # prepare data
-    X = rand(1000, 3)               # feature matrix              
+    X = rand(1000, 3)               # feature matrix
     a0 = rand(3)                    # ground truths
     y = X * a0 + 0.1 * randn(1000)  # generate response
 
@@ -65,9 +65,9 @@ For a single response vector ``y`` (using bias):
 .. code-block:: julia
 
     # prepare data
-    X = rand(1000, 3)             
+    X = rand(1000, 3)
     a0, b0 = rand(3), rand()
-    y = X * a0 + b0 + 0.1 * randn(1000) 
+    y = X * a0 + b0 + 0.1 * randn(1000)
 
     # solve using llsq
     sol = llsq(X, y)
@@ -76,12 +76,12 @@ For a single response vector ``y`` (using bias):
     a, b = sol[1:end-1], sol[end]
 
     # do prediction
-    yp = X * a + b
+    yp = X * a + b'
 
 For a matrix ``Y`` comprised of multiple columns:
 
 .. code-block:: julia
-    
+
     # prepare data
     X = rand(1000, 3)
     A0, b0 = rand(3, 5), rand(1, 5)
@@ -94,7 +94,7 @@ For a matrix ``Y`` comprised of multiple columns:
     A, b = sol[1:end-1,:], sol[end,:]
 
     # do prediction
-    Yp = X * A .+ b
+    Yp = X * A .+ b'
 
 
 Ridge Regression
@@ -104,16 +104,16 @@ Compared to linear least square, `Ridge Regression <http://en.wikipedia.org/wiki
 
 .. math::
 
-    \mathop{\mathrm{minimize}}_{(\mathbf{a}, b)} \ 
-    \frac{1}{2} \|\mathbf{y} - (\mathbf{X} \mathbf{a} + b)\|^2 + 
+    \mathop{\mathrm{minimize}}_{(\mathbf{a}, b)} \
+    \frac{1}{2} \|\mathbf{y} - (\mathbf{X} \mathbf{a} + b)\|^2 +
     \frac{1}{2} \mathbf{a}^T \mathbf{Q} \mathbf{a}
 
 The transposed form:
 
 .. math::
 
-    \mathop{\mathrm{minimize}}_{(\mathbf{a}, b)} \ 
-    \frac{1}{2} \|\mathbf{y} - (\mathbf{X}^T \mathbf{a} + b)\|^2 + 
+    \mathop{\mathrm{minimize}}_{(\mathbf{a}, b)} \
+    \frac{1}{2} \|\mathbf{y} - (\mathbf{X}^T \mathbf{a} + b)\|^2 +
     \frac{1}{2} \mathbf{a}^T \mathbf{Q} \mathbf{a}
 
 The package provides ``ridge`` to solve these problems:
@@ -135,6 +135,6 @@ The package provides ``ridge`` to solve these problems:
     - ``trans``: whether to use the transposed form. (default is ``false``)
     - ``bias``: whether to include the bias term ``b``. (default is ``true``)
 
-    The function results the solution ``a``. 
+    The function results the solution ``a``.
     In particular, when ``y`` is a vector (matrix), ``a`` is also a vector (matrix). If ``bias`` is true, then the returned array is augmented as ``[a; b]``.
 

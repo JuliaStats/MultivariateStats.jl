@@ -1,7 +1,7 @@
 # Factor Analysis
 
 """Factor Analysis type"""
-struct FactorAnalysis{T<:AbstractFloat}
+struct FactorAnalysis{T<:Real}
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     W::Matrix{T}          # factor loadings matrix: of size d x p
     Ψ::Vector{T}          # noise covariance: diagonal of size d x d
@@ -18,14 +18,14 @@ loadings(M::FactorAnalysis) = M.W
 
 ## use
 
-function transform(m::FactorAnalysis{T}, x::AbstractVecOrMat{T}) where T<:AbstractFloat
+function transform(m::FactorAnalysis{T}, x::AbstractVecOrMat{T}) where T<:Real
     xn = centralize(x, mean(m))
     W = m.W
     WᵀΨ⁻¹ = W'*diagm(0 => 1 ./ m.Ψ)  # (q x d) * (d x d) = (q x d)
     return inv(I+WᵀΨ⁻¹*W)*(WᵀΨ⁻¹*xn)  # (q x q) * (q x d) * (d x 1) = (q x 1)
 end
 
-function reconstruct(m::FactorAnalysis{T}, z::AbstractVecOrMat{T}) where T<:AbstractFloat
+function reconstruct(m::FactorAnalysis{T}, z::AbstractVecOrMat{T}) where T<:Real
     W  = m.W
     # ΣW(W'W)⁻¹z+μ = ΣW(W'W)⁻¹W'Σ⁻¹(x-μ)+μ = Σ(WW⁻¹)((W')⁻¹W')Σ⁻¹(x-μ)+μ = ΣΣ⁻¹(x-μ)+μ = (x-μ)+μ = x
     return cov(m)*W*inv(W'W)*z .+ mean(m)
@@ -46,7 +46,7 @@ end
 function faem(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
              maxoutdim::Int=size(X,1)-1,
              tol::Real=1.0e-6,   # convergence tolerance
-             maxiter::Integer=1000) where T<:AbstractFloat
+             maxiter::Integer=1000) where T<:Real
 
     d = size(S,1)
     q = maxoutdim
@@ -70,7 +70,7 @@ function faem(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
         detΣ = prod(Ψ)*det(I + WᵀΨ⁻¹*W)
         Σ⁻¹ = Ψ⁻¹ - Ψ⁻¹*W*inv(I + WᵀΨ⁻¹*W)*WᵀΨ⁻¹
         L = (-n/2)*(d*log(2π) + log(detΣ) + tr(Σ⁻¹*S))
-        # println("$c] ΔL: $(abs(L_old - L)), L: $L")
+        @debug "Likelihood" iter=c L=L ΔL=abs(L_old - L)
         if abs(L_old - L) < tol
             break
         end
@@ -88,7 +88,7 @@ function facm(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
              maxoutdim::Int=size(X,1)-1,
              tol::Real=1.0e-6,   # convergence tolerance
              η = tol,            # variance low bound
-             maxiter::Integer=1000) where T<:AbstractFloat
+             maxiter::Integer=1000) where T<:Real
 
     d = size(S,1)
 
@@ -142,7 +142,7 @@ function facm(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
             Ψ[i] = max(η, (ωᵢᵗ⁺¹ + 1.)*Ψ[i]) # set new parameter
         end
 
-        # println("$c] ΔL: $(abs(L_old - L)), L: $L")
+        @debug "Likelihood" iter=c L=L ΔL=abs(L_old - L)
         if abs(L_old - L) < tol
             break
         end
@@ -160,7 +160,7 @@ function fit(::Type{FactorAnalysis}, X::AbstractMatrix{T};
              mean=nothing,
              tol::Real=1.0e-6,   # convergence tolerance
              η = tol,            # variance low bound
-             maxiter::Integer=1000) where T<:AbstractFloat
+             maxiter::Integer=1000) where T<:Real
 
     d, n = size(X)
 

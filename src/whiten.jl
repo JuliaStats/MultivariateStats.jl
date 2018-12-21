@@ -4,28 +4,24 @@
 #
 # finds W, such that W'CW = I
 #
-function cov_whitening(C::Cholesky{T}) where T<:AbstractFloat
+function cov_whitening(C::Cholesky{T}) where {T<:Real}
     cf = C.UL
     Matrix{T}(inv(istriu(cf) ? cf : cf'))
 end
 
-cov_whitening!(C::DenseMatrix{T}) where T<:AbstractFloat = cov_whitening(cholesky!(Hermitian(C, :U)))
-cov_whitening(C::DenseMatrix{T}) where T<:AbstractFloat = cov_whitening!(copy(C))
+cov_whitening!(C::DenseMatrix{<:Real}) = cov_whitening(cholesky!(Hermitian(C, :U)))
+cov_whitening(C::DenseMatrix{<:Real}) = cov_whitening!(copy(C))
 
-cov_whitening!(C::DenseMatrix{T}, regcoef::Real) where T<:AbstractFloat =
-    cov_whitening!(regularize_symmat!(C, regcoef))
-
-cov_whitening(C::DenseMatrix{T}, regcoef::Real) where T<:AbstractFloat =
-    cov_whitening!(copy(C), regcoef)
-
+cov_whitening!(C::DenseMatrix{<:Real}, regcoef::Real) = cov_whitening!(regularize_symmat!(C, regcoef))
+cov_whitening(C::DenseMatrix{<:Real}, regcoef::Real) = cov_whitening!(copy(C), regcoef)
 
 ## Whitening type
 
-struct Whitening{T<:AbstractFloat}
+struct Whitening{T<:Real}
     mean::Vector{T}
     W::Matrix{T}
 
-    function Whitening{T}(mean::Vector{T}, W::Matrix{T}) where T<:AbstractFloat
+    function Whitening{T}(mean::Vector{T}, W::Matrix{T}) where {T<:Real}
         d, d2 = size(W)
         d == d2 || error("W must be a square matrix.")
         isempty(mean) || length(mean) == d ||
@@ -33,7 +29,7 @@ struct Whitening{T<:AbstractFloat}
         return new(mean, W)
     end
 end
-Whitening(mean::Vector{T}, W::Matrix{T}) where T<:AbstractFloat = Whitening{T}(mean, W)
+Whitening(mean::Vector{T}, W::Matrix{T}) where {T<:Real} = Whitening{T}(mean, W)
 
 indim(f::Whitening) = size(f.W, 1)
 outdim(f::Whitening) = size(f.W, 2)
@@ -44,7 +40,7 @@ transform(f::Whitening, x::AbstractVecOrMat) = transpose(f.W) * centralize(x, f.
 ## Fit whitening to data
 
 function fit(::Type{Whitening}, X::DenseMatrix{T};
-             mean=nothing, regcoef::Real=zero(T)) where T<:AbstractFloat
+             mean=nothing, regcoef::Real=zero(T)) where {T<:Real}
     n = size(X, 2)
     n > 1 || error("X must contain more than one sample.")
     mv = preprocess_mean(X, mean)
@@ -55,7 +51,7 @@ end
 
 # invsqrtm
 
-function _invsqrtm!(C::Matrix{T}) where T<:AbstractFloat
+function _invsqrtm!(C::Matrix{<:Real})
     n = size(C, 1)
     size(C, 2) == n || error("C must be a square matrix.")
     E = eigen!(Symmetric(C))
@@ -68,4 +64,4 @@ function _invsqrtm!(C::Matrix{T}) where T<:AbstractFloat
     return U * transpose(U)
 end
 
-invsqrtm(C::DenseMatrix{T}) where T<:AbstractFloat = _invsqrtm!(copy(C))
+invsqrtm(C::DenseMatrix{<:Real}) = _invsqrtm!(copy(C))
