@@ -4,18 +4,9 @@ using Test
 
 @testset "MDS" begin
 
-    ## testing data
-
-    function pwdists(X)
-        S = sum(abs2, X, dims=1)
-        D2 = S .+ S' - 2 * (X'X)
-        D2[diagind(D2)] .= 0.0
-        return sqrt.(D2)
-    end
-
     X0 = randn(3, 5)
     G0 = X0'X0
-    D0 = pwdists(X0)
+    D0 = MultivariateStats.pairwise((x,y)->norm(x-y), X0)
 
     ## conversion between dmat and gram
 
