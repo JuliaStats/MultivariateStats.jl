@@ -20,7 +20,7 @@ _haug(X::AbstractMatrix{T}) where T = hcat(X, ones(T, size(X,1), 1))::Matrix{T}
 ## linear least square
 
 function llsq(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T};
-              trans::Bool=false, bias::Bool=true) where T<:AbstractFloat
+              trans::Bool=false, bias::Bool=true) where {T<:Real}
     if trans
         mX, nX = size(X)
         size(Y, 1) == nX || throw(DimensionMismatch("Dimensions of X and Y mismatch."))
@@ -36,21 +36,21 @@ end
 ## ridge regression
 
 function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::Real;
-               trans::Bool=false, bias::Bool=true) where T<:AbstractFloat
+               trans::Bool=false, bias::Bool=true) where {T<:Real}
     lreg_chkdims(X, Y, trans)
     r >= zero(r) || error("r must be non-negative.")
     _ridge(X, Y, convert(T, r), trans, bias)
 end
 
-function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::AbstractVector{T};
-               trans::Bool=false, bias::Bool=true) where T<:AbstractFloat
+function ridge(X::AbstractMatrix, Y::AbstractVecOrMat, r::AbstractVector;
+               trans::Bool=false, bias::Bool=true)
     d = lreg_chkdims(X, Y, trans)
     length(r) == d || throw(DimensionMismatch("Incorrect length of r."))
     _ridge(X, Y, r, trans, bias)
 end
 
-function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::AbstractMatrix{T};
-               trans::Bool=false, bias::Bool=true) where T<:AbstractFloat
+function ridge(X::AbstractMatrix, Y::AbstractVecOrMat, r::AbstractMatrix;
+               trans::Bool=false, bias::Bool=true)
     d = lreg_chkdims(X, Y, trans)
     size(r) == (d, d) || throw(DimensionMismatch("Incorrect size of r."))
     _ridge(X, Y, r, trans, bias)
@@ -59,7 +59,7 @@ end
 ## implementation
 
 function _ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T},
-                r::Union{Real, AbstractVecOrMat}, trans::Bool, bias::Bool) where T<:AbstractFloat
+                r::Union{Real, AbstractVecOrMat}, trans::Bool, bias::Bool) where {T<:Real}
     if bias
         if trans
             X_ = _vaug(X)

@@ -254,7 +254,7 @@ serves to regularize the computation.
 
 .. code-block:: julia
 
-    immutable SubspaceLDA{T<:AbstractFloat}
+    immutable SubspaceLDA{T<:Real}
         projw::Matrix{T}   # P, project down to the subspace spanned by within-class scatter
         projLDA::Matrix{T} # L, LDA directions in the projected subspace
         λ::Vector{T}
