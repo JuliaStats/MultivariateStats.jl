@@ -29,6 +29,7 @@ using Test
     @test outdim(M) == 3
     @test size(projection(M)) == (n,3)
     @test length(eigvals(M)) == 3
+    @test stress(M) ≈ 0.0 atol = 1e-10
 
     X = transform(M)
     @test size(X) == (3,n)
@@ -38,6 +39,7 @@ using Test
     M = fit(MDS, D0, maxoutdim=3, distances=true)
     @test isnan(indim(M))
     @test outdim(M) == 3
+    @test stress(M) ≈ 0.0 atol = 1e-10
 
     X = transform(M)
     @test size(X) == (3,n)

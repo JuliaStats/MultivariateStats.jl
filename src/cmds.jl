@@ -153,3 +153,9 @@ function fit(::Type{MDS}, X::AbstractMatrix{T};
 end
 
 @deprecate classical_mds(D::AbstractMatrix, p::Int) transform(fit(MDS, D, maxoutdim=p, distances=true))
+
+function stress(M::MDS)
+    DY = pairwise((x,y)->norm(x-y), transform(M))
+    n = size(M.D,1)
+    return sqrt(2*sum((M.D - DY).^2)/sum(M.D.^2));
+end

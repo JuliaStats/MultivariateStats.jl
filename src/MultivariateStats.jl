@@ -78,6 +78,7 @@ module MultivariateStats
     MDS,
     classical_mds,      # perform classical MDS over a given distance matrix
     eigvals,            # eignenvalues of the transformation
+    stress,             # stress evaluation
 
     gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix
     dmat2gram, dmat2gram!,  # Distance matrix => Gram matrix
