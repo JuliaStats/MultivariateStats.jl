@@ -3,169 +3,173 @@ using Test
 using LinearAlgebra
 import Random
 
-Random.seed!(34568)
+@testset "Ridge Regression" begin
 
-## data
+    Random.seed!(34568)
 
-m = 9
-n = 6
-n2 = 3
+    ## data
 
-X = randn(m, n)
-A = randn(n, n2)
-Xt = X'
+    m = 9
+    n = 6
+    n2 = 3
 
-b = randn(1, n2)
+    X = randn(m, n)
+    A = randn(n, n2)
+    Xt = X'
 
-E = randn(m, n2) * 0.1
-Y0 = X * A + E
-Y1 = X * A .+ b + E
+    b = randn(1, n2)
 
-y0 = Y0[:,1]
-y1 = Y1[:,1]
+    E = randn(m, n2) * 0.1
+    Y0 = X * A + E
+    Y1 = X * A .+ b + E
 
-## llsq
+    y0 = Y0[:,1]
+    y1 = Y1[:,1]
 
-A = llsq(X, Y0; trans=false, bias=false)
-A_r = copy(A)
-@test size(A) == (n, n2)
-@test X'Y0 ≈ X'X * A
+    ## llsq
 
-a = llsq(X, y0; trans=false, bias=false)
-@test size(a) == (n,)
-@test a ≈ A[:,1]
+    A = llsq(X, Y0; trans=false, bias=false)
+    A_r = copy(A)
+    @test size(A) == (n, n2)
+    @test X'Y0 ≈ X'X * A
 
-A = llsq(Xt, Y0; trans=true, bias=false)
-@test size(A) == (n, n2)
-@test A ≈ A_r
+    a = llsq(X, y0; trans=false, bias=false)
+    @test size(a) == (n,)
+    @test a ≈ A[:,1]
 
-a = llsq(Xt, y0; trans=true, bias=false)
-@test size(a) == (n,)
-@test a ≈ A[:,1]
+    A = llsq(Xt, Y0; trans=true, bias=false)
+    @test size(A) == (n, n2)
+    @test A ≈ A_r
 
-Aa = llsq(X, Y1; trans=false, bias=true)
-Aa_r = copy(Aa)
-@test size(Aa) == (n+1, n2)
-A, b = Aa[1:end-1,:], Aa[end:end,:]
-@test X' * (Y1 .- b) ≈ X'X * A
+    a = llsq(Xt, y0; trans=true, bias=false)
+    @test size(a) == (n,)
+    @test a ≈ A[:,1]
 
-aa = llsq(X, y1; trans=false, bias=true)
-@test aa ≈ Aa[:,1]
+    Aa = llsq(X, Y1; trans=false, bias=true)
+    Aa_r = copy(Aa)
+    @test size(Aa) == (n+1, n2)
+    A, b = Aa[1:end-1,:], Aa[end:end,:]
+    @test X' * (Y1 .- b) ≈ X'X * A
 
-Aa = llsq(Xt, Y1; trans=true, bias=true)
-@test Aa ≈ Aa_r
+    aa = llsq(X, y1; trans=false, bias=true)
+    @test aa ≈ Aa[:,1]
 
-aa = llsq(Xt, y1; trans=true, bias=true)
-@test aa ≈ Aa[:,1]
+    Aa = llsq(Xt, Y1; trans=true, bias=true)
+    @test Aa ≈ Aa_r
 
-
-## ridge (with Real r)
-
-r = 0.1
-
-A = ridge(X, Y0, r; trans=false, bias=false)
-A_r = copy(A)
-@test size(A) == (n, n2)
-@test X'Y0 ≈ (X'X + r * I) * A
-
-a = ridge(X, y0, r; trans=false, bias=false)
-@test size(a) == (n,)
-@test a ≈ A[:,1]
-
-A = ridge(Xt, Y0, r; trans=true, bias=false)
-@test size(A) == (n, n2)
-@test A ≈ A_r
-
-a = ridge(Xt, y0, r; trans=true, bias=false)
-@test size(a) == (n,)
-@test a ≈ A[:,1]
-
-Aa = ridge(X, Y1, r; trans=false, bias=true)
-Aa_r = copy(Aa)
-@test size(Aa) == (n+1, n2)
-A, b = Aa[1:end-1,:], Aa[end:end,:]
-@test X' * (Y1 .- b) ≈ (X'X + r * I) * A
-
-aa = ridge(X, y1, r; trans=false, bias=true)
-@test aa ≈ Aa[:,1]
-
-Aa = ridge(Xt, Y1, r; trans=true, bias=true)
-@test Aa ≈ Aa_r
-
-aa = ridge(Xt, y1, r; trans=true, bias=true)
-@test aa ≈ Aa[:,1]
+    aa = llsq(Xt, y1; trans=true, bias=true)
+    @test aa ≈ Aa[:,1]
 
 
-## ridge (with diagonal r)
+    ## ridge (with Real r)
 
-r = 0.05 .+ 0.1 .* rand(n)
+    r = 0.1
 
-A = ridge(X, Y0, r; trans=false, bias=false)
-A_r = copy(A)
-@test size(A) == (n, n2)
-@test X'Y0 ≈ (X'X + diagm(0=>r)) * A
+    A = ridge(X, Y0, r; trans=false, bias=false)
+    A_r = copy(A)
+    @test size(A) == (n, n2)
+    @test X'Y0 ≈ (X'X + r * I) * A
 
-a = ridge(X, y0, r; trans=false, bias=false)
-@test size(a) == (n,)
-@test a ≈ A[:,1]
+    a = ridge(X, y0, r; trans=false, bias=false)
+    @test size(a) == (n,)
+    @test a ≈ A[:,1]
 
-A = ridge(Xt, Y0, r; trans=true, bias=false)
-@test size(A) == (n, n2)
-@test A ≈ A_r
+    A = ridge(Xt, Y0, r; trans=true, bias=false)
+    @test size(A) == (n, n2)
+    @test A ≈ A_r
 
-a = ridge(Xt, y0, r; trans=true, bias=false)
-@test size(a) == (n,)
-@test a ≈ A[:,1]
+    a = ridge(Xt, y0, r; trans=true, bias=false)
+    @test size(a) == (n,)
+    @test a ≈ A[:,1]
 
-Aa = ridge(X, Y1, r; trans=false, bias=true)
-Aa_r = copy(Aa)
-@test size(Aa) == (n+1, n2)
-A, b = Aa[1:end-1,:], Aa[end:end,:]
-@test X' * (Y1 .- b) ≈ (X'X + diagm(0=>r)) * A
+    Aa = ridge(X, Y1, r; trans=false, bias=true)
+    Aa_r = copy(Aa)
+    @test size(Aa) == (n+1, n2)
+    A, b = Aa[1:end-1,:], Aa[end:end,:]
+    @test X' * (Y1 .- b) ≈ (X'X + r * I) * A
 
-aa = ridge(X, y1, r; trans=false, bias=true)
-@test aa ≈ Aa[:,1]
+    aa = ridge(X, y1, r; trans=false, bias=true)
+    @test aa ≈ Aa[:,1]
 
-Aa = ridge(Xt, Y1, r; trans=true, bias=true)
-@test Aa ≈ Aa_r
+    Aa = ridge(Xt, Y1, r; trans=true, bias=true)
+    @test Aa ≈ Aa_r
 
-aa = ridge(Xt, y1, r; trans=true, bias=true)
-@test aa ≈ Aa[:,1]
+    aa = ridge(Xt, y1, r; trans=true, bias=true)
+    @test aa ≈ Aa[:,1]
 
 
-## ridge (with qudratic r matrix)
+    ## ridge (with diagonal r)
 
-Q = qr(randn(n, n)).Q
-r = Q' * diagm(0=>r) * Q
+    r = 0.05 .+ 0.1 .* rand(n)
 
-A = ridge(X, Y0, r; trans=false, bias=false)
-A_r = copy(A)
-@test size(A) == (n, n2)
-@test X'Y0 ≈ (X'X + r) * A
+    A = ridge(X, Y0, r; trans=false, bias=false)
+    A_r = copy(A)
+    @test size(A) == (n, n2)
+    @test X'Y0 ≈ (X'X + diagm(0=>r)) * A
 
-a = ridge(X, y0, r; trans=false, bias=false)
-@test size(a) == (n,)
-@test a ≈ A[:,1]
+    a = ridge(X, y0, r; trans=false, bias=false)
+    @test size(a) == (n,)
+    @test a ≈ A[:,1]
 
-A = ridge(Xt, Y0, r; trans=true, bias=false)
-@test size(A) == (n, n2)
-@test A ≈ A_r
+    A = ridge(Xt, Y0, r; trans=true, bias=false)
+    @test size(A) == (n, n2)
+    @test A ≈ A_r
 
-a = ridge(Xt, y0, r; trans=true, bias=false)
-@test size(a) == (n,)
-@test a ≈ A[:,1]
+    a = ridge(Xt, y0, r; trans=true, bias=false)
+    @test size(a) == (n,)
+    @test a ≈ A[:,1]
 
-Aa = ridge(X, Y1, r; trans=false, bias=true)
-Aa_r = copy(Aa)
-@test size(Aa) == (n+1, n2)
-A, b = Aa[1:end-1,:], Aa[end:end,:]
-@test X' * (Y1 .- b) ≈ (X'X + r) * A
+    Aa = ridge(X, Y1, r; trans=false, bias=true)
+    Aa_r = copy(Aa)
+    @test size(Aa) == (n+1, n2)
+    A, b = Aa[1:end-1,:], Aa[end:end,:]
+    @test X' * (Y1 .- b) ≈ (X'X + diagm(0=>r)) * A
 
-aa = ridge(X, y1, r; trans=false, bias=true)
-@test aa ≈ Aa[:,1]
+    aa = ridge(X, y1, r; trans=false, bias=true)
+    @test aa ≈ Aa[:,1]
 
-Aa = ridge(Xt, Y1, r; trans=true, bias=true)
-@test Aa ≈ Aa_r
+    Aa = ridge(Xt, Y1, r; trans=true, bias=true)
+    @test Aa ≈ Aa_r
 
-aa = ridge(Xt, y1, r; trans=true, bias=true)
-@test aa ≈ Aa[:,1]
+    aa = ridge(Xt, y1, r; trans=true, bias=true)
+    @test aa ≈ Aa[:,1]
+
+
+    ## ridge (with qudratic r matrix)
+
+    Q = qr(randn(n, n)).Q
+    r = Q' * diagm(0=>r) * Q
+
+    A = ridge(X, Y0, r; trans=false, bias=false)
+    A_r = copy(A)
+    @test size(A) == (n, n2)
+    @test X'Y0 ≈ (X'X + r) * A
+
+    a = ridge(X, y0, r; trans=false, bias=false)
+    @test size(a) == (n,)
+    @test a ≈ A[:,1]
+
+    A = ridge(Xt, Y0, r; trans=true, bias=false)
+    @test size(A) == (n, n2)
+    @test A ≈ A_r
+
+    a = ridge(Xt, y0, r; trans=true, bias=false)
+    @test size(a) == (n,)
+    @test a ≈ A[:,1]
+
+    Aa = ridge(X, Y1, r; trans=false, bias=true)
+    Aa_r = copy(Aa)
+    @test size(Aa) == (n+1, n2)
+    A, b = Aa[1:end-1,:], Aa[end:end,:]
+    @test X' * (Y1 .- b) ≈ (X'X + r) * A
+
+    aa = ridge(X, y1, r; trans=false, bias=true)
+    @test aa ≈ Aa[:,1]
+
+    Aa = ridge(Xt, Y1, r; trans=true, bias=true)
+    @test Aa ≈ Aa_r
+
+    aa = ridge(Xt, y1, r; trans=true, bias=true)
+    @test aa ≈ Aa[:,1]
+
+end
