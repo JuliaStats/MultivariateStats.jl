@@ -76,7 +76,9 @@ eigvals(M::MDS) = M.λ
 ## use
 
 function transform(M::MDS)
-    return Diagonal(sqrt.(M.λ)) * M.U'
+    # if there are non-positive missing eigval then padd with zeros
+    λ = vcat(M.λ, zeros(outdim(M) - length(M.λ)))
+    return Diagonal(sqrt.(λ)) * M.U'
 end
 
 ## show

@@ -4,7 +4,9 @@ using Test
 
 @testset "MDS" begin
 
-    X0 = randn(3, 5)
+    d = 3
+    n = 10
+    X0 = randn(d, n)
     G0 = X0'X0
     D0 = MultivariateStats.pairwise((x,y)->norm(x-y), X0)
 
@@ -22,13 +24,34 @@ using Test
     @test gram2dmat(G) ≈ D0
 
     ## classical MDS
+    M = fit(MDS, X0, maxoutdim=3)
+    @test indim(M) == d
+    @test outdim(M) == 3
+    @test size(projection(M)) == (n,3)
+    @test length(eigvals(M)) == 3
 
-    X = classical_mds(D0, 3)
-    @test pwdists(X) ≈ D0
+    X = transform(M)
+    @test size(X) == (3,n)
+    @test MultivariateStats.pairwise((x,y)->norm(x-y), X) ≈ D0
+
+    # use only distance matrix
+    M = fit(MDS, D0, maxoutdim=3, distances=true)
+    @test isnan(indim(M))
+    @test outdim(M) == 3
+
+    X = transform(M)
+    @test size(X) == (3,n)
+    @test MultivariateStats.pairwise((x,y)->norm(x-y), X) ≈ D0
+
 
     #Test MDS embeddings in dimensions >= number of points
-    @test classical_mds([0 1; 1 0], 2, dowarn=false) == [-0.5 0.5; 0 0]
-    @test classical_mds([0 1; 1 0], 3, dowarn=false) == [-0.5 0.5; 0 0; 0 0]
+    M = fit(MDS, [0. 1.; 1. 0.], maxoutdim=2, distances=true)
+    @test outdim(M) == 2
+    @test transform(M) == [-0.5 0.5; 0 0]
+
+    M = fit(MDS, [0. 1.; 1. 0.], maxoutdim=3, distances=true)
+    @test outdim(M) == 3
+    @test transform(M) == [-0.5 0.5; 0 0; 0 0]
 
 
     #10 - dmat2gram produces negative definite matrix
@@ -44,11 +67,11 @@ using Test
             0.38095238095238093 0.4 0.21052631578947367 0.5454545454545454 0.3333333333333333 0.3181818181818182 0.23529411764705882 0.5555555555555556 0.4 1.0],
         Xt = [-0.27529104101488666 0.006134513718202863 0.33298809606740326 0.2608994458893664 -0.46185275796909575 -0.23734315039370618 0.29972782027671513 0.03827901455843394 -0.04096713097883363 0.07742518984640051
             -0.08177061420820278 -0.0044504235228030225 -0.3271919093638943 0.28206254638779243 -0.0954706915166714 -0.07137742126520012 -0.30754933764853587 0.18582658369448027 -0.03715307349750036 0.45707434094053534]',
-        M = classical_mds(D, 2)'
+        M = transform(fit(MDS, D, maxoutdim=2, distances=true))'
         @test M ≈ Xt .* cis.(angle.(sum(conj.(Xt) .* M, dims=1)))
     end
 
     #10 - test degenerate problem
-    @test classical_mds(zeros(10, 10), 3, dowarn=false) == zeros(3, 10)
+    @test transform(fit(MDS, zeros(10, 10), maxoutdim=3)) == zeros(3, 10)
 
 end
