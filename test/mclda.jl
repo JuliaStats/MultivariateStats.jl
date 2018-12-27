@@ -23,6 +23,13 @@ end
 
 Random.seed!(34568)
 
+# for testing custom covariance estimators
+struct SimpleTestCovariance end
+
+function cov(X, ::SimpleTestCovariance; dims=1)
+    return cov(X; dims=dims, corrected=false)
+end
+
 ## prepare data
 let
 d = 5
@@ -81,6 +88,11 @@ S = multiclass_lda_stats(nc, X, y)
 @test classweights(S) == ns
 @test classmeans(S) ≈ cmeans
 @test mean(S) ≈ mv
+
+@test withclass_scatter(S) ≈ Sw
+@test betweenclass_scatter(S) ≈ Sb
+
+Sce = multiclass_lda_stats(nc, X, y; covarianceestimator=SimpleTestCovariance())
 
 @test withclass_scatter(S) ≈ Sw
 @test betweenclass_scatter(S) ≈ Sb

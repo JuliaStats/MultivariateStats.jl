@@ -44,15 +44,24 @@ ldacov(Cp::DenseMatrix{T},
        μp::DenseVector{T},
        μn::DenseVector{T}) where T<:Real = ldacov(Cp + Cn, μp, μn)
 
+function ldacalccov(Z::DenseMatrix{T}, covarianceestimator = nothing) where T<:Real
+    if isa(covarianceestimator, Nothing)
+        return Z * transpose(Z)
+    else
+        return cov(Z, covarianceestimator; dims=2)*size(Z, 2)
+    end
+end
+
 #### interface functions
 
-function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T}) where T<:Real
+function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T};
+             covarianceestimator = nothing) where T<:Real
     μp = vec(mean(Xp, dims=2))
     μn = vec(mean(Xn, dims=2))
     Zp = Xp .- μp
     Zn = Xn .- μn
-    Cp = Zp * transpose(Zp)
-    Cn = Zn * transpose(Zn)
+    Cp = ldacalccov(Zp, covarianceestimator)
+    Cn = ldacalccov(Zn, covarianceestimator)
     ldacov(Cp, Cn, μp, μn)
 end
 
@@ -91,7 +100,8 @@ function MulticlassLDAStats(cweights::Vector{T},
     MulticlassLDAStats(d, nc, cweights, tw, mean, cmeans, Sw, Sb)
 end
 
-function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}) where T<:Real
+function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
+    covarianceestimator=nothing) where T<:Real
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
@@ -101,12 +111,12 @@ function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}
     # compute class-specific weights and means
     cmeans, cweights, Z = center(X, y, nc)
 
-    Sw = Z * transpose(Z)
+    Sw = ldacalccov(Z, covarianceestimator)
 
     # compute between-class scattering
     mean = cmeans * (cweights ./ T(n))
     U = rmul!(cmeans .- mean, Diagonal(sqrt.(cweights)))
-    Sb = U * transpose(U)
+    Sb = ldacalccov(U, covarianceestimator)
 
     return MulticlassLDAStats(Vector{T}(cweights), mean, cmeans, Sw, Sb)
 end
@@ -137,9 +147,10 @@ transform(M::MulticlassLDA, x::AbstractVecOrMat{T}) where T<:Real = M.proj'x
 function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
              method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
-             regcoef::T=T(1.0e-6)) where T<:Real
+             regcoef::T=T(1.0e-6),
+             covarianceestimator=nothing) where T<:Real
 
-    multiclass_lda(multiclass_lda_stats(nc, X, y);
+    multiclass_lda(multiclass_lda_stats(nc, X, y; covarianceestimator=covarianceestimator);
                    method=method,
                    regcoef=regcoef,
                    outdim=outdim)

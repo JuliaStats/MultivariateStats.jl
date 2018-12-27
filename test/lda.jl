@@ -72,3 +72,16 @@ f = fit(LinearDiscriminant, Xp, Xn)
 # input of Float32 type
 L = fit(LinearDiscriminant, [1 2 3 4f0], [5 6 7 8f0])
 @test isa(L.b, Float32)
+
+# covariance shrinkage
+struct SimpleTestCovariance end
+
+function cov(X, ::SimpleTestCovariance; dims=1)
+    return cov(X; dims=dims, corrected=false)
+end
+
+begin
+    fs = fit(LinearDiscriminant, Xp, Xn; covarianceestimator=SimpleTestCovariance())
+    @test fs.w ≈ w_gt
+    @test fs.b ≈ b_gt
+end
