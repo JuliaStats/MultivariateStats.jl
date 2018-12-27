@@ -2,7 +2,7 @@
 
 #### PCA type
 
-struct PCA{T<:AbstractFloat}
+struct PCA{T<:Real}
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     proj::Matrix{T}       # projection matrix: of size d x p
     prinvars::Vector{T}   # principal variances: of length p
@@ -12,7 +12,7 @@ end
 
 ## constructor
 
-function PCA(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T) where T<:AbstractFloat
+function PCA(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T) where {T<:Real}
     d, p = size(proj)
     (isempty(mean) || length(mean) == d) ||
         throw(DimensionMismatch("Dimensions of mean and proj are inconsistent."))
@@ -43,8 +43,8 @@ principalratio(M::PCA) = M.tprinvar / M.tvar
 
 ## use
 
-transform(M::PCA{T}, x::AbstractVecOrMat{T}) where T<:AbstractFloat = transpose(M.proj) * centralize(x, M.mean)
-reconstruct(M::PCA{T}, y::AbstractVecOrMat{T}) where T<:AbstractFloat = decentralize(M.proj * y, M.mean)
+transform(M::PCA{T}, x::AbstractVecOrMat{T}) where {T<:Real} = transpose(M.proj) * centralize(x, M.mean)
+reconstruct(M::PCA{T}, y::AbstractVecOrMat{T}) where {T<:Real} = decentralize(M.proj * y, M.mean)
 
 ## show & dump
 
@@ -73,7 +73,7 @@ end
 
 const default_pca_pratio = 0.99
 
-function check_pcaparams(d::Int, mean::Vector{T}, md::Int, pr::AbstractFloat) where T<:AbstractFloat
+function check_pcaparams(d::Int, mean::AbstractVector, md::Int, pr::Real)
     isempty(mean) || length(mean) == d ||
         throw(DimensionMismatch("Incorrect length of mean."))
     md >= 1 || error("maxoutdim must be a positive integer.")
@@ -81,11 +81,11 @@ function check_pcaparams(d::Int, mean::Vector{T}, md::Int, pr::AbstractFloat) wh
 end
 
 function choose_pcadim(v::AbstractVector{T}, ord::Vector{Int}, vsum::T, md::Int,
-                       pr::AbstractFloat) where T<:AbstractFloat
+                       pr::Real) where {T<:Real}
     md = min(length(v), md)
     k = 1
     a = v[ord[1]]
-    thres = vsum * pr
+    thres = vsum * convert(T, pr)
     while k < md && a < thres
         a += v[ord[k += 1]]
     end
@@ -97,7 +97,7 @@ end
 
 function pcacov(C::AbstractMatrix{T}, mean::Vector{T};
                 maxoutdim::Int=size(C,1),
-                pratio::AbstractFloat=default_pca_pratio) where T<:AbstractFloat
+                pratio::Real=default_pca_pratio) where {T<:Real}
 
     check_pcaparams(size(C,1), mean, maxoutdim, pratio)
     Eg = eigen(Symmetric(C))
@@ -111,7 +111,7 @@ end
 
 function pcasvd(Z::AbstractMatrix{T}, mean::Vector{T}, tw::Real;
                 maxoutdim::Int=min(size(Z)...),
-                pratio::AbstractFloat=default_pca_pratio) where T<:AbstractFloat
+                pratio::Real=default_pca_pratio) where {T<:Real}
 
     check_pcaparams(size(Z,1), mean, maxoutdim, pratio)
     Svd = svd(Z)
@@ -132,8 +132,8 @@ end
 function fit(::Type{PCA}, X::AbstractMatrix{T};
              method::Symbol=:auto,
              maxoutdim::Int=size(X,1),
-             pratio::AbstractFloat=default_pca_pratio,
-             mean=nothing) where T<:AbstractFloat
+             pratio::Real=default_pca_pratio,
+             mean=nothing) where {T<:Real}
 
     @assert !SparseArrays.issparse(X) "Use Kernel PCA for sparce arrays"
 

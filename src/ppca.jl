@@ -1,7 +1,7 @@
 # Probabilistic Principal Component Analysis
 
 """Probabilistic PCA type"""
-struct PPCA{T<:AbstractFloat}
+struct PPCA{T<:Real}
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     W::Matrix{T}          # weight matrix: of size d x p
     σ²::T                 # residual variance
@@ -19,7 +19,7 @@ loadings(M::PPCA) = M.W
 
 ## use
 
-function transform(m::PPCA{T}, x::AbstractVecOrMat{T}) where T<:AbstractFloat
+function transform(m::PPCA{T}, x::AbstractVecOrMat{T}) where {T<:Real}
     xn = centralize(x, m.mean)
     W  = m.W
     n = outdim(m)
@@ -27,7 +27,7 @@ function transform(m::PPCA{T}, x::AbstractVecOrMat{T}) where T<:AbstractFloat
     return inv(M)*m.W'*xn
 end
 
-function reconstruct(m::PPCA{T}, z::AbstractVecOrMat{T}) where T<:AbstractFloat
+function reconstruct(m::PPCA{T}, z::AbstractVecOrMat{T}) where {T<:Real}
     W  = m.W
     WTW = W'W
     n = outdim(m)
@@ -45,7 +45,7 @@ end
 
 function ppcaml(Z::AbstractMatrix{T}, mean::Vector{T};
                 tol::Real=1.0e-6, # convergence tolerance
-                maxoutdim::Int=size(Z,1)-1) where T<:AbstractFloat
+                maxoutdim::Int=size(Z,1)-1) where {T<:Real}
 
     check_pcaparams(size(Z,1), mean, maxoutdim, 1.)
 
@@ -77,7 +77,7 @@ end
 function ppcaem(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
                 maxoutdim::Int=size(S,1)-1,
                 tol::Real=1.0e-6,   # convergence tolerance
-                maxiter::Integer=1000) where T<:AbstractFloat
+                maxiter::Integer=1000) where {T<:Real}
 
     check_pcaparams(size(S,1), mean, maxoutdim, 1.)
 
@@ -106,7 +106,8 @@ function ppcaem(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
         M⁻¹ = inv(W'*W .+ σ²*Iq)
         C⁻¹ = (Id - W*M⁻¹*W')/σ²
         L = (-n/2)*(log(det(C)) + tr(C⁻¹*S))  # (-n/2)*d*log(2π) omitted
-        # println("$i] ΔL: $(abs(L_old - L)), L: $L")
+
+        @debug "Likelihood" iter=i L=L ΔL=abs(L_old - L)
         chg = abs(L_old - L)
         if chg < tol
             converged = true
@@ -123,7 +124,7 @@ end
 function bayespca(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
                  maxoutdim::Int=size(S,1)-1,
                  tol::Real=1.0e-6,   # convergence tolerance
-                 maxiter::Integer=1000) where T<:AbstractFloat
+                 maxiter::Integer=1000) where {T<:Real}
 
     check_pcaparams(size(S,1), mean, maxoutdim, 1.)
 
@@ -160,7 +161,8 @@ function bayespca(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
         M⁻¹ = inv(M)
         C⁻¹ = (Id - W*M⁻¹*W')/σ²
         L = (-n/2)*(log(det(C)) + tr(C⁻¹*S))  # (-n/2)*d*log(2π) omitted
-        # println("$i] ΔL: $(abs(L_old - L)), L: $L")
+
+        @debug "Likelihood" iter=i L=L ΔL=abs(L_old - L)
         chg = abs(L_old - L)
         if chg < tol
             converged = true
@@ -181,7 +183,7 @@ function fit(::Type{PPCA}, X::AbstractMatrix{T};
              maxoutdim::Int=size(X,1)-1,
              mean=nothing,
              tol::Real=1.0e-6,   # convergence tolerance
-             maxiter::Integer=1000) where T<:AbstractFloat
+             maxiter::Integer=1000) where {T<:Real}
 
     @assert !SparseArrays.issparse(X) "Use Kernel PCA for sparce arrays"
 

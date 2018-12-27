@@ -10,10 +10,6 @@ tests = ["lreg",
          "kpca",
          "fa"]
 
-println("Running tests:")
-
-for t in tests
-    fp = string(t, ".jl")
-    println(" * $(fp)")
-    include(fp)
+for test in tests
+    include(test*".jl")
 end

@@ -3,20 +3,20 @@
 import Arpack
 
 """Center a kernel matrix"""
-struct KernelCenter{T<:AbstractFloat}
+struct KernelCenter{T<:Real}
     means::AbstractVector{T}
     total::T
 end
 
 """Fit `KernelCenter` object"""
-function fit(::Type{KernelCenter}, K::AbstractMatrix{T}) where T<:AbstractFloat
+function fit(::Type{KernelCenter}, K::AbstractMatrix{T}) where {T<:Real}
     n = size(K, 1)
     means = vec(mean(K, dims=2))
     KernelCenter(means, sum(means) / n)
 end
 
 """Center kernel matrix."""
-function transform!(C::KernelCenter{T}, K::AbstractMatrix{T}) where T<:AbstractFloat
+function transform!(C::KernelCenter{T}, K::AbstractMatrix{T}) where {T<:Real}
     r, c = size(K)
     tot = C.total
     means = mean(K, dims=1)
@@ -29,7 +29,7 @@ function transform!(C::KernelCenter{T}, K::AbstractMatrix{T}) where T<:AbstractF
 end
 
 """Kernel PCA type"""
-struct KernelPCA{T<:AbstractFloat}
+struct KernelPCA{T<:Real}
     X::AbstractMatrix{T}  # fitted data
     ker::Function         # kernel function
     center::KernelCenter  # kernel center
@@ -49,18 +49,18 @@ principalvars(M::KernelPCA) = M.λ
 ## use
 
 """Calculate transformation to kernel space"""
-function transform(M::KernelPCA{T}, x::AbstractVecOrMat{T}) where T<:AbstractFloat
+function transform(M::KernelPCA{T}, x::AbstractVecOrMat{T}) where {T<:Real}
     k = pairwise(M.ker, M.X, x)
     transform!(M.center, k)
     return projection(M)'*k
 end
 
-function transform(M::KernelPCA{T}) where T<:AbstractFloat
+function transform(M::KernelPCA{T}) where {T<:Real}
     return projection(M)'*M.X
 end
 
 """Calculate inverse transformation to original space"""
-function reconstruct(M::KernelPCA{T}, y::AbstractVecOrMat{T}) where T<:AbstractFloat
+function reconstruct(M::KernelPCA{T}, y::AbstractVecOrMat{T}) where {T<:Real}
     if size(M.inv, 1) == 0
         throw(ArgumentError("Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"))
     end
@@ -78,7 +78,7 @@ end
 ## core algorithms
 
 function pairwise!(K::AbstractVecOrMat{T}, kernel::Function,
-                   X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where T<:AbstractFloat
+                   X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where {T<:Real}
     n = size(X, 2)
     m = size(Y, 2)
     for j = 1:m
@@ -93,17 +93,17 @@ function pairwise!(K::AbstractVecOrMat{T}, kernel::Function,
     K
 end
 
-pairwise!(K::AbstractVecOrMat{T}, kernel::Function, X::AbstractVecOrMat{T}) where T<:AbstractFloat =
+pairwise!(K::AbstractVecOrMat{T}, kernel::Function, X::AbstractVecOrMat{T}) where {T<:Real} =
     pairwise!(K, kernel, X, X)
 
-function pairwise(kernel::Function, X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where T<:AbstractFloat
+function pairwise(kernel::Function, X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where {T<:Real}
     n = size(X, 2)
     m = size(Y, 2)
     K = similar(X, n, m)
     pairwise!(K, kernel, X, Y)
 end
 
-pairwise(kernel::Function, X::AbstractVecOrMat{T}) where T<:AbstractFloat =
+pairwise(kernel::Function, X::AbstractVecOrMat{T}) where {T<:Real} =
     pairwise(kernel, X, X)
 
 ## interface functions
@@ -114,7 +114,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
              remove_zero_eig::Bool = false, atol::Real = 1e-10,
              solver::Symbol = :eig,
              inverse::Bool = false,  β::Real = 1.0,
-             tol::Real = 0.0, maxiter::Real = 300) where T<:AbstractFloat
+             tol::Real = 0.0, maxiter::Real = 300) where {T<:Real}
 
     d, n = size(X)
     Kfunc = (x,y)->error("Kernel is precomputed.")
