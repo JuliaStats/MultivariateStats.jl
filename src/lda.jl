@@ -44,14 +44,6 @@ ldacov(Cp::DenseMatrix{T},
        μp::DenseVector{T},
        μn::DenseVector{T}) where T<:Real = ldacov(Cp + Cn, μp, μn)
 
-function ldacalccov(Z::DenseMatrix{T}, covarianceestimator = nothing) where T<:Real
-    if isa(covarianceestimator, Nothing)
-        return Z * transpose(Z)
-    else
-        return cov(Z, covarianceestimator; dims=2)*size(Z, 2)
-    end
-end
-
 #### interface functions
 
 function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T};
@@ -60,8 +52,8 @@ function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T};
     μn = vec(mean(Xn, dims=2))
     Zp = Xp .- μp
     Zn = Xn .- μn
-    Cp = ldacalccov(Zp, covarianceestimator)
-    Cn = ldacalccov(Zn, covarianceestimator)
+    Cp = calcscattermat(Zp, covarianceestimator)
+    Cn = calcscattermat(Zn, covarianceestimator)
     ldacov(Cp, Cn, μp, μn)
 end
 
@@ -111,12 +103,12 @@ function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}
     # compute class-specific weights and means
     cmeans, cweights, Z = center(X, y, nc)
 
-    Sw = ldacalccov(Z, covarianceestimator)
+    Sw = calcscattermat(Z, covarianceestimator)
 
     # compute between-class scattering
     mean = cmeans * (cweights ./ T(n))
     U = rmul!(cmeans .- mean, Diagonal(sqrt.(cweights)))
-    Sb = ldacalccov(U, covarianceestimator)
+    Sb = calcscattermat(U, covarianceestimator)
 
     return MulticlassLDAStats(Vector{T}(cweights), mean, cmeans, Sw, Sb)
 end

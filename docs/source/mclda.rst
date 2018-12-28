@@ -140,22 +140,29 @@ One can use ``fit`` to perform multi-class LDA over a set of data:
 
     **Keyword arguments:**
 
-    =========== =============================================================== ====================
-      name         description                                                   default
-    =========== =============================================================== ====================
-     method     The choice of methods:                                           ``:gevd``
+    ======================= =============================================================== ====================
+      name                    description                                                     default
+    ======================= =============================================================== ====================
+     method                 The choice of methods:                                           ``:gevd``
 
-                - ``:gevd``: based on generalized eigenvalue decomposition
-                - ``:whiten``: first derive a whitening transform from ``Sw``
-                  and then solve the problem based on eigenvalue
-                  decomposition of the whiten ``Sb``.
-    ----------- --------------------------------------------------------------- --------------------
-     outdim     The output dimension, *i.e* dimension of the transformed space   ``min(d, nc-1)``
-    ----------- --------------------------------------------------------------- --------------------
-     regcoef    The regularization coefficient.                                  ``1.0e-6``
-                A positive value ``regcoef * eigmax(Sw)`` is added to the
-                diagonal of ``Sw`` to improve numerical stability.
-    =========== =============================================================== ====================
+                            - ``:gevd``: based on generalized eigenvalue decomposition
+                            - ``:whiten``: first derive a whitening transform from ``Sw``
+                              and then solve the problem based on eigenvalue
+                              decomposition of the whiten ``Sb``.
+    ----------------------- --------------------------------------------------------------- --------------------
+     outdim                 The output dimension, *i.e* dimension of the transformed space   ``min(d, nc-1)``
+    ----------------------- --------------------------------------------------------------- --------------------
+     regcoef                The regularization coefficient.                                  ``1.0e-6``
+                            A positive value ``regcoef * eigmax(Sw)`` is added to the
+                            diagonal of ``Sw`` to improve numerical stability.
+    ----------------------- --------------------------------------------------------------- --------------------
+     covarianceestimator    custom covariance estimator; when it is different from           ``nothing``
+                            ``nothing``, the covariance matrix will be calculated as
+                            ``cov(X, covarianceestimator; dims=2)``. Custom covariance
+                            estimators, available in other packages, may result in more
+                            robust discriminants for data with more features than
+                            observations.
+    ======================= =============================================================== ====================
 
     **Note:** The resultant projection matrix ``P`` satisfies:
 

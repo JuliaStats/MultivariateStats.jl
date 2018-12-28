@@ -105,3 +105,16 @@ function regularize_symmat!(A::Matrix{T}, lambda::Real) where T<:Real
     return A
 end
 
+"""
+    calcscattermat(Z::DenseMatrix, covarianceestimator = nothing)
+
+Calculate the scatter matrix of centered data `Z`. If `covarianceestimator` is
+not `nothing` then it is used to calculate the covariance matrix.
+"""
+function calcscattermat(Z::DenseMatrix, covarianceestimator = nothing)
+    if covarianceestimator === nothing
+        return Z * transpose(Z)
+    else
+        return cov(Z, covarianceestimator; dims=2)*size(Z, 2)
+    end
+end
