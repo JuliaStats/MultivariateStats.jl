@@ -1,7 +1,7 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
-import Statistics: mean, cov
+import Statistics: mean, cov, std
 import Random
 import SparseArrays
 
@@ -9,18 +9,19 @@ import SparseArrays
 
     Random.seed!(34568)
 
-    ## PCA with zero mean
+    ## PCA with zero-mean and one-std
 
     X = randn(5, 10)
     Y = randn(3, 10)
 
     P = qr(randn(5, 5)).Q[:, 1:3]
     pvars = [5., 4., 3.]
-    M = PCA(Float64[], P, pvars, 15.0)
+    M = PCA(Float64[], Float64[], P, pvars, 15.0)
 
     @test indim(M) == 5
     @test outdim(M) == 3
     @test mean(M) == zeros(5)
+    @test std(M) == ones(5)
     @test projection(M) == P
     @test principalvars(M) == pvars
     @test principalvar(M, 2) == pvars[2]
@@ -36,10 +37,34 @@ import SparseArrays
     @test reconstruct(M, Y) ≈ P * Y
 
 
+    ## PCA with non-zero mean and non-one std
+
+    mval = rand(5)
+    sval = rand(5)
+    M = PCA(mval, sval, P, pvars, 15.0)
+
+    @test indim(M) == 5
+    @test outdim(M) == 3
+    @test mean(M) == mval
+    @test std(M) == sval
+    @test projection(M) == P
+    @test principalvars(M) == pvars
+    @test principalvar(M, 2) == pvars[2]
+    @test tvar(M) == 15.0
+    @test tprincipalvar(M) == 12.0
+    @test tresidualvar(M) == 3.0
+    @test principalratio(M) == 0.8
+
+    @test transform(M, X[:,1]) ≈ P' * ((X[:,1] .- mval) ./ sval)
+    @test transform(M, X) ≈ P' * ((X .- mval) ./ sval)
+
+    @test reconstruct(M, Y[:,1]) ≈ ((P * Y[:,1]) .* sval) .+ mval
+    @test reconstruct(M, Y) ≈ ((P * Y) .* sval) .+ mval
+
     ## PCA with non-zero mean
 
     mval = rand(5)
-    M = PCA(mval, P, pvars, 15.0)
+    M = PCA(mval, Float64[], P, pvars, 15.0)
 
     @test indim(M) == 5
     @test outdim(M) == 3
@@ -58,6 +83,27 @@ import SparseArrays
     @test reconstruct(M, Y[:,1]) ≈ P * Y[:,1] .+ mval
     @test reconstruct(M, Y) ≈ P * Y .+ mval
 
+    ## PCA with non-one std
+
+    sval = rand(5)
+    M = PCA(Float64[], sval, P, pvars, 15.0)
+
+    @test indim(M) == 5
+    @test outdim(M) == 3
+    @test std(M) == sval
+    @test projection(M) == P
+    @test principalvars(M) == pvars
+    @test principalvar(M, 2) == pvars[2]
+    @test tvar(M) == 15.0
+    @test tprincipalvar(M) == 12.0
+    @test tresidualvar(M) == 3.0
+    @test principalratio(M) == 0.8
+
+    @test transform(M, X[:,1]) ≈ P' * (X[:,1] ./ sval)
+    @test transform(M, X) ≈ P' * (X ./ sval)
+
+    @test reconstruct(M, Y[:,1]) ≈ (P * Y[:,1]) .* sval
+    @test reconstruct(M, Y) ≈ (P * Y) .* sval
 
     ## prepare training data
 
@@ -69,16 +115,19 @@ import SparseArrays
     rmul!(R, Diagonal(sqrt.([0.5, 0.3, 0.1, 0.05, 0.05])))
 
     X = R'randn(5, n) .+ randn(5)
-    mval = vec(mean(X, dims=2))
-    Z = X .- mval
+    mval = vec(mean(X, dims = 2))
+    sval = vec(std(X, dims = 2))
+    Xm = X .- mval
+    Xs = X ./ sval
+    Xz = (X .- mval) ./ sval
 
-    C = cov(X, dims=2)
+    C = cov(Xz, dims=2)
     pvs0 = sort(eigvals(C); rev=true)
     tv = sum(diag(C))
 
     ## pcacov (default using cov when d < n)
 
-    M = fit(PCA, X)
+    M = fit(PCA, X, std = nothing)
     P = projection(M)
     pvs = principalvars(M)
 
@@ -93,10 +142,16 @@ import SparseArrays
     @test sum(pvs) ≈ tvar(M)
     @test reconstruct(M, transform(M, X)) ≈ X
 
-    M = fit(PCA, X; mean=mval)
+    M = fit(PCA, X; mean = mval, std = sval)
     @test projection(M) ≈ P
 
-    M = fit(PCA, Z; mean=0)
+    M = fit(PCA, Xm; mean = 0, std = sval)
+    @test projection(M) ≈ P
+
+    M = fit(PCA, Xm; mean = 0, std = nothing)
+    @test projection(M) ≈ P
+
+    M = fit(PCA, Xz; mean = 0, std = 1)
     @test projection(M) ≈ P
 
     M = fit(PCA, X; maxoutdim=3)
@@ -116,7 +171,7 @@ import SparseArrays
 
     ## pcastd
 
-    M = fit(PCA, X; method=:svd)
+    M = fit(PCA, X; std = nothing, method=:svd)
     P = projection(M)
     pvs = principalvars(M)
 
@@ -124,17 +179,26 @@ import SparseArrays
     @test outdim(M) == 5
     @test mean(M) == mval
     @test P'P ≈ Matrix(I, 5, 5)
-    @test isapprox(C*P, P*Diagonal(pvs), atol=1.0e-3)
+    @test isapprox(C*P, P*Diagonal(pvs), atol=1.0e-2)
     @test issorted(pvs; rev=true)
-    @test isapprox(pvs, pvs0, atol=1.0e-3)
-    @test isapprox(tvar(M), tv, atol=1.0e-3)
+    @test isapprox(pvs, pvs0, atol=1.0e-2)
+    @test isapprox(tvar(M), tv, atol=1.0e-2)
     @test sum(pvs) ≈ tvar(M)
     @test reconstruct(M, transform(M, X)) ≈ X
 
-    M = fit(PCA, X; method=:svd, mean=mval)
+    M = fit(PCA, X; method=:svd, mean=mval, std = nothing)
     @test projection(M) ≈ P
 
-    M = fit(PCA, Z; method=:svd, mean=0)
+    M = fit(PCA, X; method=:svd, mean=mval, std = sval)
+    @test projection(M) ≈ P
+
+    M = fit(PCA, Xm; method=:svd, mean=0, std = nothing)
+    @test projection(M) ≈ P
+
+    M = fit(PCA, Xm; method=:svd, mean=0, std = sval)
+    @test projection(M) ≈ P
+
+    M = fit(PCA, Xz; method=:svd, mean=0)
     @test projection(M) ≈ P
 
     M = fit(PCA, X; method=:svd, maxoutdim=3)

@@ -12,18 +12,50 @@ printvecln(io::IO, a::AbstractVector) = (printvec(io, a); println(io))
 
 # centralize
 
-centralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x - m)
-centralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .- m)
+centralize(x, m::AbstractVector) = (isempty(m) ? x : x .- m)
+decentralize(x, m::AbstractVector) = (isempty(m) ? x : x .+ m)
+centralize!(x, m::AbstractVector) = (isempty(m) || (x .= x .- m); x)
+decentralize!(x, m::AbstractVector) = (isempty(m) || (x .= x .+ m); x)
 
-decentralize(x::AbstractVector, m::AbstractVector) = (isempty(m) ? x : x + m)
-decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)
+# standardize
 
-# get a full mean vector
+standardize(x, s::AbstractVector) = (isempty(s) ? x : x ./ s)
+destandardize(x, s::AbstractVector) = (isempty(s) ? x : x .* s)
+standardize!(x, s::AbstractVector) = (isempty(s) || (x .= x ./ s); x)
+destandardize!(x, s::AbstractVector) = (isempty(s) || (x .= x .* s); x)
+
+# z transform
+function ztransform!(x, m::AbstractVector, s::AbstractVector)
+    if isempty(m) || isempty(s)
+        centralize!(x, m)
+        standardize!(x, s)
+    else
+        x .= (x .- m) ./ s
+    end
+    return x
+end
+ztransform(x, m, s) = ztransform!(copy(x), m, s)
+
+function deztransform!(x, m::AbstractVector, s::AbstractVector)
+    if isempty(m) || isempty(s)
+        destandardize!(x, s)
+        decentralize!(x, m)
+    else
+        x .= (x .* s) .+ m
+    end
+end
+deztransform(x, m, s) = deztransform!(copy(x), m, s)
+
+# get a full mean/std vector
 
 fullmean(d::Int, mv::Vector{T}) where T = (isempty(mv) ? zeros(T, d) : mv)::Vector{T}
+fullstd(d::Int, sv::Vector{T}) where T = (isempty(sv) ? ones(T, d) : sv)::Vector{T}
 
 preprocess_mean(X::AbstractMatrix{T}, m) where T<:Real =
     (m == nothing ? vec(mean(X, dims=2)) : m == 0 ? T[] :  m)::Vector{T}
+
+preprocess_std(X::AbstractMatrix{T}, s, m = nothing) where T<:Real =
+    (s == nothing ? vec(std(X, mean = m, dims = 2)) : s == 1 ? T[] : s)::Vector{T}
 
 # choose the first k values and columns
 #

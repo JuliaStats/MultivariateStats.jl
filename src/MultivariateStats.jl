@@ -1,8 +1,8 @@
 module MultivariateStats
     using LinearAlgebra
-    import Statistics: mean, var, cov, covm
+    import Statistics: mean, var, cov, covm, std
     import Base: length, size, show, dump
-    import StatsBase: fit, predict, ConvergenceException
+    import StatsBase: fit, predict, ConvergenceException, cov2cor
     import SparseArrays
 
     export

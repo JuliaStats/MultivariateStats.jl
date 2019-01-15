@@ -8,7 +8,7 @@ This package defines a ``PCA`` type to represent a PCA model, and provides a set
 Properties
 ~~~~~~~~~~~
 
-Let ``M`` be an instance of ``PCA``, ``d`` be the dimension of observations, and ``p`` be the output dimension (*i.e* the dimension of the principal subspace)
+Let ``M`` be an instance of ``PCA``, ``d`` be the dimension of observations, and ``p`` be the output dimension (*i.e* the dimension of the principal subspace).
 
 .. function:: indim(M)
 
@@ -21,6 +21,10 @@ Let ``M`` be an instance of ``PCA``, ``d`` be the dimension of observations, and
 .. function:: mean(M)
 
     Get the mean vector (of length ``d``).
+
+.. function:: std(M)
+
+    Get the vector of standard deviations (of length ``d``).
 
 .. function:: projection(M)
 
@@ -56,15 +60,15 @@ Given a PCA model ``M``, one can use it to transform observations into principal
 
 .. math::
 
-    \mathbf{y} = \mathbf{P}^T (\mathbf{x} - \boldsymbol{\mu})
+    \mathbf{y} = \mathbf{P}^T ((\mathbf{x} - \boldsymbol{\mu}) * \boldsymbol{\sigma})
 
 or use it to reconstruct (approximately) the observations from principal components, as
 
 .. math::
 
-    \tilde{\mathbf{x}} = \mathbf{P} \mathbf{y} + \boldsymbol{\mu}
+    \tilde{\mathbf{x}} = \mathbf{P} \mathbf{y} * \boldsymbol{\sigma} + \boldsymbol{\mu}
 
-Here, :math:`\mathbf{P}` is the projection matrix.
+Here, :math:`\mathbf{P}` is the projection matrix, :math:`\boldsymbol{\mu}` the sample means, :math:`\boldsymbol{\sigma}` the sample standard deviations, and :math:`*` element wise multiplication of vectors.
 
 The package provides methods to do so:
 
@@ -96,25 +100,31 @@ One can use the ``fit`` method to perform PCA over a given dataset.
 
     Let ``(d, n) = size(X)`` be respectively the input dimension and the number of observations:
 
-    =========== =============================================================== ===============
-      name         description                                                   default
-    =========== =============================================================== ===============
-     method     The choice of methods:                                           ``:auto``
+    =========== ================================================================= ===============
+      name         description                                                     default
+    =========== ================================================================= ===============
+     method     The choice of methods:                                             ``:auto``
 
                 - ``:auto``: use ``:cov`` when ``d < n`` or ``:svd`` otherwise
                 - ``:cov``: based on covariance matrix
                 - ``:svd``: based on SVD of the input data
-    ----------- --------------------------------------------------------------- ---------------
-     maxoutdim  Maximum output dimension.                                        ``min(d, n)``
-    ----------- --------------------------------------------------------------- ---------------
-     pratio     The ratio of variances preserved in the principal subspace.      ``0.99``
-    ----------- --------------------------------------------------------------- ---------------
-     mean       The mean vector, which can be either of:                         ``nothing``
+    ----------- ----------------------------------------------------------------- ---------------
+     maxoutdim  Maximum output dimension.                                          ``min(d, n)``
+    ----------- ----------------------------------------------------------------- ---------------
+     pratio     The ratio of variances preserved in the principal subspace.        ``0.99``
+    ----------- ----------------------------------------------------------------- ---------------
+     mean       The mean vector, which can be either of:                           ``nothing``
 
                 - ``0``: the input data has already been centralized
                 - ``nothing``: this function will compute the mean
                 - a pre-computed mean vector
-    =========== =============================================================== ===============
+    ----------- ----------------------------------------------------------------- ---------------
+     std       The vector of standard deviations, which can be either of:          ``1``
+
+                - ``1``: the input data has already been standardized
+                - ``nothing``: this function will compute the standard deviation
+                - a pre-computed vector of standard deviations
+    =========== ================================================================= ===============
 
     **Notes:** 
 
@@ -188,20 +198,23 @@ Core Algorithms
 
 Two algorithms are implemented in this package: ``pcacov`` and ``pcastd``. 
 
-.. function:: pcacov(C, mean; ...)
+.. function:: pcacov(C, mean, std; ...)
 
     Compute PCA based on eigenvalue decomposition of a given covariance matrix ``C``.
 
     :param C: The covariance matrix.
 
-    :param mean: The mean vector of original samples, which can be a vector of length ``d``, 
+    :param mean: The mean vector of **original** samples, which can be a vector of length ``d``, 
            or an empty vector ``Float64[]`` indicating a zero mean.
+
+    :param std: The vector of standard deviations of **original** samples, which can be a vector
+           of length ``d``, or an empty vector ``Float64[]`` indicating a zero mean.
 
     :return: The resultant PCA model.
 
     :note: This function accepts two keyword arguments: ``maxoutdim`` and ``pratio``.
 
-.. function:: pcasvd(Z, mean, tw; ...)
+.. function:: pcasvd(Z, mean, std, tw; ...)
 
     Compute PCA based on singular value decomposition of a centralized sample matrix ``Z``.
 
@@ -210,7 +223,9 @@ Two algorithms are implemented in this package: ``pcacov`` and ``pcastd``.
     :param mean: The mean vector of the **original** samples, which can be a vector of length ``d``, 
                  or an empty vector ``Float64[]`` indicating a zero mean.
 
+    :param std: The vector of standard deviations of **original** samples, which can be a vector
+           of length ``d``, or an empty vector ``Float64[]`` indicating a zero mean.
+
     :return: The resultant PCA model.
 
     :note: This function accepts two keyword arguments: ``maxoutdim`` and ``pratio``.
-
