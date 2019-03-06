@@ -1,15 +1,9 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
+using StatsBase
 import Statistics: mean, cov
 import Random
-
-# for testing custom covariance estimators
-struct SimpleTestCovariance end
-
-function cov(X, ::SimpleTestCovariance; dims=1)
-    return cov(X; dims=dims, corrected=false)
-end
 
 @testset "Multi-class LDA" begin
 
@@ -94,7 +88,8 @@ end
     @test withclass_scatter(S) ≈ Sw
     @test betweenclass_scatter(S) ≈ Sb
 
-    Sce = multiclass_lda_stats(nc, X, y; covarianceestimator=SimpleTestCovariance())
+    covestimator = SimpleCovariance(;corrected=true)
+    Sce = multiclass_lda_stats(nc, X, y; covestimator=covestimator)
 
     @test withclass_scatter(S) ≈ Sw
     @test betweenclass_scatter(S) ≈ Sb

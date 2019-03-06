@@ -3,13 +3,7 @@ using LinearAlgebra
 using Test
 import Statistics: mean, cov
 import Random
-
-# for testing custom covariance estimators
-struct SimpleTestCovariance end
-
-function cov(X, ::SimpleTestCovariance; dims=1)
-    return cov(X; dims=dims, corrected=false)
-end
+using StatsBase
 
 @testset "LDA" begin
 
@@ -78,7 +72,8 @@ end
     @test f.w ≈ w_gt
     @test f.b ≈ b_gt
 
-    fs = fit(LinearDiscriminant, Xp, Xn; covarianceestimator=SimpleTestCovariance())
+    covestimator = SimpleCovariance(;corrected=true)
+    fs = fit(LinearDiscriminant, Xp, Xn; covestimator=covestimator)
     @test fs.w ≈ w_gt
     @test fs.b ≈ b_gt
 

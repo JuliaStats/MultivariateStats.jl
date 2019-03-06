@@ -85,7 +85,7 @@ The package provides several functions to perform Linear Discriminant Analysis.
 
     **Note:** The coefficient vector is scaled such that ``w'μp + b = 1`` and ``w'μn + b = -1``.
 
-.. function:: fit(LinearDiscriminant, Xp, Xn; covarianceestimator = nothing)
+.. function:: fit(LinearDiscriminant, Xp, Xn; covestimator = SimpleCovariance())
 
     Performs LDA given both positive and negative samples. 
 
@@ -96,13 +96,13 @@ The package provides several functions to perform Linear Discriminant Analysis.
 
     **Keyword arguments:**
 
-    ======================= =============================================================== ====================
-      name                    description                                                     default
-    ======================= =============================================================== ====================
-     covarianceestimator    custom covariance estimator; when it is different from           ``nothing``
-                            ``nothing``, the covariance matrix will be calculated as
-                            ``cov(X, covarianceestimator; dims=2)``. Custom covariance
-                            estimators, available in other packages, may result in more
-                            robust discriminants for data with more features than
-                            observations.
-    ======================= =============================================================== ====================
+    ============== =============================================================== =========================
+      name                    description                                                          default
+    ============== =============================================================== =========================
+     covestimator   custom covariance estimator; when it is different from           ``SimpleCovariance()``
+                    ``nothing``, the covariance matrix will be calculated as
+                    ``cov(X, covestimator; dims=2)``. Custom covariance
+                    estimators, available in other packages, may result in more
+                    robust discriminants for data with more features than
+                    observations.
+    ============== =============================================================== =========================

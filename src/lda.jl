@@ -47,13 +47,13 @@ ldacov(Cp::DenseMatrix{T},
 #### interface functions
 
 function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T};
-             covarianceestimator = nothing) where T<:Real
+             covestimator = SimpleCovariance()) where T<:Real
     μp = vec(mean(Xp, dims=2))
     μn = vec(mean(Xn, dims=2))
     Zp = Xp .- μp
     Zn = Xn .- μn
-    Cp = calcscattermat(Zp, covarianceestimator)
-    Cn = calcscattermat(Zn, covarianceestimator)
+    Cp = calcscattermat(Zp, covestimator)
+    Cn = calcscattermat(Zn, covestimator)
     ldacov(Cp, Cn, μp, μn)
 end
 
@@ -93,7 +93,7 @@ function MulticlassLDAStats(cweights::Vector{T},
 end
 
 function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
-    covarianceestimator=nothing) where T<:Real
+    covestimator=SimpleCovariance()) where T<:Real
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
@@ -103,12 +103,12 @@ function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}
     # compute class-specific weights and means
     cmeans, cweights, Z = center(X, y, nc)
 
-    Sw = calcscattermat(Z, covarianceestimator)
+    Sw = calcscattermat(Z, covestimator)
 
     # compute between-class scattering
     mean = cmeans * (cweights ./ T(n))
     U = rmul!(cmeans .- mean, Diagonal(sqrt.(cweights)))
-    Sb = calcscattermat(U, covarianceestimator)
+    Sb = calcscattermat(U, covestimator)
 
     return MulticlassLDAStats(Vector{T}(cweights), mean, cmeans, Sw, Sb)
 end
@@ -140,9 +140,9 @@ function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVecto
              method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
              regcoef::T=T(1.0e-6),
-             covarianceestimator=nothing) where T<:Real
+             covestimator=SimpleCovariance()) where T<:Real
 
-    multiclass_lda(multiclass_lda_stats(nc, X, y; covarianceestimator=covarianceestimator);
+    multiclass_lda(multiclass_lda_stats(nc, X, y; covestimator=covestimator);
                    method=method,
                    regcoef=regcoef,
                    outdim=outdim)
