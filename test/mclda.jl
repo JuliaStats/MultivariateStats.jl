@@ -91,8 +91,11 @@ import Random
     covestimator = SimpleCovariance(corrected=true)
     Sce = multiclass_lda_stats(nc, X, y; covestimator=covestimator)
 
-    @test withclass_scatter(S) ≈ Sw
-    @test betweenclass_scatter(S) ≈ Sb
+    Swcorr = Sw * sum(ns)/(sum(ns)-1)
+    Sbcorr = Sb * nc/(nc-1)
+
+    @test withclass_scatter(Sce) ≈ Swcorr
+    @test betweenclass_scatter(Sce) ≈ Sbcorr
 
     ## Solve
 
