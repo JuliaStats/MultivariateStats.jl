@@ -156,7 +156,7 @@ One can use ``fit`` to perform multi-class LDA over a set of data:
                     A positive value ``regcoef * eigmax(Sw)`` is added to the
                     diagonal of ``Sw`` to improve numerical stability.
     --------------- --------------------------------------------------------------- ------------------------
-     covstimator    custom covariance estimator; when it is different from           ``SampleCovariance()``
+     covestimator   custom covariance estimator; when it is different from           ``SampleCovariance()``
                     ``nothing``, the covariance matrix will be calculated as
                     ``cov(X, covestimator; dims=2)``. Custom covariance
                     estimators, available in other packages, may result in more

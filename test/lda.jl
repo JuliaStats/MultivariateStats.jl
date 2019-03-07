@@ -72,7 +72,7 @@ using StatsBase
     @test f.w ≈ w_gt
     @test f.b ≈ b_gt
 
-    covestimator = SimpleCovariance(;corrected=true)
+    covestimator = SimpleCovariance(corrected=true)
     fs = fit(LinearDiscriminant, Xp, Xn; covestimator=covestimator)
     @test fs.w ≈ w_gt
     @test fs.b ≈ b_gt

@@ -88,7 +88,7 @@ import Random
     @test withclass_scatter(S) ≈ Sw
     @test betweenclass_scatter(S) ≈ Sb
 
-    covestimator = SimpleCovariance(;corrected=true)
+    covestimator = SimpleCovariance(corrected=true)
     Sce = multiclass_lda_stats(nc, X, y; covestimator=covestimator)
 
     @test withclass_scatter(S) ≈ Sw

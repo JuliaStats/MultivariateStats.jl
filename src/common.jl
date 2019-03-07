@@ -112,6 +112,6 @@ Calculate the scatter matrix of centered data `Z` based on a covariance
 matrix calculated using covariance estimator `covestimator` (by default,
 sample covariance).
 """
-function calcscattermat(Z::DenseMatrix{T}, covestimator = SimpleCovariance()) where T<:Real
+function calcscattermat(Z::DenseMatrix{T}, covestimator=SimpleCovariance()) where T<:Real
     return cov(covestimator, Z; dims=2, mean=zeros(T, size(Z, 1)))*size(Z, 2)
 end
