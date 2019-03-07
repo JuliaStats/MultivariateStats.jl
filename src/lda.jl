@@ -93,7 +93,7 @@ function MulticlassLDAStats(cweights::Vector{T},
 end
 
 function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
-    covestimator=SimpleCovariance()) where T<:Real
+                              covestimator=SimpleCovariance()) where T<:Real
     # check sizes
     d = size(X, 1)
     n = size(X, 2)

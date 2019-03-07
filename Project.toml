@@ -20,4 +20,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 test = ["Test"]
 
 [compat]
-StatsBase = "0.29"
+StatsBase = ">=0.29"
