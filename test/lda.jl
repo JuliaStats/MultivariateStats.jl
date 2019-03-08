@@ -5,6 +5,20 @@ import Statistics: mean, cov
 import Random
 using StatsBase
 
+"""
+    UnitCovarianceEstimator
+
+Covariance estimator that always returns a unit matrix of appropriate size.
+For testing purposes only.
+"""
+struct UnitCovarianceEstimator <: StatsBase.CovarianceEstimator
+end
+
+function cov(::UnitCovarianceEstimator, X::AbstractMatrix; dims=1, mean=nothing)
+    n = size(X, 3-dims)
+    return Matrix{eltype(X)}(I, n, n)
+end
+
 @testset "LDA" begin
 
     Random.seed!(34568)
@@ -77,7 +91,23 @@ using StatsBase
     @test fs.w ≈ w_gt
     @test fs.b ≈ b_gt
 
+    let unitcovestimator = UnitCovarianceEstimator(),
+        up = vec(mean(Xp, dims=2)),
+        un = vec(mean(Xn, dims=2)),
+        C = cov(unitcovestimator, Xn, dims=2)
+        w_gt = C \ (up - un)
+        w_gt .*= (2 / (dot(w_gt, up) - dot(w_gt, un)))
+        b_gt = 1.0 - dot(w_gt, up)
+
+        fs = fit(LinearDiscriminant, Xp, Xn; covestimator=unitcovestimator)
+        @test fs.w ≈ w_gt
+        @test fs.b ≈ b_gt
+    end
+
     # input of Float32 type
     L = fit(LinearDiscriminant, [1 2 3 4f0], [5 6 7 8f0])
     @test isa(L.b, Float32)
+
+    Lce = fit(LinearDiscriminant, [1 2 3 4f0], [5 6 7 8f0], covestimator=covestimator)
+    @test isa(Lce.b, Float32)
 end
