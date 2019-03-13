@@ -47,7 +47,7 @@ ldacov(Cp::DenseMatrix{T},
 #### interface functions
 
 function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T};
-             covestimator = SimpleCovariance()) where T<:Real
+             covestimator::CovarianceEstimator = SimpleCovariance()) where T<:Real
     μp = vec(mean(Xp, dims=2))
     μn = vec(mean(Xn, dims=2))
     Zp = Xp .- μp
@@ -93,8 +93,8 @@ function MulticlassLDAStats(cweights::Vector{T},
 end
 
 function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
-                              covestimator_within=SimpleCovariance(),
-                              covestimator_between=SimpleCovariance()) where T<:Real
+                              covestimator_within::CovarianceEstimator=SimpleCovariance(),
+                              covestimator_between::CovarianceEstimator=SimpleCovariance()) where T<:Real
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
@@ -141,8 +141,8 @@ function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVecto
              method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
              regcoef::T=T(1.0e-6),
-             covestimator_within=SimpleCovariance(),
-             covestimator_between=SimpleCovariance()) where T<:Real
+             covestimator_within::CovarianceEstimator=SimpleCovariance(),
+             covestimator_between::CovarianceEstimator=SimpleCovariance()) where T<:Real
 
     multiclass_lda(multiclass_lda_stats(nc, X, y;
                                         covestimator_within=covestimator_within,

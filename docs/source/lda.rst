@@ -99,10 +99,11 @@ The package provides several functions to perform Linear Discriminant Analysis.
     ============== =============================================================== =========================
       name                    description                                                          default
     ============== =============================================================== =========================
-     covestimator   custom covariance estimator; when it is different from           ``SimpleCovariance()``
-                    ``nothing``, the covariance matrix will be calculated as
-                    ``cov(X, covestimator; dims=2)``. Custom covariance
-                    estimators, available in other packages, may result in more
-                    robust discriminants for data with more features than
-                    observations.
+     covestimator   Custom covariance estimator for between-class covariance.          ``SimpleCovariance()``
+                    The covariance matrix will be calculated as
+                    ``cov(covestimator_between, #=data=#; dims=2,
+                    mean=zeros(#=...=#)``.
+                    Custom covariance estimators, available in other packages,
+                    may result in more robust discriminants for data with more
+                    features than observations.
     ============== =============================================================== =========================
