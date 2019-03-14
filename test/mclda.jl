@@ -1,6 +1,7 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
+using StatsBase
 import Statistics: mean, cov
 import Random
 
@@ -86,6 +87,15 @@ import Random
 
     @test withclass_scatter(S) ≈ Sw
     @test betweenclass_scatter(S) ≈ Sb
+
+    covestimator = SimpleCovariance(corrected=true)
+    Sce = multiclass_lda_stats(nc, X, y; covestimator_between=covestimator, covestimator_within=covestimator)
+
+    Swcorr = Sw * sum(ns)/(sum(ns)-1)
+    Sbcorr = Sb * nc/(nc-1)
+
+    @test withclass_scatter(Sce) ≈ Swcorr
+    @test betweenclass_scatter(Sce) ≈ Sbcorr
 
     ## Solve
 

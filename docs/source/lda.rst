@@ -85,7 +85,7 @@ The package provides several functions to perform Linear Discriminant Analysis.
 
     **Note:** The coefficient vector is scaled such that ``w'μp + b = 1`` and ``w'μn + b = -1``.
 
-.. function:: fit(LinearDiscriminant, Xp, Xn)
+.. function:: fit(LinearDiscriminant, Xp, Xn; covestimator = SimpleCovariance())
 
     Performs LDA given both positive and negative samples. 
 
@@ -94,4 +94,16 @@ The package provides several functions to perform Linear Discriminant Analysis.
 
     :return: The resultant linear discriminant functional of type ``LinearDiscriminant``.
 
+    **Keyword arguments:**
 
+    ============== =============================================================== =========================
+      name                    description                                                          default
+    ============== =============================================================== =========================
+     covestimator   Custom covariance estimator for between-class covariance.          ``SimpleCovariance()``
+                    The covariance matrix will be calculated as
+                    ``cov(covestimator_between, #=data=#; dims=2,
+                    mean=zeros(#=...=#)``.
+                    Custom covariance estimators, available in other packages,
+                    may result in more robust discriminants for data with more
+                    features than observations.
+    ============== =============================================================== =========================

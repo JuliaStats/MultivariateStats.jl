@@ -46,13 +46,14 @@ ldacov(Cp::DenseMatrix{T},
 
 #### interface functions
 
-function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T}) where T<:Real
+function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T};
+             covestimator::CovarianceEstimator = SimpleCovariance()) where T<:Real
     μp = vec(mean(Xp, dims=2))
     μn = vec(mean(Xn, dims=2))
     Zp = Xp .- μp
     Zn = Xn .- μn
-    Cp = Zp * transpose(Zp)
-    Cn = Zn * transpose(Zn)
+    Cp = calcscattermat(covestimator, Zp)
+    Cn = calcscattermat(covestimator, Zn)
     ldacov(Cp, Cn, μp, μn)
 end
 
@@ -91,7 +92,9 @@ function MulticlassLDAStats(cweights::Vector{T},
     MulticlassLDAStats(d, nc, cweights, tw, mean, cmeans, Sw, Sb)
 end
 
-function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}) where T<:Real
+function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
+                              covestimator_within::CovarianceEstimator=SimpleCovariance(),
+                              covestimator_between::CovarianceEstimator=SimpleCovariance()) where T<:Real
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
@@ -101,12 +104,12 @@ function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int}
     # compute class-specific weights and means
     cmeans, cweights, Z = center(X, y, nc)
 
-    Sw = Z * transpose(Z)
+    Sw = calcscattermat(covestimator_within, Z)
 
     # compute between-class scattering
     mean = cmeans * (cweights ./ T(n))
     U = rmul!(cmeans .- mean, Diagonal(sqrt.(cweights)))
-    Sb = U * transpose(U)
+    Sb = calcscattermat(covestimator_between, U)
 
     return MulticlassLDAStats(Vector{T}(cweights), mean, cmeans, Sw, Sb)
 end
@@ -137,9 +140,13 @@ transform(M::MulticlassLDA, x::AbstractVecOrMat{T}) where T<:Real = M.proj'x
 function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
              method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
-             regcoef::T=T(1.0e-6)) where T<:Real
+             regcoef::T=T(1.0e-6),
+             covestimator_within::CovarianceEstimator=SimpleCovariance(),
+             covestimator_between::CovarianceEstimator=SimpleCovariance()) where T<:Real
 
-    multiclass_lda(multiclass_lda_stats(nc, X, y);
+    multiclass_lda(multiclass_lda_stats(nc, X, y;
+                                        covestimator_within=covestimator_within,
+                                        covestimator_between=covestimator_between);
                    method=method,
                    regcoef=regcoef,
                    outdim=outdim)

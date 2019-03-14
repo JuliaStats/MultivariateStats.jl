@@ -1,5 +1,6 @@
 module MultivariateStats
     using LinearAlgebra
+    using StatsBase: SimpleCovariance, CovarianceEstimator
     import Statistics: mean, var, cov, covm
     import Base: length, size, show, dump
     import StatsBase: fit, predict, ConvergenceException
