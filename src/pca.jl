@@ -50,6 +50,18 @@ reconstruct(M::PCA{T}, y::AbstractVecOrMat{T}) where {T<:Real} = decentralize(M.
 
 function show(io::IO, M::PCA)
     print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $(principalratio(M)))")
+
+    ldgs = projection(M) * diagm(0 => sqrt.(M.prinvars))
+    rot = diag(ldgs' * ldgs)
+    ldgs = ldgs[:,sortperm(rot, rev=true)]
+    ldgs_signs = sign.(sum(ldgs, dims=1))
+    ldgs_signs[ldgs_signs .== 0] .= 1
+    ldgs = ldgs * diagm(0 => ldgs_signs[:])
+    print(io, "\nPattern matrix\n")
+    display(ldgs)
+    print(io, "\nLoadings              $(principalvars(M))\n")
+    print(io, "Proportion explained  $(principalvars(M) ./ M.tvar)\n")
+    print(io, "Cumulative proportion $(cumsum(principalvars(M) ./M.tvar))\n")
 end
 
 function dump(io::IO, M::PCA)
