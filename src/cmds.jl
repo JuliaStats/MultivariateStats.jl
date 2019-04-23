@@ -89,7 +89,7 @@ function classical_mds(D::AbstractMatrix{T}, p::Int;
         else #Keeping all remaining eigenpairs would not change solution (if 0)
              #or make the answer _worse_ (if <0).
              #The least squares solution would want to throw all these away.
-            dowarn && warn("Gramian has only $(i-1) positive eigenvalue(s)")
+            dowarn && @warn("Gramian has only $(i-1) positive eigenvalue(s)")
             m = i-1
             ord = ord[1:m]
             v = v[1:m]
@@ -102,7 +102,7 @@ function classical_mds(D::AbstractMatrix{T}, p::Int;
         nevalsmore = sum(abs.(E.values[ord[m+1:end]] .- v[m]^2) .< n*eps())
         nevals = sum(abs.(E.values .- v[m]^2) .< n*eps())
         if nevalsmore > 1
-            dowarn && warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
+            dowarn && @warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
         end
     end
     U = E.vectors[:, ord[1:m]]
