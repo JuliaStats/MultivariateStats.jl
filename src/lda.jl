@@ -238,10 +238,10 @@ function fit(::Type{F}, X::AbstractMatrix{T},
     # Compute centroids, class weights, and deviation from centroids
     # Note Sb = Hb*Hb', Sw = Hw*Hw'
     cmeans, cweights, Hw = center(X, label, nc)
-    dmeans = cmeans .- (normalize ? mean(cmeans, dims=2) : cmeans * (cweights / n))
-    Hb = normalize ? dmeans : dmeans * Diagonal(sqrt.(cweights))
+    dmeans = cmeans .- (normalize ? mean(cmeans, dims=2) : cmeans * (cweights / T(n)))
+    Hb = normalize ? dmeans : dmeans * Diagonal(convert(Vector{T}, sqrt.(cweights)))
     if normalize
-        Hw /= sqrt(n)
+        Hw /= T(sqrt(n))
     end
     # Project to the subspace spanned by the within-class scatter
     # (essentially, PCA before LDA)
