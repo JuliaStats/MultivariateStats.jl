@@ -60,7 +60,7 @@ dmat2gram(D::AbstractMatrix{T}) where {T<:Real} = dmat2gram!(similar(D, momentty
 """Classical MDS type"""
 struct MDS{T<:Real}
     d::Real                  # original dimension
-    D::AbstractMatrix{T}     # fitted data, X (d x d)
+    X::AbstractMatrix{T}     # fitted data, X (d x n)
     λ::AbstractVector{T}     # sqrt. eigenvalues in feature space, √λ (k x 1)
     U::AbstractMatrix{T}     # eigenvectors in feature space, U (n x k)
 end
@@ -75,10 +75,43 @@ eigvals(M::MDS) = M.λ
 
 ## use
 
-function transform(M::MDS)
+"""Calculate out-of-sample multidimensional scaling transformation"""
+function transform(M::MDS{T}, x::AbstractVector{T}; distances=false) where {T<:Real}
+    d = if isnan(M.d) # model has only distance matrix
+        @assert distances "Cannot transform points if model was fitted with a distance matrix. Use point distances."
+        size(x, 1) != size(M.X, 1) && throw(
+            DimensionMismatch("Point distances should be calculated to all original points"))
+        x
+    else
+        if distances
+            size(x, 1) != size(M.X, 2) && throw(
+                DimensionMismatch("Point distances should be calculated to all original points."))
+            x
+        else
+            size(x, 1) != size(M.X, 1) && throw(
+                DimensionMismatch("Points and original data must have same dimensionality."))
+            pairwise((x,y)->norm(x-y), M.X, x)
+        end
+    end
+
+    # get distance matrix
+    D = isnan(M.d) ? M.X  : pairwise((x,y)->norm(x-y), M.X)
+    d = d.^2
+
+    # b = 0.5*(ones(n,n)*d./n - d + D*ones(n,1)./n - ones(n,n)*D*ones(n,1)./n^2)
+    mD = mean(D.^2, dims=2)
+    b = (d  .- mean(d, dims=1) .- mD .+ mean(mD)) ./ -2
+
+    # sqrt(λ)⁻¹U'b
+    λ = vcat(M.λ, zeros(T, outdim(M) - length(M.λ)))
+    return M.U' * b ./ sqrt.(λ)
+end
+
+"""Calculate multidimensional scaling transformation"""
+function transform(M::MDS{T}) where {T<:Real}
     # if there are non-positive missing eigval then padd with zeros
-    λ = vcat(M.λ, zeros(outdim(M) - length(M.λ)))
-    return Diagonal(sqrt.(λ)) * M.U'
+    λ = vcat(M.λ, zeros(T, outdim(M) - length(M.λ)))
+    return diagm(0=>sqrt.(λ)) * M.U'
 end
 
 ## show
@@ -138,7 +171,7 @@ function fit(::Type{MDS}, X::AbstractMatrix{T};
         nevalsmore = sum(abs.(E.values[ord[m+1:end]] .- λ[m]) .< n*eps())
         nevals = sum(abs.(E.values .- λ[m]) .< n*eps())
         if nevalsmore > 1
-            dowarn && @warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
+            @warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
         end
     end
     U = E.vectors[:, ord[1:m]]
@@ -149,13 +182,15 @@ function fit(::Type{MDS}, X::AbstractMatrix{T};
         U = [U zeros(T, n, maxoutdim-m)]
     end
 
-    return MDS(d, D, λ, U)
+    return MDS(d, X, λ, U)
 end
 
 @deprecate classical_mds(D::AbstractMatrix, p::Int) transform(fit(MDS, D, maxoutdim=p, distances=true))
 
 function stress(M::MDS)
+    # calculate distances if original data was stored
+    DX = isnan(M.d) ? M.X : pairwise((x,y)->norm(x-y), M.X)
     DY = pairwise((x,y)->norm(x-y), transform(M))
-    n = size(M.D,1)
-    return sqrt(2*sum((M.D - DY).^2)/sum(M.D.^2));
+    n = size(DX,1)
+    return sqrt(2*sum((DX - DY).^2)/sum(DX.^2));
 end

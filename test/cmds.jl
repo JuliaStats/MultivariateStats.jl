@@ -1,5 +1,6 @@
 using MultivariateStats
 using LinearAlgebra
+import Statistics: mean
 using Test
 
 @testset "MDS" begin
@@ -35,6 +36,10 @@ using Test
     @test size(X) == (3,n)
     @test MultivariateStats.pairwise((x,y)->norm(x-y), X) ≈ D0
 
+    @test_throws DimensionMismatch transform(M, rand(d+1))
+    y = transform(M, X0[:, 1])
+    @test X[:, 1] ≈ y
+
     # use only distance matrix
     M = fit(MDS, D0, maxoutdim=3, distances=true)
     @test isnan(indim(M))
@@ -45,6 +50,11 @@ using Test
     @test size(X) == (3,n)
     @test MultivariateStats.pairwise((x,y)->norm(x-y), X) ≈ D0
 
+    @test_throws AssertionError transform(M, X0[:, 1])
+    @test_throws DimensionMismatch transform(M, rand(d+1); distances = true)
+    d = MultivariateStats.pairwise((x,y)->norm(x-y), X0, X0[:,2]) |> vec
+    y = transform(M, d, distances=true)
+    @test X[:, 2] ≈ y
 
     #Test MDS embeddings in dimensions >= number of points
     M = fit(MDS, [0. 1.; 1. 0.], maxoutdim=2, distances=true)
@@ -75,5 +85,27 @@ using Test
 
     #10 - test degenerate problem
     @test transform(fit(MDS, zeros(10, 10), maxoutdim=3)) == zeros(3, 10)
+
+    # out-of-sample
+    D = [0 1 2 1;
+         1 0 1 2;
+         2 1 0 1;
+         1 2 1 0.0f32]
+
+    M = fit(MDS, sqrt.(D), maxoutdim=2, distances=true)
+    X = transform(M)
+    @test D ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), X)
+    @test eltype(X) == Float32
+
+    a = Float32[0.5, 0.5, 0.5, 0.5]
+    A = vcat(hcat(D, a), hcat(a', zeros(Float32, 1, 1)))
+    M⁺ = fit(MDS, sqrt.(A), maxoutdim=2, distances=true)
+    X⁺ = transform(M⁺)
+    @test A ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), X⁺)
+
+    y = transform(M, a, distances=true)
+    Y = [X y]
+    @test A ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), Y)
+    @test eltype(Y) == Float32
 
 end
