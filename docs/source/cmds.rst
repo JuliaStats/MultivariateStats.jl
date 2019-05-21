@@ -26,8 +26,95 @@ Overview of Classical MDS
 2. Perform eigenvalue decomposition of the Gram matrix to derive the coordinates.
 
 
-Functions
-~~~~~~~~~~
+This package defines a ``MDS`` type to represent a classical MDS model, and provides a set of methods to access the properties.
+
+Properties
+~~~~~~~~~~~
+
+Let ``M`` be an instance of ``MDS``, ``d`` be the dimension of observations, and ``p`` be the embedding dimension
+
+.. function:: indim(M)
+
+    Get the input dimension ``d``, *i.e* the dimension of the observation space.
+
+.. function:: outdim(M)
+
+    Get the output dimension ``p``, *i.e* the dimension of the embedding.
+
+.. function:: projection(M)
+
+    Get the eigenvectors matrix (of size ``(n, p)``) of the embedding space.
+
+    The eigenvectors are arranged in descending order of the corresponding eigenvalues.
+
+.. function:: eigvals(M)
+
+    Get the eigenvalues.
+
+.. function:: stress(M)
+
+    Get the model stress.
+
+
+Transformation and Construction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The package provides methods to do so:
+
+.. function:: transform(M)
+
+    It returns a coordinate matrix of size ``(p, n)``, where each column is the
+    coordinates for an observation.
+
+.. function:: transform(M, x)
+
+    Out-of-sample transformation of the observation ``x``.
+
+    Here, ``x`` is a vector of length ``d``.
+
+
+Data Analysis
+~~~~~~~~~~~~~~~
+
+One can use the ``fit`` method to perform classical MDS over a given dataset.
+
+.. function:: fit(MDS, X; ...)
+
+    Perform classical MDS over the data given in a matrix ``X``. Each column of ``X`` is an observation.
+
+    This method returns an instance of ``MDS``.
+
+    **Keyword arguments:**
+
+    Let ``(d, n) = size(X)`` be respectively the input dimension and the number of observations:
+
+    =========== =============================================================== ===============
+      name         description                                                   default
+    =========== =============================================================== ===============
+     maxoutdim  Maximum output dimension.                                        ``d-1``
+    ----------- --------------------------------------------------------------- ---------------
+     distances  When the parameter is ``true``, the input matrix ``X`` is        ``false``
+                treated as a distance matrix.
+    =========== =============================================================== ===============
+
+.. note::
+
+    The Gramian derived from ``D`` may have nonpositive or degenerate
+    eigenvalues.  The subspace of nonpositive eigenvalues is projected out
+    of the MDS solution so that the strain function is minimized in a
+    least-squares sense.  If the smallest remaining eigenvalue that is used
+    for the MDS is degenerate, then the solution is not unique, as any
+    linear combination of degenerate eigenvectors will also yield a MDS
+    solution with the same strain value. By default, warnings are emitted
+    if either situation is detected, which can be suppressed with
+    ``dowarn=false``.
+
+    If the MDS uses an eigenspace of dimension ``m`` less than ``p``, then
+    the MDS coordinates will be padded with ``p-m`` zeros each.
+
+
+Miscellaneous Functions
+~~~~~~~~~~~~~~~~~~~~~~~
 
 This package provides functions related to classical MDS.
 
@@ -46,29 +133,6 @@ This package provides functions related to classical MDS.
 .. function:: dmat2gram!(G, D)
 
     Convert a distance matrix ``D`` to a Gram matrix, and write the results to ``G``.
-
-.. function:: classical_mds(D, p[, dowarn=true])
-
-    Perform classical MDS. This function derives a ``p``-dimensional embedding
-    based on a given distance matrix ``D``.
-
-    It returns a coordinate matrix of size ``(p, n)``, where each column is the
-    coordinates for an observation.
-
-    .. note::
-
-        The Gramian derived from ``D`` may have nonpositive or degenerate
-        eigenvalues.  The subspace of nonpositive eigenvalues is projected out
-        of the MDS solution so that the strain function is minimized in a
-        least-squares sense.  If the smallest remaining eigenvalue that is used
-        for the MDS is degenerate, then the solution is not unique, as any
-        linear combination of degenerate eigenvectors will also yield a MDS
-        solution with the same strain value. By default, warnings are emitted
-        if either situation is detected, which can be suppressed with
-        ``dowarn=false``.
-
-        If the MDS uses an eigenspace of dimension ``m`` less than ``p``, then
-        the MDS coordinates will be padded with ``p-m`` zeros each.
 
     Reference::
 
