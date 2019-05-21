@@ -27,7 +27,6 @@ import Random
     Random.seed!(34568)
 
     ## prepare data
-    let
     d = 5
     ns = [10, 15, 20]
     nc = length(ns)
@@ -239,6 +238,14 @@ import Random
         Sw = dX*dX'/(n1+n2)
         @test Sb*proj ≈ Sw*proj*Diagonal(M.λ)
     end
+
+    # Test various input data typess
+    for (T, nrm) in Iterators.product((Float64, Float32), (false, true))
+        n2 = 100
+        X, dX, label = gen_ldadata_2(centers, n1, n2)
+        M = fit(SubspaceLDA, convert(Matrix{T}, X), label; normalize=nrm)
+        proj = projection(M)
+        @test eltype(proj) === T
     end
 
 end
