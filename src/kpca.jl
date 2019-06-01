@@ -30,12 +30,12 @@ end
 
 """Kernel PCA type"""
 struct KernelPCA{T<:Real}
-    X::AbstractMatrix{T}  # fitted data
-    ker::Function         # kernel function
-    center::KernelCenter  # kernel center
-    λ::AbstractVector{T}     # eigenvalues  in feature space
-    α::AbstractMatrix{T}     # eigenvectors in feature space
-    inv::AbstractMatrix{T}   # inverse transform coefficients
+    X::AbstractMatrix{T}           # fitted data or precomputed kernel
+    ker::Union{Nothing, Function}  # kernel function
+    center::KernelCenter           # kernel center
+    λ::AbstractVector{T}           # eigenvalues  in feature space
+    α::AbstractMatrix{T}           # eigenvectors in feature space
+    inv::AbstractMatrix{T}         # inverse transform coefficients
 end
 
 ## properties
@@ -56,6 +56,7 @@ function transform(M::KernelPCA{T}, x::AbstractVecOrMat{T}) where {T<:Real}
 end
 
 function transform(M::KernelPCA{T}) where {T<:Real}
+    M.ker !== nothing && throw(MissingException("No precomputed kernel provided. Use `transform(model, data)`."))
     return projection(M)'*M.X
 end
 
@@ -78,7 +79,7 @@ end
 ## interface functions
 
 function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
-             kernel = (x,y)->x'y,
+             kernel::Union{Nothing, Function} = (x,y)->x'y,
              maxoutdim::Int = min(size(X)...),
              remove_zero_eig::Bool = false, atol::Real = 1e-10,
              solver::Symbol = :eig,
@@ -86,10 +87,9 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
              tol::Real = 0.0, maxiter::Real = 300) where {T<:Real}
 
     d, n = size(X)
-    Kfunc = (x,y)->error("Kernel is precomputed.")
-
     maxoutdim = min(min(d, n), maxoutdim)
 
+    # set kernel function if available
     K = if isa(kernel, Function)
         pairwise(kernel, X)
     elseif kernel === nothing
@@ -97,12 +97,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
         inverse = false
         X
     else
-        throw(ArgumentError("Incorrect kernel type. Use function or symmetric matrix."))
-    end
-
-    # set kernel function if available
-    if isa(kernel, Function)
-        Kfunc = kernel
+        throw(ArgumentError("Incorrect kernel type. Use a function or a precomputed kernel."))
     end
 
     # center kernel
@@ -119,7 +114,8 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
     end
 
     # sort eigenvalues in descending order
-    ord = sortperm(evl; rev=true)[1:maxoutdim]
+    ord = sortperm(evl; rev=true)
+    ord = ord[1:min(length(ord), maxoutdim)]
 
     # remove zero eigenvalues
     λ, α = if remove_zero_eig
@@ -133,9 +129,9 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
     Q = zeros(T, 0, 0)
     if inverse
         Pᵗ = α' .* sqrt.(λ)
-        KT = pairwise(Kfunc, Pᵗ)
+        KT = pairwise(kernel, Pᵗ)
         Q = (KT + diagm(0 => fill(β, size(KT,1)))) \ X'
     end
 
-    KernelPCA(X, Kfunc, center, λ, α, Q')
+    KernelPCA(X, kernel, center, λ, α, Q')
 end

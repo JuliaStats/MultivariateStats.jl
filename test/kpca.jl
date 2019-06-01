@@ -102,7 +102,7 @@ import Random
     @test_throws ArgumentError reconstruct(M, X) # no reconstruction for precomputed kernel
     @test abs.(transform(M)) ≈ abs.(transform(M2, X))
 
-    @test_throws ArgumentError fit(KernelPCA, rand(1,10), kernel=1)
+    @test_throws TypeError fit(KernelPCA, rand(1,10), kernel=1)
 
     # fit a Float32 matrix
     X = randn(Float32, d, n)
@@ -116,4 +116,8 @@ import Random
     M = fit(KernelPCA, X, maxoutdim=3, solver=:eigs)
     @test indim(M) == 100d
     @test outdim(M) == 3
+
+    # issue #96
+    M = fit(KernelPCA, X)
+    @test_throws MissingException transform(M)
 end
