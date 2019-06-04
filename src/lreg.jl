@@ -20,8 +20,13 @@ _haug(X::AbstractMatrix{T}) where T = hcat(X, ones(T, size(X,1), 1))::Matrix{T}
 ## linear least square
 
 function llsq(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T};
-              trans::Bool=false, bias::Bool=true) where {T<:Real}
-    if trans
+              trans::Bool=false, bias::Bool=true,
+              dims::Union{Integer,Nothing}=nothing) where {T<:Real}
+    if dims === nothing
+        Base.depwarn("`trans` argument is deprecated, use llsq(X, Y, dims=d) instead.", :trans)
+        dims = 2
+    end
+    if dims == 2
         mX, nX = size(X)
         size(Y, 1) == nX || throw(DimensionMismatch("Dimensions of X and Y mismatch."))
         mX <= nX || error("mX <= nX is required when trans is false.")
@@ -30,30 +35,45 @@ function llsq(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T};
         size(Y, 1) == mX || throw(DimensionMismatch("Dimensions of X and Y mismatch."))
         mX >= nX || error("mX >= nX is required when trans is false.")
     end
-    _ridge(X, Y, zero(T), trans, bias)
+    _ridge(X, Y, zero(T), dims == 2, bias)
 end
 
 ## ridge regression
 
 function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::Real;
-               trans::Bool=false, bias::Bool=true) where {T<:Real}
-    lreg_chkdims(X, Y, trans)
+               trans::Bool=false, bias::Bool=true,
+               dims::Union{Integer,Nothing}=nothing) where {T<:Real}
+    if dims === nothing
+        Base.depwarn("`trans` argument is deprecated, use ridge(X, Y, r, dims=d) instead.", :trans)
+        dims = 2
+    end
+    lreg_chkdims(X, Y, dims == 2)
     r >= zero(r) || error("r must be non-negative.")
-    _ridge(X, Y, convert(T, r), trans, bias)
+    _ridge(X, Y, convert(T, r), dims == 2, bias)
 end
 
 function ridge(X::AbstractMatrix, Y::AbstractVecOrMat, r::AbstractVector;
-               trans::Bool=false, bias::Bool=true)
-    d = lreg_chkdims(X, Y, trans)
+               trans::Bool=false, bias::Bool=true,
+               dims::Union{Integer,Nothing}=nothing)
+    if dims === nothing
+        Base.depwarn("`trans` argument is deprecated, use ridge(X, Y, r, dims=d) instead.", :trans)
+        dims = 2
+    end
+    d = lreg_chkdims(X, Y, dims == 2)
     length(r) == d || throw(DimensionMismatch("Incorrect length of r."))
-    _ridge(X, Y, r, trans, bias)
+    _ridge(X, Y, r, dims == 2, bias)
 end
 
 function ridge(X::AbstractMatrix, Y::AbstractVecOrMat, r::AbstractMatrix;
-               trans::Bool=false, bias::Bool=true)
-    d = lreg_chkdims(X, Y, trans)
+               trans::Bool=false, bias::Bool=true,
+               dims::Union{Integer,Nothing}=nothing)
+    if dims === nothing
+        Base.depwarn("`trans` argument is deprecated, use ridge(X, Y, r, dims=d) instead.", :trans)
+        dims = 2
+    end
+    d = lreg_chkdims(X, Y, dims == 2)
     size(r) == (d, d) || throw(DimensionMismatch("Incorrect size of r."))
-    _ridge(X, Y, r, trans, bias)
+    _ridge(X, Y, r, dims == 2, bias)
 end
 
 ## implementation
