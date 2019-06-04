@@ -68,6 +68,7 @@ import Random
     M2 = fit(PCA, X, method=:cov, pratio=1.0)
     @test indim(M) == d
     @test outdim(M) == d
+    @test abs.(transform(M)) ≈ abs.(transform(M2, X))
     @test abs.(transform(M, X)) ≈ abs.(transform(M2, X))
     @test abs.(transform(M, X[:,1])) ≈ abs.(transform(M2, X[:,1]))
 
@@ -85,7 +86,7 @@ import Random
     # reconstruction
     @test_throws ArgumentError reconstruct(M, X)
     M = fit(KernelPCA, X, inverse=true)
-    @test all(isapprox.(reconstruct(M, transform(M, X)), X, atol=0.75))
+    @test all(isapprox.(reconstruct(M, transform(M)), X, atol=0.75))
 
     # use rbf kernel
     γ = 10.
@@ -116,8 +117,4 @@ import Random
     M = fit(KernelPCA, X, maxoutdim=3, solver=:eigs)
     @test indim(M) == 100d
     @test outdim(M) == 3
-
-    # issue #96
-    M = fit(KernelPCA, X)
-    @test_throws MissingException transform(M)
 end
