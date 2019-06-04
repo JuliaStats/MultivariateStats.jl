@@ -55,10 +55,7 @@ function transform(M::KernelPCA{T}, x::AbstractVecOrMat{T}) where {T<:Real}
     return projection(M)'*k
 end
 
-function transform(M::KernelPCA{T}) where {T<:Real}
-    M.ker !== nothing && throw(MissingException("No precomputed kernel provided. Use `transform(model, data)`."))
-    return projection(M)'*M.X
-end
+transform(M::KernelPCA) = sqrt.(M.λ) .* M.α'
 
 """Calculate inverse transformation to original space"""
 function reconstruct(M::KernelPCA{T}, y::AbstractVecOrMat{T}) where {T<:Real}
