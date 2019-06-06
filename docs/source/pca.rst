@@ -153,12 +153,12 @@ One can use the ``fit`` method to perform PCA over a given dataset.
     iris = dataset("datasets", "iris")
 
     # split half to training set
-    Xtr = convert(Array,DataArray(iris[1:2:end,1:4]))'
-    Xtr_labels = convert(Array,DataArray(iris[1:2:end,5]))
+    Xtr = convert(Matrix, iris[1:2:end,1:4])'
+    Xtr_labels = convert(Vector, iris[1:2:end,5])
 
     # split other half to testing set
-    Xte = convert(Array,DataArray(iris[2:2:end,1:4]))'
-    Xte_labels = convert(Array,DataArray(iris[2:2:end,5]))
+    Xte = convert(Matrix, iris[2:2:end,1:4])'
+    Xte_labels = convert(Vector, iris[2:2:end,5])
 
     # suppose Xtr and Xte are training and testing data matrix,
     # with each observation in a column
