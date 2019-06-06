@@ -31,7 +31,7 @@ The package provides ``llsq`` to solve these problems:
 
     This function accepts two keyword arguments:
 
-    - ``trans``: whether to use the transposed form. (default is ``false``)
+    - ``dims``: whether input observations stored as rows (1) or columns (2). (default is ``2``)
     - ``bias``: whether to include the bias term ``b``. (default is ``true``)
 
     The function results the solution ``a``.
@@ -43,7 +43,7 @@ For a single response vector ``y`` (without using bias):
 
 .. code-block:: julia
 
-    using MultivariateStats
+    using Statistics, MultivariateStats
 
     # prepare data
     X = rand(1000, 3)               # feature matrix
@@ -51,13 +51,13 @@ For a single response vector ``y`` (without using bias):
     y = X * a0 + 0.1 * randn(1000)  # generate response
 
     # solve using llsq
-    a = llsq(X, y; bias=false)
+    a = llsq(X, y; dims=1, bias=false)
 
     # do prediction
     yp = X * a
 
     # measure the error
-    rmse = sqrt(mean(abs2(y - yp)))
+    rmse = sqrt(mean(abs2.(y - yp)))
     print("rmse = $rmse")
 
 For a single response vector ``y`` (using bias):
@@ -67,25 +67,25 @@ For a single response vector ``y`` (using bias):
     # prepare data
     X = rand(1000, 3)
     a0, b0 = rand(3), rand()
-    y = X * a0 + b0 + 0.1 * randn(1000)
+    y = X * a0 .+ b0 .+ 0.1 * randn(1000)
 
     # solve using llsq
-    sol = llsq(X, y)
+    sol = llsq(X, y, dims=1)
 
     # extract results
     a, b = sol[1:end-1], sol[end]
 
     # do prediction
-    yp = X * a + b'
+    yp = X * a .+ b'
 
-For a matrix ``Y`` comprised of multiple columns:
+For a matrix column-stored regressors ``X`` and  dependent variables comprised of multiple columns ``Y``:
 
 .. code-block:: julia
 
     # prepare data
-    X = rand(1000, 3)
+    X = rand(3, 1000)
     A0, b0 = rand(3, 5), rand(1, 5)
-    Y = (X * A0 .+ b0) + 0.1 * randn(1000, 5)
+    Y = (X' * A0 .+ b0) + 0.1 * randn(1000, 5)
 
     # solve using llsq
     sol = llsq(X, Y)
@@ -94,7 +94,7 @@ For a matrix ``Y`` comprised of multiple columns:
     A, b = sol[1:end-1,:], sol[end,:]
 
     # do prediction
-    Yp = X * A .+ b'
+    Yp = X'*A .+ b'
 
 
 Ridge Regression
@@ -132,7 +132,7 @@ The package provides ``ridge`` to solve these problems:
 
     This function accepts two keyword arguments:
 
-    - ``trans``: whether to use the transposed form. (default is ``false``)
+    - ``dims``: whether input observations stored as rows (1) or columns (2). (default is ``2``)
     - ``bias``: whether to include the bias term ``b``. (default is ``true``)
 
     The function results the solution ``a``.
