@@ -61,10 +61,10 @@ import Random
     @test aa ≈ Aa[:,1]
 
     # test default dims=2 argument
-    aa = llsq(Xt, y1)
+    aa = llsq(X, y1)
     @test aa ≈ Aa[:,1]
-    @test_throws DimensionMismatch llsq(X, y0)
-    @test_throws DimensionMismatch llsq(Xt, y1; dims=1)
+    @test_throws DimensionMismatch llsq(X, y1; dims=2)
+    @test_throws DimensionMismatch llsq(Xt, y1)
 
 
     ## ridge (with Real r)
@@ -104,10 +104,10 @@ import Random
     @test aa ≈ Aa[:,1]
 
     # test default dims=2 argument
-    aa = ridge(Xt, y1, r)
+    aa = ridge(X, y1, r)
     @test aa ≈ Aa[:,1]
-    @test_throws DimensionMismatch ridge(X, y0, r)
-    @test_throws DimensionMismatch ridge(Xt, y1, r; dims=1)
+    @test_throws DimensionMismatch ridge(X, y1, r; dims=2)
+    @test_throws DimensionMismatch ridge(Xt, y1, r)
 
 
     ## ridge (with diagonal r)

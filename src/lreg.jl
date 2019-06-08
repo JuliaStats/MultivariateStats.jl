@@ -22,9 +22,9 @@ _haug(X::AbstractMatrix{T}) where T = hcat(X, ones(T, size(X,1), 1))::Matrix{T}
 function llsq(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T};
               trans::Bool=false, bias::Bool=true,
               dims::Union{Integer,Nothing}=nothing) where {T<:Real}
-    if dims === nothing
+    if dims === nothing && trans
         Base.depwarn("`trans` argument is deprecated, use llsq(X, Y, dims=d) instead.", :trans)
-        dims = 2
+        dims = 1
     end
     if dims == 2
         mX, nX = size(X)
@@ -43,9 +43,9 @@ end
 function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::Union{Real, AbstractVecOrMat};
                trans::Bool=false, bias::Bool=true,
                dims::Union{Integer,Nothing}=nothing) where {T<:Real}
-    if dims === nothing
+    if dims === nothing && trans
         Base.depwarn("`trans` argument is deprecated, use ridge(X, Y, r, dims=d) instead.", :trans)
-        dims = 2
+        dims = 1
     end
     d = lreg_chkdims(X, Y, dims == 2)
     if isa(r, Real)

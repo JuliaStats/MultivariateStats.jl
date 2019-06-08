@@ -31,7 +31,7 @@ The package provides ``llsq`` to solve these problems:
 
     This function accepts two keyword arguments:
 
-    - ``dims``: whether input observations stored as rows (1) or columns (2). (default is ``2``)
+    - ``dims``: whether input observations are stored as rows (``1``) or columns (``2``). (default is ``1``)
     - ``bias``: whether to include the bias term ``b``. (default is ``true``)
 
     The function results the solution ``a``.
@@ -51,7 +51,7 @@ For a single response vector ``y`` (without using bias):
     y = X * a0 + 0.1 * randn(1000)  # generate response
 
     # solve using llsq
-    a = llsq(X, y; dims=1, bias=false)
+    a = llsq(X, y; bias=false)
 
     # do prediction
     yp = X * a
@@ -70,7 +70,7 @@ For a single response vector ``y`` (using bias):
     y = X * a0 .+ b0 .+ 0.1 * randn(1000)
 
     # solve using llsq
-    sol = llsq(X, y, dims=1)
+    sol = llsq(X, y)
 
     # extract results
     a, b = sol[1:end-1], sol[end]
@@ -78,7 +78,7 @@ For a single response vector ``y`` (using bias):
     # do prediction
     yp = X * a .+ b'
 
-For a matrix column-stored regressors ``X`` and  dependent variables comprised of multiple columns ``Y``:
+For a matrix of column-stored regressors ``X`` and a matrix comprised of multiple columns of dependent variables ``Y``:
 
 .. code-block:: julia
 
@@ -88,7 +88,7 @@ For a matrix column-stored regressors ``X`` and  dependent variables comprised o
     Y = (X' * A0 .+ b0) + 0.1 * randn(1000, 5)
 
     # solve using llsq
-    sol = llsq(X, Y)
+    sol = llsq(X, Y, dims=2)
 
     # extract results
     A, b = sol[1:end-1,:], sol[end,:]
@@ -132,7 +132,7 @@ The package provides ``ridge`` to solve these problems:
 
     This function accepts two keyword arguments:
 
-    - ``dims``: whether input observations stored as rows (1) or columns (2). (default is ``2``)
+    - ``dims``: whether input observations are stored as rows (``1``) or columns (``2``). (default is ``1``)
     - ``bias``: whether to include the bias term ``b``. (default is ``true``)
 
     The function results the solution ``a``.
