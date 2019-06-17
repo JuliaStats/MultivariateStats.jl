@@ -6,8 +6,6 @@ A Julia package for multivariate statistics and data analysis (e.g. dimensionali
 [![Coverage Status](https://coveralls.io/repos/JuliaStats/MultivariateStats.jl/badge.svg?branch=master)](https://coveralls.io/r/JuliaStats/MultivariateStats.jl?branch=master)
 [![Build Status](https://travis-ci.org/JuliaStats/MultivariateStats.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/MultivariateStats.jl)
 
-**Note:** This package is aimed to replace [DimensionalityReduction.jl](https://github.com/JuliaStats/DimensionalityReduction.jl), and to provide more multivariate analysis techniques.
-
 -------
 
 ## Functionalities
