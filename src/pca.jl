@@ -47,10 +47,12 @@ transform(M::PCA{T}, x::AbstractVecOrMat{T}) where {T<:Real} = transpose(M.proj)
 reconstruct(M::PCA{T}, y::AbstractVecOrMat{T}) where {T<:Real} = decentralize(M.proj * y, M.mean)
 
 ## show & dump
-
 function show(io::IO, M::PCA)
     print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $(principalratio(M)))")
+end
 
+function show(io::IO, ::MIME"text/plain", M::PCA)
+    print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $(principalratio(M)))")
     ldgs = projection(M) * diagm(0 => sqrt.(M.prinvars))
     rot = diag(ldgs' * ldgs)
     ldgs = ldgs[:,sortperm(rot, rev=true)]
