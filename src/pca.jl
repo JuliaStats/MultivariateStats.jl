@@ -59,11 +59,13 @@ function show(io::IO, ::MIME"text/plain", M::PCA)
     ldgs_signs = sign.(sum(ldgs, dims=1))
     ldgs_signs[ldgs_signs .== 0] .= 1
     ldgs = ldgs * diagm(0 => ldgs_signs[:])
-    print(io, "\nPattern matrix\n")
+    print(io, "\n\nPattern matrix\n")
     display(ldgs)
-    print(io, "\nLoadings              $(principalvars(M))\n")
-    print(io, "Proportion explained  $(principalvars(M) ./ M.tvar)\n")
-    print(io, "Cumulative proportion $(cumsum(principalvars(M) ./M.tvar))\n")
+    print(io, "\n")
+    print(io, "Importance of components:\n")
+    print(io, CoefTable(hcat(principalvars(M), principalvars(M) ./ M.tvar, cumsum(principalvars(M) ./M.tvar)),
+                        string.("PC", 1:length(principalvars(M))),                      # components in order
+                        ["Loadings", "Proportion explained", "Cumulative proportion"])) # row names
 end
 
 function dump(io::IO, M::PCA)
