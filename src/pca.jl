@@ -63,7 +63,7 @@ function show(io::IO, ::MIME"text/plain", M::PCA)
     display(ldgs)
     print(io, "\n")
     print(io, "Importance of components:\n")
-    print(io, CoefTable(hcat(principalvars(M), principalvars(M) ./ M.tvar, cumsum(principalvars(M) ./M.tvar)),
+    print(io, CoefTable(vcat(principalvars(M)', (principalvars(M) ./ tvar(M))', (cumsum(principalvars(M) ./tvar(M)))'),
                         string.("PC", 1:length(principalvars(M))),                      # components in order
                         ["Loadings", "Proportion explained", "Cumulative proportion"])) # row names
 end
