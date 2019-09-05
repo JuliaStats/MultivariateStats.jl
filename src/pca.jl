@@ -57,7 +57,7 @@ function show(io::IO, ::MIME"text/plain", M::PCA)
     rot = diag(ldgs' * ldgs)
     ldgs = ldgs[:,sortperm(rot, rev=true)]
     ldgs_signs = sign.(sum(ldgs, dims=1))
-    ldgs_signs[ldgs_signs .== 0] .= 1
+    replace!(ldgs_signs, 0=>1)
     ldgs = ldgs * diagm(0 => ldgs_signs[:])
     print(io, "\n\nPattern matrix\n")
     display(ldgs)
