@@ -60,7 +60,7 @@ function show(io::IO, ::MIME"text/plain", M::PCA)
     replace!(ldgs_signs, 0=>1)
     ldgs = ldgs * diagm(0 => ldgs_signs[:])
     print(io, "\n\nPattern matrix\n")
-    display(ldgs)
+    show(io, ldgs)
     print(io, "\n")
     print(io, "Importance of components:\n")
     print(io, CoefTable(vcat(principalvars(M)', (principalvars(M) ./ tvar(M))', (cumsum(principalvars(M) ./tvar(M)))'),
