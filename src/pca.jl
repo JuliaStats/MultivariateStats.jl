@@ -55,7 +55,7 @@ function show(io::IO, ::MIME"text/plain", M::PCA)
     print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $(principalratio(M)))")
     ldgs = projection(M) * diagm(0 => sqrt.(M.prinvars))
     rot = diag(ldgs' * ldgs)
-    ldgs = ldgs[:,sortperm(rot, rev=true)]
+    ldgs = ldgs[:, sortperm(rot, rev=true)]
     ldgs_signs = sign.(sum(ldgs, dims=1))
     replace!(ldgs_signs, 0=>1)
     ldgs = ldgs * diagm(0 => ldgs_signs[:])
