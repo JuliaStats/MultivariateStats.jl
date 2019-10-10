@@ -32,7 +32,7 @@ This package uses the ``LinearDiscriminant`` type, defined as below, to capture 
 
 .. code-block:: julia
 
-    immutable LinearDiscriminant <: Discriminant
+    struct LinearDiscriminant <: Discriminant
         w::Vector{Float64}
         b::Float64
     end
