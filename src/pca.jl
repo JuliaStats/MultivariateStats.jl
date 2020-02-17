@@ -135,7 +135,7 @@ function fit(::Type{PCA}, X::AbstractMatrix{T};
              pratio::Real=default_pca_pratio,
              mean=nothing) where {T<:Real}
 
-    @assert !SparseArrays.issparse(X) "Use Kernel PCA for sparce arrays"
+    @assert !SparseArrays.issparse(X) "Use Kernel PCA for sparse arrays"
 
     d, n = size(X)
 
