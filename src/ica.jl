@@ -98,14 +98,14 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
     # normalize each column
     for j = 1:k
         w = view(W,:,j)
-        rmul!(w, 1.0 / sqrt(sum(abs2, w)))
+        rmul!(w, one(T) / sqrt(sum(abs2, w)))
     end
 
     # main loop
-    chg = NaN
+    chg = T(NaN)
     t = 0
     converged = false
-    while !converged && t < maxiter
+    @inbounds while !converged && t < maxiter
         t += 1
         copyto!(Wp, W)
 
@@ -113,34 +113,24 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
         mul!(U, transpose(X), W) # u <- w'x
 
         # compute g(w'x) --> U and E{g'(w'x)} --> E1
-        _s = 0.0
-        for j = 1:k
-            for i = 1:n
-                u, v = evaluate(fun, U[i,j])
-                U[i,j] = u
-                _s += v
-            end
-            E1[j] = _s / n
-        end
+        update_UE!(fun, U, E1)
 
         # compute E{x g(w'x)} --> Y
-        rmul!(mul!(Y, X, U), 1.0 / n)
+        rmul!(mul!(Y, X, U), one(T) / n)
 
         # update w: E{x g(w'x)} - E{g'(w'x)} w := y - e1 * w
         for j = 1:k
             w = view(W,:,j)
             y = view(Y,:,j)
             e1 = E1[j]
-            for i = 1:m
-                w[i] = y[i] - e1 * w[i]
-            end
+            @. w = y - e1 * w
         end
 
         # symmetric decorrelation: W <- W * (W'W)^{-1/2}
         copyto!(W, W * _invsqrtm!(W'W))
 
         # compare with Wp to evaluate a conversion change
-        chg = maximum(abs.(abs.(diag(W*Wp')) .- 1.0))
+        chg = maximum(abs.(abs.(diag(W*Wp')) .- one(T)))
         converged = (chg < tol)
 
         @debug "Iteration $t" change=chg tolerance=tol
@@ -196,3 +186,79 @@ function fit(::Type{ICA}, X::AbstractMatrix{T},             # sample matrix, siz
     end
     return ICA(mv, W)
 end
+
+
+
+# function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (m, k)
+#                   X::DenseMatrix{T},      # (whitened) observation sample matrix, size(m, n)
+#                   fun::ICAGDeriv{T},      # approximate neg-entropy functor
+#                   maxiter::Int,           # maximum number of iterations
+#                   tol::Real) where T<:Real# convergence tolerance
+#
+#     # argument checking
+#     m = size(W, 1)
+#     k = size(W, 2)
+#     size(X, 1) == m || throw(DimensionMismatch("Sizes of W and X mismatch."))
+#     n = size(X, 2)
+#     k <= min(m, n) || throw(DimensionMismatch("k must not exceed min(m, n)."))
+#
+#     @debug "FastICA Algorithm" m=m n=n k=k
+#
+#     # pre-allocated storage
+#     Wp = Matrix{T}(undef, m, k)    # to store previous version of W
+#     U  = Matrix{T}(undef, n, k)    # to store w'x & g(w'x)
+#     Y  = Matrix{T}(undef, m, k)    # to store E{x g(w'x)} for components
+#     E1 = Vector{T}(undef, k)       # store E{g'(w'x)} for components
+#
+#     # normalize each column
+#     for j = 1:k
+#         w = view(W,:,j)
+#         rmul!(w, one(T) / sqrt(sum(abs2, w)))
+#     end
+#
+#     # main loop
+#     chg = NaN
+#     t = 0
+#     converged = false
+#     @inbounds while !converged && t < maxiter
+#         t += 1
+#         copyto!(Wp, W)
+#
+#         # apply W of previous step
+#         mul!(U, transpose(X), W) # u <- w'x
+#
+#         # compute g(w'x) --> U and E{g'(w'x)} --> E1
+#         _s = zero(T)
+#         for j = 1:k
+#             for i = 1:n
+#                 u, v = evaluate(fun, U[i,j])
+#                 U[i,j] = u
+#                 _s += v
+#             end
+#             E1[j] = _s / n
+#         end
+#
+#         # compute E{x g(w'x)} --> Y
+#         rmul!(mul!(Y, X, U), one(T) / n)
+#
+#         # update w: E{x g(w'x)} - E{g'(w'x)} w := y - e1 * w
+#         for j = 1:k
+#             w = view(W,:,j)
+#             y = view(Y,:,j)
+#             e1 = E1[j]
+#             @. w = y - e1 * w
+#
+#         end
+#
+#         # symmetric decorrelation: W <- W * (W'W)^{-1/2}
+#         copyto!(W, W * _invsqrtm!(W'W))
+#
+#         # compare with Wp to evaluate a conversion change
+#         chg = maximum(abs.(abs.(diag(W*Wp')) .- one(T)))
+#         converged = (chg < tol)
+#
+#         @debug "Iteration $t" change=chg tolerance=tol
+#     end
+#     converged || throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
+#     return W
+# end
