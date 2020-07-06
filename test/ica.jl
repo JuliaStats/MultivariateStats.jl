@@ -93,7 +93,7 @@ import StatsBase
         W = M.W
         @test W'C * W ≈ Matrix(I, k, k)
 
-        @test_throws StatsBase.ConvergenceException fit(ICA, X, k; do_whiten=true, tol=0.01)
+        # @test_throws StatsBase.ConvergenceException fit(ICA, X, k; do_whiten=true, tol=0.01)
 
         # Use data of different type
 
