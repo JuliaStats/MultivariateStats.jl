@@ -33,32 +33,32 @@ import StatsBase
 
     @testset "Auxiliary" begin
 
-        f = icagfun(:tanh)
+        f = Tanh(1.0)
         u, v = evaluate(f, 1.5)
         @test u ≈ 0.905148253644866438242
         @test v ≈ 0.180706638923648530597
 
-        f = icagfun(:tanh, Float32)
+        f = Tanh(1f0)
         u, v = evaluate(f, 1.5f0)
         @test u ≈ 0.90514827f0
         @test v ≈ 0.18070662f0
 
-        f = icagfun(:tanh, 1.5)
+        f = Tanh(1.5)
         u, v = evaluate(f, 1.2)
         @test u ≈ 0.946806012846268289646
         @test v ≈ 0.155337561057228069719
 
-        f = icagfun(:tanh, 1.5f0)
+        f = Tanh(1.5f0)
         u, v = evaluate(f, 1.2f0)
         @test u ≈ 0.94680610f0
         @test v ≈ 0.15533754f0
 
-        f = icagfun(:gaus)
+        f = Gaus()
         u, v = evaluate(f, 1.5)
         @test u ≈ 0.486978701037524594696
         @test v ≈ -0.405815584197937162246
 
-        f = icagfun(:gaus, Float32)
+        f = Gaus()
         u, v = evaluate(f, 1.5f0)
         @test u ≈ 0.4869787f0
         @test v ≈ -0.40581557f0

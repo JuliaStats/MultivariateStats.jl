@@ -24,28 +24,47 @@ transform(M::ICA, x::AbstractVecOrMat) = transpose(M.W) * centralize(x, M.mean)
 #
 # It returns a function value v, and derivative d
 #
-abstract type ICAGDeriv{T<:Real} end
+abstract type ICAGDeriv end
 
-struct Tanh{T} <: ICAGDeriv{T}
+struct Tanh{T} <: ICAGDeriv
     a::T
 end
 
 evaluate(f::Tanh{T}, x::T) where T<:Real = (a = f.a; t = tanh(a * x); (t, a * (1 - t * t)))
 
-struct Gaus{T} <: ICAGDeriv{T} end
-evaluate(f::Gaus{T}, x::T) where T<:Real = (x2 = x * x; e = exp(-x2/2); (x * e, (1 - x2) * e))
+function update_UE!(f::Tanh{T}, U::AbstractMatrix{T}, E1::AbstractVector{T}) where T
+    n,k = size(U)
+    _s = zero(T)
+    a = f.a
+    @inbounds for j = 1:k
+        @inbounds @fastmath for i = 1:n
+            t = tanh(a * U[i,j])
+            U[i,j] = t
+            _s += a * (1 - t^2)
+        end
+        E1[j] = _s / n
+    end
+end
 
-## a function to get a g-fun
+struct Gaus <: ICAGDeriv end
 
-icagfun(fname::Symbol, ::Type{T} = Float64) where T<:Real=
-    fname == :tanh ? Tanh{T}(1.0) :
-    fname == :gaus ? Gaus{T}() :
-    error("Unknown gfun $(fname)")
+evaluate(f::Gaus, x::T) where T<:Real = (x2 = x * x; e = exp(-x2/2); (x * e, (1 - x2) * e))
 
-icagfun(fname::Symbol, a::T) where T<:Real =
-    fname == :tanh ? Tanh(a) :
-    fname == :gaus ? error("The gfun $(fname) has no parameters") :
-    error("Unknown gfun $(fname)")
+function update_UE!(f::Gaus, U::AbstractMatrix{T}, E1::AbstractVector{T}) where T
+    n,k = size(U)
+    _s = zero(T)
+    @inbounds for j = 1:k
+        for i = 1:n
+            u = U[i,j]
+            u2 = u^2
+            e = exp(-u2/2)
+            U[i,j] = u * e
+            _s += (1 - u2) * e
+        end
+        E1[j] = _s / n
+    end
+end
+
 
 # Fast ICA
 #
@@ -57,7 +76,7 @@ icagfun(fname::Symbol, a::T) where T<:Real =
 #
 function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (m, k)
                   X::DenseMatrix{T},      # (whitened) observation sample matrix, size(m, n)
-                  fun::ICAGDeriv{T},      # approximate neg-entropy functor
+                  fun::ICAGDeriv,         # approximate neg-entropy functor
                   maxiter::Int,           # maximum number of iterations
                   tol::Real) where T<:Real# convergence tolerance
 
@@ -132,10 +151,10 @@ end
 
 #### interface function
 
-function fit(::Type{ICA}, X::AbstractMatrix{T},                # sample matrix, size (m, n)
+function fit(::Type{ICA}, X::AbstractMatrix{T},             # sample matrix, size (m, n)
                           k::Int;                           # number of independent components
                           alg::Symbol=:fastica,             # choice of algorithm
-                          fun::ICAGDeriv=icagfun(:tanh, T), # approx neg-entropy functor
+                          fun::ICAGDeriv=Tanh(one(T)),      # approx neg-entropy functor
                           do_whiten::Bool=true,             # whether to perform pre-whitening
                           maxiter::Integer=100,             # maximum number of iterations
                           tol::Real=1.0e-6,                 # convergence tolerance

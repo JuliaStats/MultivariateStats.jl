@@ -104,7 +104,8 @@ module MultivariateStats
     ## ica
     ICA,                    # Type: the Fast ICA model
 
-    icagfun,                # a function to get a ICA approx neg-entropy functor
+    Tanh,                   # An ICADeriv type
+    Gaus,                   # An ICADeriv type
     fastica!,               # core algorithm function for the Fast ICA
 
     ## fa
