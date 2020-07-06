@@ -79,14 +79,14 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
     # normalize each column
     for j = 1:k
         w = view(W,:,j)
-        rmul!(w, 1.0 / sqrt(sum(abs2, w)))
+        rmul!(w, one(T) / sqrt(sum(abs2, w)))
     end
 
     # main loop
-    chg = NaN
+    chg = T(NaN)
     t = 0
     converged = false
-    while !converged && t < maxiter
+    @inbounds while !converged && t < maxiter
         t += 1
         copyto!(Wp, W)
 
@@ -94,7 +94,7 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
         mul!(U, transpose(X), W) # u <- w'x
 
         # compute g(w'x) --> U and E{g'(w'x)} --> E1
-        _s = 0.0
+        _s = zero(T)
         for j = 1:k
             for i = 1:n
                 u, v = evaluate(fun, U[i,j])
@@ -105,14 +105,14 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
         end
 
         # compute E{x g(w'x)} --> Y
-        rmul!(mul!(Y, X, U), 1.0 / n)
+        rmul!(mul!(Y, X, U), one(T) / n)
 
         # update w: E{x g(w'x)} - E{g'(w'x)} w := y - e1 * w
         for j = 1:k
             w = view(W,:,j)
             y = view(Y,:,j)
             e1 = E1[j]
-            for i = 1:m
+            @simd for i = 1:m
                 w[i] = y[i] - e1 * w[i]
             end
         end
