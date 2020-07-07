@@ -2,6 +2,10 @@
 
 #### FastICA type
 
+abstract type AbstractICAAlg end
+
+struct FastICA <: AbstractICAAlg
+
 struct ICA{T<:Real}
     mean::Vector{T}   # mean vector, of length m (or empty to indicate zero mean)
     W::Matrix{T}      # component coefficient matrix, of size (m, k)
@@ -74,7 +78,7 @@ end
 #   Independent Component Analysis: Algorithms and Applications.
 #   Neural Network 13(4-5), 2000.
 #
-function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (m, k)
+function ica!(::FastICA, W::DenseMatrix{T},      # initialized component matrix, size (m, k)
                   X::DenseMatrix{T},      # (whitened) observation sample matrix, size(m, n)
                   fun::ICAGDeriv,         # approximate neg-entropy functor
                   maxiter::Int,           # maximum number of iterations
@@ -143,7 +147,7 @@ end
 
 function fit(::Type{ICA}, X::AbstractMatrix{T},             # sample matrix, size (m, n)
                           k::Int;                           # number of independent components
-                          alg::Symbol=:fastica,             # choice of algorithm
+                          alg::AbstractICAAlg,             # choice of algorithm
                           fun::ICAGDeriv=Tanh(one(T)),      # approx neg-entropy functor
                           do_whiten::Bool=true,             # whether to perform pre-whitening
                           maxiter::Integer=100,             # maximum number of iterations
@@ -178,7 +182,7 @@ function fit(::Type{ICA}, X::AbstractMatrix{T},             # sample matrix, siz
     W = (isempty(winit) ? randn(T, size(Z,1), k) : copy(winit))
 
     # invoke core algorithm
-    fastica!(W, Z, fun, maxiter, tol)
+    ica!(alg, W, Z, fun, maxiter, tol)
 
     # construct model
     if do_whiten
