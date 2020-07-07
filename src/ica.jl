@@ -4,7 +4,7 @@
 
 abstract type AbstractICAAlg end
 
-struct FastICA <: AbstractICAAlg
+struct FastICA <: AbstractICAAlg end
 
 struct ICA{T<:Real}
     mean::Vector{T}   # mean vector, of length m (or empty to indicate zero mean)
@@ -159,8 +159,6 @@ function fit(::Type{ICA}, X::AbstractMatrix{T},             # sample matrix, siz
     m, n = size(X)
     n > 1 || error("There must be more than one samples, i.e. n > 1.")
     k <= min(m, n) || error("k must not exceed min(m, n).")
-
-    alg == :fastica || error("alg must be :fastica")
     maxiter > 1 || error("maxiter must be greater than 1.")
     tol > 0 || error("tol must be positive.")
 
