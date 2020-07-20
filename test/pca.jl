@@ -16,6 +16,11 @@ import SparseArrays
 
     P = qr(randn(5, 5)).Q[:, 1:3]
     pvars = [5., 4., 3.]
+    l = [-0.809509  -1.14456    0.944145
+    -0.738713  -1.23353   -0.607874;
+    -1.64431    0.875826  -0.479549;
+    -0.816033   0.613632   1.06775 ;
+     0.655236   0.157369   0.607475]
     M = PCA(Float64[], P, pvars, 15.0)
 
     @test indim(M) == 5
@@ -28,6 +33,7 @@ import SparseArrays
     @test tprincipalvar(M) == 12.0
     @test tresidualvar(M) == 3.0
     @test principalratio(M) == 0.8
+    @test isapprox(loadings(M),l, atol = 0.001)
 
     @test transform(M, X[:,1]) ≈ P'X[:,1]
     @test transform(M, X) ≈ P'X
