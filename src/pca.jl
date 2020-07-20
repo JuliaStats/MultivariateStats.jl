@@ -41,6 +41,8 @@ tvar(M::PCA) = M.tvar
 
 principalratio(M::PCA) = M.tprinvar / M.tvar
 
+loadings(M::PCA) = sqrt.(principalvars(M))' .* projection(M)
+
 ## use
 
 transform(M::PCA{T}, x::AbstractVecOrMat{T}) where {T<:Real} = transpose(M.proj) * centralize(x, M.mean)
