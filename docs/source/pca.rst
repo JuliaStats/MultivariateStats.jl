@@ -186,7 +186,7 @@ One can use the ``fit`` method to perform PCA over a given dataset.
 Core Algorithms
 ~~~~~~~~~~~~~~~~~
 
-Two algorithms are implemented in this package: ``pcacov`` and ``pcastd``. 
+Two algorithms are implemented in this package: ``pcacov`` and ``pcasvd``. 
 
 .. function:: pcacov(C, mean; ...)
 
