@@ -60,15 +60,15 @@ end
 
 #### Multiclass LDA Stats
 
-mutable struct MulticlassLDAStats{T<:Real}
+mutable struct MulticlassLDAStats{T<:Real, M<:AbstractMatrix{T}, N<:AbstractMatrix{T}}
     dim::Int              # sample dimensions
     nclasses::Int         # number of classes
     cweights::Vector{T}   # class weights
     tweight::T            # total sample weight
     mean::Vector{T}       # overall sample mean
     cmeans::Matrix{T}     # class-specific means
-    Sw::Matrix{T}         # within-class scatter matrix
-    Sb::Matrix{T}         # between-class scatter matrix
+    Sw::M                 # within-class scatter matrix
+    Sb::N                 # between-class scatter matrix
 end
 
 mean(S::MulticlassLDAStats) = S.mean
@@ -81,8 +81,8 @@ betweenclass_scatter(S::MulticlassLDAStats) = S.Sb
 function MulticlassLDAStats(cweights::Vector{T},
                             mean::Vector{T},
                             cmeans::Matrix{T},
-                            Sw::Matrix{T},
-                            Sb::Matrix{T}) where T<:Real
+                            Sw::AbstractMatrix{T},
+                            Sb::AbstractMatrix{T}) where T<:Real
     d, nc = size(cmeans)
     length(mean) == d || throw(DimensionMismatch("Incorrect length of mean"))
     length(cweights) == nc || throw(DimensionMismatch("Incorrect length of cweights"))
@@ -92,7 +92,7 @@ function MulticlassLDAStats(cweights::Vector{T},
     MulticlassLDAStats(d, nc, cweights, tw, mean, cmeans, Sw, Sb)
 end
 
-function multiclass_lda_stats(nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
+function multiclass_lda_stats(nc::Int, X::AbstractMatrix{T}, y::AbstractVector{Int};
                               covestimator_within::CovarianceEstimator=SimpleCovariance(),
                               covestimator_between::CovarianceEstimator=SimpleCovariance()) where T<:Real
     # check sizes
@@ -161,11 +161,11 @@ function multiclass_lda(S::MulticlassLDAStats{T};
     MulticlassLDA(P, P'S.cmeans, S)
 end
 
-mclda_solve(Sb::DenseMatrix{T}, Sw::DenseMatrix{T}, method::Symbol, p::Int, regcoef::T) where T<:Real =
+mclda_solve(Sb::AbstractMatrix{T}, Sw::AbstractMatrix{T}, method::Symbol, p::Int, regcoef::T) where T<:Real =
     mclda_solve!(copy(Sb), copy(Sw), method, p, regcoef)
 
-function mclda_solve!(Sb::Matrix{T},
-                      Sw::Matrix{T},
+function mclda_solve!(Sb::AbstractMatrix{T},
+                      Sw::AbstractMatrix{T}
                       method::Symbol, p::Int, regcoef::T) where T<:Real
 
     p <= size(Sb, 1) || throw(ArgumentError("p cannot exceed sample dimension."))
@@ -189,7 +189,7 @@ function mclda_solve!(Sb::Matrix{T},
     return P::Matrix{T}
 end
 
-function _lda_whitening!(C::Matrix{T}, regcoef::T) where T<:Real
+function _lda_whitening!(C::AbstractMatrix{T}, regcoef::T) where T<:Real
     n = size(C,1)
     E = eigen!(Symmetric(C))
     v = E.values
