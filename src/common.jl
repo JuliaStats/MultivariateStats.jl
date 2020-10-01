@@ -23,7 +23,7 @@ decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)
 fullmean(d::Int, mv::Vector{T}) where T = (isempty(mv) ? zeros(T, d) : mv)::Vector{T}
 
 preprocess_mean(X::AbstractMatrix{T}, m) where T<:Real =
-    (m === nothing ? vec(mean(X, dims=2)) : m == 0 ? T[] :  m)
+    (m == nothing ? vec(mean(X, dims=2)) : m == 0 ? T[] :  m)::Vector{T}
 
 # choose the first k values and columns
 #
@@ -97,7 +97,7 @@ function add_diag!(A::AbstractMatrix, v::Real)
 end
 
 # regularize a symmetric matrix
-function regularize_symmat!(A::Matrix{T}, lambda::Real) where T<:Real
+function regularize_symmat!(A::AbstractMatrix{T}, lambda::Real) where T<:Real
     if lambda > 0
         emax = eigmax(Symmetric(A))
         add_diag!(A, emax * lambda)
