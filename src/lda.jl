@@ -165,7 +165,7 @@ mclda_solve(Sb::AbstractMatrix{T}, Sw::AbstractMatrix{T}, method::Symbol, p::Int
     mclda_solve!(copy(Sb), copy(Sw), method, p, regcoef)
 
 function mclda_solve!(Sb::AbstractMatrix{T},
-                      Sw::AbstractMatrix{T}
+                      Sw::AbstractMatrix{T},
                       method::Symbol, p::Int, regcoef::T) where T<:Real
 
     p <= size(Sb, 1) || throw(ArgumentError("p cannot exceed sample dimension."))
