@@ -1,7 +1,7 @@
 using MultivariateStats
 using Test
 using LinearAlgebra
-import Random
+using Random
 
 @testset "Ridge Regression" begin
 
