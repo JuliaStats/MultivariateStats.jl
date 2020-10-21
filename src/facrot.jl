@@ -95,7 +95,7 @@ function orthomax(F::AbstractMatrix, γ, miniter, maxiter, ϵ)
   M = svd(F' * (F .^ 3 - γ / n * F * Diagonal(vec(sum(F .^ 2, dims=1)))))
   R = M.U * M.Vt
   if norm(R - Matrix{eltype(R)}(I, p, p)) < ϵ
-    R, _ = qr(randn(p, p)).Q
+    R = qr(randn(p, p)).Q
   end
 
   # Main iterations
