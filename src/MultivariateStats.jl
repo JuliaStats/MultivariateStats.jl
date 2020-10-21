@@ -2,7 +2,7 @@ module MultivariateStats
     using LinearAlgebra
     using StatsBase: SimpleCovariance, CovarianceEstimator
     import Statistics: mean, var, cov, covm
-    import Base: length, size, show, dump
+    import Base: length, size, show, dump, eltype
     import StatsBase: fit, predict, ConvergenceException
     import SparseArrays
     import LinearAlgebra: eigvals
@@ -10,109 +10,116 @@ module MultivariateStats
     export
 
     ## common
-    evaluate,           # evaluate discriminant function values (imported from Base)
-    predict,            # use a model to predict responses (imported from StatsBase)
-    fit,                # fit a model to data (imported from StatsBase)
-    centralize,         # subtract a mean vector from each column
-    decentralize,       # add a mean vector to each column
-    indim,              # the input dimension of a model
-    outdim,             # the output dimension of a model
-    projection,         # the projection matrix
-    reconstruct,        # reconstruct the input (approximately) given the output
-    transform,          # apply a model to transform a vector or a matrix
+    evaluate,                  # evaluate discriminant function values (imported from Base)
+    predict,                   # use a model to predict responses (imported from StatsBase)
+    fit,                       # fit a model to data (imported from StatsBase)
+    centralize,                # subtract a mean vector from each column
+    decentralize,              # add a mean vector to each column
+    indim,                     # the input dimension of a model
+    outdim,                    # the output dimension of a model
+    projection,                # the projection matrix
+    reconstruct,               # reconstruct the input (approximately) given the output
+    transform,                 # apply a model to transform a vector or a matrix
 
-    # lreg
-    llsq,               # Linear Least Square regression
-    ridge,              # Ridge regression
+    ## lreg
+    llsq,                      # Linear Least Square regression
+    ridge,                     # Ridge regression
 
-    # whiten
-    Whitening,          # Type: Whitening transformation
+    ## whiten
+    Whitening,                 # Type: Whitening transformation
 
-    invsqrtm,           # Compute inverse of matrix square root, i.e. inv(sqrtm(A))
-    invsqrtm!,          # Compute inverse of matrix square root inplace
-    cov_whitening,      # Compute a whitening transform based on covariance
-    cov_whitening!,     # Compute a whitening transform based on covariance (input will be overwritten)
-    invsqrtm,           # Compute C^{-1/2}, i.e. inv(sqrtm(C))
+    invsqrtm,                  # Compute inverse of matrix square root, i.e. inv(sqrtm(A))
+    invsqrtm!,                 # Compute inverse of matrix square root inplace
+    cov_whitening,             # Compute a whitening transform based on covariance
+    cov_whitening!,            # Compute a whitening transform based on covariance (input will be overwritten)
+    invsqrtm,                  # Compute C^{-1/2}, i.e. inv(sqrtm(C))
 
     ## pca
-    PCA,                # Type: Principal Component Analysis model
+    PCA,                       # Type: Principal Component Analysis model
 
-    pcacov,             # PCA based on covariance
-    pcasvd,             # PCA based on singular value decomposition of input data
-    principalratio,     # the ratio of variances preserved in the principal subspace
-    principalvar,       # the variance along a specific principal direction
-    principalvars,      # the variances along all principal directions
+    pcacov,                    # PCA based on covariance
+    pcasvd,                    # PCA based on singular value decomposition of input data
+    principalratio,            # the ratio of variances preserved in the principal subspace
+    principalvar,              # the variance along a specific principal direction
+    principalvars,             # the variances along all principal directions
 
-    tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
-    tresidualvar,       # total residual variance
-    tvar,               # total variance
+    tprincipalvar,             # total principal variance, i.e. sum(principalvars(M))
+    tresidualvar,              # total residual variance
+    tvar,                      # total variance
 
     ## ppca
-    PPCA,               # Type: the Probabilistic PCA model
+    PPCA,                      # Type: the Probabilistic PCA model
 
-    ppcaml,             # Maximum likelihood probabilistic PCA
-    ppcaem,             # EM algorithm for probabilistic PCA
-    bayespca,           # Bayesian PCA
-    loadings,           # factor loadings matrix
+    ppcaml,                    # Maximum likelihood probabilistic PCA
+    ppcaem,                    # EM algorithm for probabilistic PCA
+    bayespca,                  # Bayesian PCA
+    loadings,                  # factor loadings matrix
 
     ## kpca
-    KernelPCA,          # Type: the Kernel PCA model
+    KernelPCA,                 # Type: the Kernel PCA model
 
     ## cca
-    CCA,                # Type: Correlation Component Analysis model
+    CCA,                       # Type: Correlation Component Analysis model
 
-    ccacov,             # CCA based on covariances
-    ccasvd,             # CCA based on singular value decomposition of input data
+    ccacov,                    # CCA based on covariances
+    ccasvd,                    # CCA based on singular value decomposition of input data
 
-    xindim,             # input dimension of X
-    yindim,             # input dimension of Y
-    xmean,              # sample mean of X
-    ymean,              # sample mean of Y
-    xprojection,        # projection matrix for X
-    yprojection,        # projection matrix for Y
-    xtransform,         # transform for X
-    ytransform,         # transform for Y
-    correlations,       # correlations of all projected directions
+    xindim,                    # input dimension of X
+    yindim,                    # input dimension of Y
+    xmean,                     # sample mean of X
+    ymean,                     # sample mean of Y
+    xprojection,               # projection matrix for X
+    yprojection,               # projection matrix for Y
+    xtransform,                # transform for X
+    ytransform,                # transform for Y
+    correlations,              # correlations of all projected directions
 
     ## cmds
     MDS,
-    classical_mds,      # perform classical MDS over a given distance matrix
-    eigvals,            # eignenvalues of the transformation
-    stress,             # stress evaluation
+    classical_mds,             # perform classical MDS over a given distance matrix
+    eigvals,                   # eignenvalues of the transformation
+    stress,                    # stress evaluation
 
-    gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix
-    dmat2gram, dmat2gram!,  # Distance matrix => Gram matrix
+    gram2dmat, gram2dmat!,     # Gram matrix => Distance matrix
+    dmat2gram, dmat2gram!,     # Distance matrix => Gram matrix
 
     ## lda
-    Discriminant,           # Abstract Type: for all discriminant functionals
-    LinearDiscriminant,     # Type: Linear Discriminant functional
-    MulticlassLDAStats,     # Type: Statistics required for training multi-class LDA
-    MulticlassLDA,          # Type: Multi-class LDA model
-    SubspaceLDA,            # Type: LDA model for high-dimensional spaces
+    Discriminant,              # Abstract Type: for all discriminant functionals
+    LinearDiscriminant,        # Type: Linear Discriminant functional
+    MulticlassLDAStats,        # Type: Statistics required for training multi-class LDA
+    MulticlassLDA,             # Type: Multi-class LDA model
+    SubspaceLDA,               # Type: LDA model for high-dimensional spaces
 
-    ldacov,                 # Linear discriminant analysis based on covariances
+    ldacov,                    # Linear discriminant analysis based on covariances
 
-    classweights,           # class-specific weights
-    classmeans,             # class-specific means
-    withclass_scatter,      # with-class scatter matrix
-    betweenclass_scatter,   # between-class scatter matrix
-    multiclass_lda_stats,   # compute statistics for multiclass LDA training
-    multiclass_lda,         # train multi-class LDA based on statistics
-    mclda_solve,            # solve multi-class LDA projection given scatter matrices
-    mclda_solve!,           # solve multi-class LDA projection (inputs are overriden)
+    classweights,              # class-specific weights
+    classmeans,                # class-specific means
+    withclass_scatter,         # with-class scatter matrix
+    betweenclass_scatter,      # between-class scatter matrix
+    multiclass_lda_stats,      # compute statistics for multiclass LDA training
+    multiclass_lda,            # train multi-class LDA based on statistics
+    mclda_solve,               # solve multi-class LDA projection given scatter matrices
+    mclda_solve!,              # solve multi-class LDA projection (inputs are overriden)
 
     ## ica
-    ICA,                    # Type: the Fast ICA model
+    ICA,                       # Type: the Fast ICA model
 
-    icagfun,                # a function to get a ICA approx neg-entropy functor
-    fastica!,               # core algorithm function for the Fast ICA
+    icagfun,                   # a function to get a ICA approx neg-entropy functor
+    fastica!,                  # core algorithm function for the Fast ICA
 
     ## fa
-    FactorAnalysis,         # Type: the Factor Analysis model
+    FactorAnalysis,            # Type: the Factor Analysis model
 
-    faem,                   # Maximum likelihood probabilistic PCA
-    facm                    # EM algorithm for probabilistic PCA
+    faem,                      # Maximum likelihood probabilistic PCA
+    facm,                      # EM algorithm for probabilistic PCA
 
+    ## facrot
+    FactorRotationAlgorithm,   # Type: Factor rotation algorithm
+    Orthomax,                  # Type: Orthomax factor rotation algorithm
+
+    FactorRotation,            # Type: Return type for factor rotations
+    
+    rotatefactors              # Alternative interface to factor rotations
 
     ## source files
     include("common.jl")
@@ -126,5 +133,6 @@ module MultivariateStats
     include("lda.jl")
     include("ica.jl")
     include("fa.jl")
+    include("facrot.jl")
 
 end # module
