@@ -11,8 +11,8 @@ abstract type FactorRotationAlgorithm end
 A type representing the orthomax factor rotation algorithm.
 
 The positive parameter `γ::Real` determines which type of rotation is performed.
-For a `n x p` matrix, the default `γ = 1.0` leads to varimax rotation, `γ = 0.0` 
-is quartimax rotation, `γ = p / 2` is equamax rotation, and 
+For a `n x p` matrix, the default `γ = 1.0` leads to varimax rotation, `γ = 0.0`
+is quartimax rotation, `γ = p / 2` is equamax rotation, and
 `γ = n (p - 1) / (n + p - 2)` is parsimax rotation.
 
 The parameter `maxiter::Integer` controls the maximum number of iterations to
@@ -27,10 +27,10 @@ struct Orthomax <: FactorRotationAlgorithm
     ϵ::Real
 
     Orthomax(;γ = 1.0, miniter = 20, maxiter = 1000, ϵ = 1e-12) = begin
-        maxiter > zero(eltype(maxiter)) || throw(ArgumentError("Orthomax: maxiter needs to be positive"))
-        miniter > zero(eltype(miniter)) || throw(ArgumentError("Orthomax: miniter needs to be positive"))
-        γ > zero(eltype(γ)) || throw(ArgumentError("Orthomax: γ needs to be positive"))
-        ϵ > zero(eltype(ϵ)) || throw(ArgumentError("Orthomax: ϵ needs to be positive"))
+        γ ≥ zero(eltype(γ)) || throw(DomainError("Orthomax: γ needs to be non-negative"))
+        miniter > zero(eltype(miniter)) || throw(DomainError("Orthomax: miniter needs to be positive"))
+        maxiter > zero(eltype(maxiter)) || throw(DomainError("Orthomax: maxiter needs to be positive"))
+        ϵ > zero(eltype(ϵ)) || throw(DomainError("Orthomax: ϵ needs to be positive"))
 
         new(γ, miniter, maxiter, ϵ)
     end
@@ -74,13 +74,26 @@ function show(io::IO, mime::MIME{Symbol("text/plain")}, FR::FactorRotation{<:Any
     summary(io, FR); println(io)
 end
 
+"""
+    loadings(FR::FactorRotation)
+
+Returns the loading matrix.
+"""
+loadings(FR::FactorRotation{T, Ta}) where {T, Ta} = FR.F
+
+"""
+    rotation(FR::FactorRotation)
+
+Returns the rotation matrix.
+"""
+rotation(FR::FactorRotation{T, Ta}) where {T, Ta} = FR.R
 
 ## Comparison to other implementations
 # The implementation of varimax in R row-normlises the input matrix before
 # application of the algorithm and rescales the rows afterwards.
-## Reference 
-# Mikkel B. Stegmann, Karl Sjöstrand, Rasmus Larsen, "Sparse modeling of 
-# landmark and texture variability using the orthomax criterion," 
+## Reference
+# Mikkel B. Stegmann, Karl Sjöstrand, Rasmus Larsen, "Sparse modeling of
+# landmark and texture variability using the orthomax criterion,"
 # Proc. SPIE 6144, Medical Imaging 2006: Image Processing, 61441G
 # (10 March 2006); doi: 10.1117/12.651293
 function orthomax(F::AbstractMatrix, γ, miniter, maxiter, ϵ)
@@ -100,6 +113,7 @@ function orthomax(F::AbstractMatrix, γ, miniter, maxiter, ϵ)
 
     # Main iterations
     d = 0
+    lastchange = NaN
     converged = false
     for i in 1:maxiter
         dold  = d
@@ -107,15 +121,14 @@ function orthomax(F::AbstractMatrix, γ, miniter, maxiter, ϵ)
         M = svd(F' * (B .^ 3 - γ / n * B * Diagonal(vec(sum(B .^ 2, dims=1)))))
         R = M.U * M.Vt
         d = sum(M.S)
-        if abs(d - dold) / d < ϵ && i >= miniter
+        lastchange = abs(d - dold) / d
+        if lastchange < ϵ && i >= miniter
             converged = true
             break
         end
     end
 
-    if !converged
-        @warn "orthomax did not converge in $(maxiter) iterations"
-    end
+    converged || throw(ConvergenceException(maxiter, lastchange, ϵ))
 
     (F * R, R)
 end
@@ -127,7 +140,7 @@ Fit a factor rotation to the matrix `F` and apply it. The algorithm used to
 perform the factor rotation is by default [`Orthomax`](@ref) and can be changed
 with the keyword argument `alg` which is of type `<:FactorRotationAlgorithm`.
 """
-function fit(::Type{FactorRotation}, F::AbstractMatrix; 
+function fit(::Type{FactorRotation}, F::AbstractMatrix;
              alg::T = Orthomax()) where {T <: FactorRotationAlgorithm}
     if isa(alg, Orthomax)
         F, R = orthomax(F, alg.γ, alg.miniter, alg.maxiter, alg.ϵ)
@@ -143,7 +156,7 @@ object and apply it.
 
 See [`fit(::Type{FactorRotation}, F::AbstractMatrix)`](@ref) for keyword arguments.
 """
-function fit(::Type{FactorRotation}, F::FactorAnalysis; 
+function fit(::Type{FactorRotation}, F::FactorAnalysis;
              alg::T = Orthomax()) where {T <: FactorRotationAlgorithm}
     return fit(FactorRotation, F.W; alg = alg)
 end
@@ -171,7 +184,7 @@ end
     rotatefactors(F::FactorAnalysis, [alg::FactorRotationAlgorithm]) -> FactorAnalysis
 
 Rotate the factors in the loading matrix of `F` which is of type [`FactorAnalysis`](@ref).
-The algorithm to be used can be passed in via the second argument `alg`. 
+The algorithm to be used can be passed in via the second argument `alg`.
 By default [`Orthomax`](@ref) is used.
 """
 function rotatefactors(F::FactorAnalysis, alg::FactorRotationAlgorithm = Orthomax())

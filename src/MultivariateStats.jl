@@ -108,7 +108,9 @@ module MultivariateStats
     Orthomax,                  # Type: Orthomax factor rotation algorithm
 
     FactorRotation,            # Type: Return type for factor rotations
-    
+    loadings,                  # rotated loading matrix
+    rotation,                  # rotation matrix applied to loadings
+
     rotatefactors              # Alternative interface to factor rotations
 
     ## source files
