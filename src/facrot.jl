@@ -16,8 +16,9 @@ is quartimax rotation, `γ = p / 2` is equamax rotation, and
 `γ = n (p - 1) / (n + p - 2)` is parsimax rotation.
 
 The parameter `maxiter::Integer` controls the maximum number of iterations to
-perform (default `1000`) and `ϵ::Real` is a small positive constant determining
-convergence (default `1e-12`).
+perform (default `1000`), `miniter::Integer` controls the minimum number of
+iterations taken before convergence is checked, and `ϵ::Real` is a small positive
+constant determining convergence (default `1e-12`).
 """
 struct Orthomax <: FactorRotationAlgorithm
   γ::Real
