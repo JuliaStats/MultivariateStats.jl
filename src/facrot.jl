@@ -21,27 +21,27 @@ iterations taken before convergence is checked, and `ϵ::Real` is a small positi
 constant determining convergence (default `1e-12`).
 """
 struct Orthomax <: FactorRotationAlgorithm
-  γ::Real
-  miniter::Integer
-  maxiter::Integer
-  ϵ::Real
+    γ::Real
+    miniter::Integer
+    maxiter::Integer
+    ϵ::Real
 
-  Orthomax(;γ = 1.0, miniter = 20, maxiter = 1000, ϵ = 1e-12) = begin
-    maxiter > zero(eltype(maxiter)) || throw(ArgumentError("Orthomax: maxiter needs to be positive"))
-    miniter > zero(eltype(miniter)) || throw(ArgumentError("Orthomax: miniter needs to be positive"))
-    γ > zero(eltype(γ)) || throw(ArgumentError("Orthomax: γ needs to be positive"))
-    ϵ > zero(eltype(ϵ)) || throw(ArgumentError("Orthomax: ϵ needs to be positive"))
-    
-    new(γ, miniter, maxiter, ϵ)
-  end
+    Orthomax(;γ = 1.0, miniter = 20, maxiter = 1000, ϵ = 1e-12) = begin
+        maxiter > zero(eltype(maxiter)) || throw(ArgumentError("Orthomax: maxiter needs to be positive"))
+        miniter > zero(eltype(miniter)) || throw(ArgumentError("Orthomax: miniter needs to be positive"))
+        γ > zero(eltype(γ)) || throw(ArgumentError("Orthomax: γ needs to be positive"))
+        ϵ > zero(eltype(ϵ)) || throw(ArgumentError("Orthomax: ϵ needs to be positive"))
+
+        new(γ, miniter, maxiter, ϵ)
+    end
 end
 
 function show(io::IO, mime::MIME{Symbol("text/plain")}, alg::Orthomax)
-  summary(io, alg); println(io)
-  println(io, "γ = $(alg.γ)")
-  println(io, "miniter = $(alg.miniter)")
-  println(io, "maxiter = $(alg.maxiter)")
-  println(io, "ϵ = $(alg.ϵ)")
+    summary(io, alg); println(io)
+    println(io, "γ = $(alg.γ)")
+    println(io, "miniter = $(alg.miniter)")
+    println(io, "maxiter = $(alg.maxiter)")
+    println(io, "ϵ = $(alg.ϵ)")
 end
 
 """
@@ -53,12 +53,12 @@ The return type for factor rotations.
 was applied to the original factors.
 """
 struct FactorRotation{T <: Real, Ta <: FactorRotationAlgorithm}
-  F::Matrix{T}
-  R::Matrix{T}
+    F::Matrix{T}
+    R::Matrix{T}
 
-  alg::Ta
+    alg::Ta
 
-  FactorRotation{T, Ta}(F, R, alg) where {T <: Real, Ta <: FactorRotationAlgorithm} = new{T, Ta}(F, R, alg)
+    FactorRotation{T, Ta}(F, R, alg) where {T <: Real, Ta <: FactorRotationAlgorithm} = new{T, Ta}(F, R, alg)
 end
 
 eltype(::Type{FactorRotation{T, Ta}}) where {T,Ta} = T
@@ -67,11 +67,11 @@ FactorRotation(F::Matrix{T}, R::Matrix{T}, alg::Ta) where {T <: Real, Ta <: Fact
 FactorRotation(F::Matrix{T}, alg::Ta) where {T <: Real, Ta <: FactorRotationAlgorithm} = FactorRotation(F, Matrix{eltype(F)}(I, size(F, 2), size(F, 2)), alg)
 
 function FactorRotation(F::Matrix, R::Matrix, alg::Ta) where {Ta <: FactorRotationAlgorithm}
-  return FactorRotation(promote(F, R)..., alg)
+    return FactorRotation(promote(F, R)..., alg)
 end
 
 function show(io::IO, mime::MIME{Symbol("text/plain")}, FR::FactorRotation{<:Any,<:Any})
-  summary(io, FR); println(io)
+    summary(io, FR); println(io)
 end
 
 
@@ -84,40 +84,40 @@ end
 # Proc. SPIE 6144, Medical Imaging 2006: Image Processing, 61441G
 # (10 March 2006); doi: 10.1117/12.651293
 function orthomax(F::AbstractMatrix, γ, miniter, maxiter, ϵ)
-  n, p = size(F)
-  if n < 2
-    return (F, Matrix{eltype(F)}(I, p, p))
-  end
-
-  # Warm up step
-  # Do one step. If that first step did not lead away from the identity
-  # matrix enough use a random orthogonal matrix as a starting point.
-  M = svd(F' * (F .^ 3 - γ / n * F * Diagonal(vec(sum(F .^ 2, dims=1)))))
-  R = M.U * M.Vt
-  if norm(R - Matrix{eltype(R)}(I, p, p)) < ϵ
-    R = qr(randn(p, p)).Q
-  end
-
-  # Main iterations
-  d = 0
-  converged = false
-  for i in 1:maxiter
-    dold  = d
-    B = F * R
-    M = svd(F' * (B .^ 3 - γ / n * B * Diagonal(vec(sum(B .^ 2, dims=1)))))
-    R = M.U * M.Vt
-    d = sum(M.S)
-    if abs(d - dold) / d < ϵ && i >= miniter
-      converged = true
-      break
+    n, p = size(F)
+    if n < 2
+        return (F, Matrix{eltype(F)}(I, p, p))
     end
-  end
 
-  if !converged
-    @warn "orthomax did not converge in $(maxiter) iterations"
-  end
+    # Warm up step
+    # Do one step. If that first step did not lead away from the identity
+    # matrix enough use a random orthogonal matrix as a starting point.
+    M = svd(F' * (F .^ 3 - γ / n * F * Diagonal(vec(sum(F .^ 2, dims=1)))))
+    R = M.U * M.Vt
+    if norm(R - Matrix{eltype(R)}(I, p, p)) < ϵ
+        R = qr(randn(p, p)).Q
+    end
 
-  (F * R, R)
+    # Main iterations
+    d = 0
+    converged = false
+    for i in 1:maxiter
+        dold  = d
+        B = F * R
+        M = svd(F' * (B .^ 3 - γ / n * B * Diagonal(vec(sum(B .^ 2, dims=1)))))
+        R = M.U * M.Vt
+        d = sum(M.S)
+        if abs(d - dold) / d < ϵ && i >= miniter
+            converged = true
+            break
+        end
+    end
+
+    if !converged
+        @warn "orthomax did not converge in $(maxiter) iterations"
+    end
+
+    (F * R, R)
 end
 
 """
@@ -128,11 +128,11 @@ perform the factor rotation is by default [`Orthomax`](@ref) and can be changed
 with the keyword argument `alg` which is of type `<:FactorRotationAlgorithm`.
 """
 function fit(::Type{FactorRotation}, F::AbstractMatrix; 
-                       alg::T = Orthomax()) where {T <: FactorRotationAlgorithm}
-  if isa(alg, Orthomax)
-    F, R = orthomax(F, alg.γ, alg.miniter, alg.maxiter, alg.ϵ)
-    return FactorRotation(F, R, alg)
-  end
+             alg::T = Orthomax()) where {T <: FactorRotationAlgorithm}
+    if isa(alg, Orthomax)
+        F, R = orthomax(F, alg.γ, alg.miniter, alg.maxiter, alg.ϵ)
+        return FactorRotation(F, R, alg)
+    end
 end
 
 """
@@ -144,8 +144,8 @@ object and apply it.
 See [`fit(::Type{FactorRotation}, F::AbstractMatrix)`](@ref) for keyword arguments.
 """
 function fit(::Type{FactorRotation}, F::FactorAnalysis; 
-                       alg::T = Orthomax()) where {T <: FactorRotationAlgorithm}
-  return fit(FactorRotation, F.W; alg = alg)
+             alg::T = Orthomax()) where {T <: FactorRotationAlgorithm}
+    return fit(FactorRotation, F.W; alg = alg)
 end
 
 ## Alternative interface
@@ -157,14 +157,14 @@ Rotate the factors in the matrix `F`. The algorithm to be used can be passed in
 via the second argument `alg`. By default [`Orthomax`](@ref) is used.
 """
 function rotatefactors(F::AbstractMatrix, alg::FactorRotationAlgorithm = Orthomax())
-  F, R = _rotatefactors(F, alg)
-  return FactorRotation(F, R, alg)
+    F, R = _rotatefactors(F, alg)
+    return FactorRotation(F, R, alg)
 end
 
 # Use multiple dispatch to decide on the algorithm implementation
 
 function _rotatefactors(F::AbstractMatrix, alg::Orthomax)
-  return orthomax(F, alg.γ, alg.miniter, alg.maxiter, alg.ϵ)
+    return orthomax(F, alg.γ, alg.miniter, alg.maxiter, alg.ϵ)
 end
 
 """
@@ -175,6 +175,6 @@ The algorithm to be used can be passed in via the second argument `alg`.
 By default [`Orthomax`](@ref) is used.
 """
 function rotatefactors(F::FactorAnalysis, alg::FactorRotationAlgorithm = Orthomax())
-  FR = rotatefactors(F.W, alg)
-  return FactorAnalysis(F.mean, FR.F, F.Ψ)
+    FR = rotatefactors(F.W, alg)
+    return FactorAnalysis(F.mean, FR.F, F.Ψ)
 end
