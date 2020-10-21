@@ -144,7 +144,7 @@ See [`fit(::Type{FactorRotation}, F::AbstractMatrix)`](@ref) for keyword argumen
 """
 function fit(::Type{FactorRotation}, F::FactorAnalysis; 
                        alg::T = Orthomax()) where {T <: FactorRotationAlgorithm}
-  return fit(FactorRotation, F.W; alg)
+  return fit(FactorRotation, F.W; alg = alg)
 end
 
 ## Alternative interface
