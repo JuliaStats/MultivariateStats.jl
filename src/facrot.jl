@@ -10,15 +10,15 @@ abstract type FactorRotationAlgorithm end
 
 A type representing the orthomax factor rotation algorithm.
 
-The positive parameter `γ::Real` determines which type of rotation is performed.
-For a `n x p` matrix, the default `γ = 1.0` leads to varimax rotation, `γ = 0.0`
-is quartimax rotation, `γ = p / 2` is equamax rotation, and
-`γ = n (p - 1) / (n + p - 2)` is parsimax rotation.
+The positive parameter `γ::Real` determines which type of rotation is
+performed. For a `n x p` matrix, the default `γ = 1.0` leads to varimax
+rotation, `γ = 0.0` is quartimax rotation, `γ = p / 2` is equamax
+rotation, and `γ = n (p - 1) / (n + p - 2)` is parsimax rotation.
 
-The parameter `maxiter::Integer` controls the maximum number of iterations to
-perform (default `1000`), `miniter::Integer` controls the minimum number of
-iterations taken before convergence is checked, and `ϵ::Real` is a small positive
-constant determining convergence (default `1e-12`).
+The parameter `maxiter::Integer` controls the maximum number of iterations
+to perform (default `1000`), `miniter::Integer` controls the minimum number
+of iterations taken before convergence is checked, and `ϵ::Real` is a small
+positive constant determining convergence (default `1e-12`).
 """
 struct Orthomax <: FactorRotationAlgorithm
     γ::Real
@@ -26,14 +26,71 @@ struct Orthomax <: FactorRotationAlgorithm
     maxiter::Integer
     ϵ::Real
 
-    Orthomax(;γ = 1.0, miniter = 20, maxiter = 1000, ϵ = 1e-12) = begin
-        γ ≥ zero(eltype(γ)) || throw(DomainError("Orthomax: γ needs to be non-negative"))
-        miniter > zero(eltype(miniter)) || throw(DomainError("Orthomax: miniter needs to be positive"))
-        maxiter > zero(eltype(maxiter)) || throw(DomainError("Orthomax: maxiter needs to be positive"))
-        ϵ > zero(eltype(ϵ)) || throw(DomainError("Orthomax: ϵ needs to be positive"))
+    Orthomax(;γ::Union{Real, Integer} = 1.0,
+              miniter::Integer = 20,
+              maxiter::Integer = 1000,
+              ϵ::Real = 1e-12) = begin
+        γ ≥ zero(eltype(γ)) ||
+            throw(DomainError("Orthomax: γ needs to be non-negative"))
+        miniter > zero(eltype(miniter)) ||
+            throw(DomainError("Orthomax: miniter needs to be positive"))
+        maxiter > zero(eltype(maxiter)) ||
+            throw(DomainError("Orthomax: maxiter needs to be positive"))
+        ϵ > zero(eltype(ϵ)) ||
+            throw(DomainError("Orthomax: ϵ needs to be positive"))
 
-        new(γ, miniter, maxiter, ϵ)
+        new(float(γ), miniter, maxiter, ϵ)
     end
+end
+
+"""
+    Varimax() -> Orthomax
+
+Creates an orthomax factor rotation algorithm object for a matrix of
+size `n x p` with `γ = 1.0`.
+Remaining keyword parameters as for [`Orthomax`](@ref).
+"""
+function Varimax(;miniter::Integer = 20,
+                  maxiter::Integer = 1000,
+                  ϵ::Real = 1e-12)
+    Orthomax(γ = 1.0, miniter = miniter, maxiter = maxiter, ϵ = ϵ)
+end
+"""
+    Quartimax() -> Orthomax
+
+Creates an orthomax factor rotation algorithm object for a matrix of
+size `n x p` with `γ = 0.0`.
+Remaining keyword parameters as for [`Orthomax`](@ref).
+"""
+function Quartimax(;miniter::Integer = 20,
+                    maxiter::Integer = 1000,
+                    ϵ::Real = 1e-12)
+    Orthomax(γ = 0.0, miniter = miniter, maxiter = maxiter, ϵ = ϵ)
+end
+"""
+    Equamax(p) -> Orthomax
+
+Creates an orthomax factor rotation algorithm object for a matrix of
+size `n x p` with `γ = p / 2`.
+Remaining keyword parameters as for [`Orthomax`](@ref).
+"""
+function Equamax(p::Integer; miniter::Integer = 20,
+                             maxiter::Integer = 1000,
+                             ϵ::Real = 1e-12)
+    Orthomax(γ = float(p) / 2.0, miniter = miniter, maxiter = maxiter, ϵ = ϵ)
+end
+"""
+    Parsimax(n, p) -> Orthomax
+
+Creates an orthomax factor rotation algorithm object for a matrix of
+size `n x p` with `γ = n (p - 1) / (n + p - 2)`.
+Remaining keyword parameters as for [`Orthomax`](@ref).
+"""
+function Parsimax(n::Integer, p::Integer; miniter::Integer = 20,
+                                          maxiter::Integer = 1000,
+                                          ϵ::Real = 1e-12)
+    Orthomax(γ = float(n) * (float(p) - 1) / (float(n) + float(p) - 2),
+             miniter = miniter, maxiter = maxiter, ϵ = ϵ)
 end
 
 function show(io::IO, mime::MIME{Symbol("text/plain")}, alg::Orthomax)
