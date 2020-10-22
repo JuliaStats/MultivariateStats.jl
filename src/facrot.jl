@@ -55,6 +55,7 @@ function Varimax(;miniter::Integer = 20,
                   ϵ::Real = 1e-12)
     Orthomax(γ = 1.0, miniter = miniter, maxiter = maxiter, ϵ = ϵ)
 end
+
 """
     Quartimax() -> Orthomax
 
@@ -67,6 +68,7 @@ function Quartimax(;miniter::Integer = 20,
                     ϵ::Real = 1e-12)
     Orthomax(γ = 0.0, miniter = miniter, maxiter = maxiter, ϵ = ϵ)
 end
+
 """
     Equamax(p) -> Orthomax
 
@@ -79,6 +81,7 @@ function Equamax(p::Integer; miniter::Integer = 20,
                              ϵ::Real = 1e-12)
     Orthomax(γ = float(p) / 2.0, miniter = miniter, maxiter = maxiter, ϵ = ϵ)
 end
+
 """
     Parsimax(n, p) -> Orthomax
 
