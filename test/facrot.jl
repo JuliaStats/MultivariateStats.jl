@@ -3,14 +3,15 @@ using LinearAlgebra
 using Test
 import Random
 
-@testset "Factor Analysis" begin
+@testset "Factor Rotations" begin
 
     Random.seed!(37273)
 
     X = randn(5, 2)
 
     ## Varimax rotation
-    # Comparison with R's `varimax` function called as (after `using RCall`)
+    # Comparison with R's `varimax` function called as
+    # using RCall
     # R"vm <- varimax($X, normalize = FALSE, eps = 1e-12)"
     # R"F <- qm$loadings"
     # R"R <- qm$rotmat"
@@ -52,7 +53,7 @@ import Random
     ## Equamax
     X = randn(10, 5)
 
-    # Comparsion with Matlab's `rotatefactors`
+    # Comparison with Matlab's `rotatefactors` called as
     # using MATLAB
     # mat"rotatefactors($X, 'Method', 'equamax')"
 
