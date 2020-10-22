@@ -116,6 +116,10 @@ module MultivariateStats
     ## facrot
     FactorRotationAlgorithm,   # Type: Factor rotation algorithm
     Orthomax,                  # Type: Orthomax factor rotation algorithm
+    Varimax,                   # Convenience interfaces to Orthomax factor rotation algorithms
+    Quartimax,
+    Equamax,
+    Parsimax,
 
     FactorRotation,            # Type: Return type for factor rotations
     loadings,                  # rotated loading matrix
