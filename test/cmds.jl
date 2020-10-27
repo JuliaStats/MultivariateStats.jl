@@ -25,7 +25,8 @@ using Test
     @test gram2dmat(G) ≈ D0
 
     ## classical MDS
-    M = fit(MDS, X0, maxoutdim=3)
+    @test_throws UndefKeywordError fit(MDS, X0, maxoutdim=3)   # disambiguate distance matrix from data matrix
+    M = fit(MDS, X0, maxoutdim=3, distances=false)
     @test indim(M) == d
     @test outdim(M) == 3
     @test size(projection(M)) == (n,3)
@@ -84,7 +85,7 @@ using Test
     end
 
     #10 - test degenerate problem
-    @test transform(fit(MDS, zeros(10, 10), maxoutdim=3)) == zeros(3, 10)
+    @test transform(fit(MDS, zeros(10, 10), maxoutdim=3, distances=false)) == zeros(3, 10)
 
     # out-of-sample
     D = [0 1 2 1;
