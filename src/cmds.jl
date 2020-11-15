@@ -61,7 +61,7 @@ dmat2gram(D::AbstractMatrix{T}) where {T<:Real} = dmat2gram!(similar(D, momentty
 struct MDS{T<:Real}
     d::Real                  # original dimension
     X::AbstractMatrix{T}     # fitted data, X (d x n)
-    λ::AbstractVector{T}     # sqrt. eigenvalues in feature space, √λ (k x 1)
+    λ::AbstractVector{T}     # eigenvalues in feature space, (k x 1)
     U::AbstractMatrix{T}     # eigenvectors in feature space, U (n x k)
 end
 
@@ -122,9 +122,23 @@ end
 
 ## interface functions
 
+"""
+
+Compute an embedding of points by classical multidimensional scaling (MDS).
+There are two calling options, specified via the required keyword argument `distances`:
+
+    mds = fit(MDS, X; distances=false, maxdim=size(X,1)-1)
+
+`X` is the data matrix. Distances between pairs of columns of `X` are computed using the Euclidean norm.
+This is equivalent to performing PCA on `X`.
+
+    mds = fit(MDS, D; distances=true,  maxdim=size(D,1)-1)
+
+`D` is a symmetric matrix `D` of distances between points.
+"""
 function fit(::Type{MDS}, X::AbstractMatrix{T};
              maxoutdim::Int = size(X,1)-1,
-             distances=false) where T<:Real
+             distances::Bool) where T<:Real
 
     # get distance matrix and space dimension
     D, d = if !distances
