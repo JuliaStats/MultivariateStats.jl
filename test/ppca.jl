@@ -103,7 +103,7 @@ import StatsBase
     @test outdim(M) == 4
     @test mean(M) == mval
     @test P'P ≈ Matrix(I, 4, 4)
-    @test all(isapprox.(reconstruct(M, transform(M, X)), reconstruct(M0, transform(M0, X)), atol=1e-3))
+    @test all(isapprox.(reconstruct(M, transform(M, X)), reconstruct(M0, transform(M0, X)), atol=1e-2))
 
     M = fit(PPCA, X; method=:em, mean=mval)
     @test loadings(M) ≈ W
