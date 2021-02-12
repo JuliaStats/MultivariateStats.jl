@@ -50,8 +50,8 @@ correlations(M::CCA) = M.corrs
 
 ## use
 
-xtransform(M::CCA, X::AbstractVecOrMat{T}) where T<:Real = transpose(M.xproj) * centralize(X, M.xmean)
-ytransform(M::CCA, Y::AbstractVecOrMat{T}) where T<:Real = transpose(M.yproj) * centralize(Y, M.ymean)
+xtransform(M::CCA, X::AbstractVecOrMat{<:Real}) = transpose(M.xproj) * centralize(X, M.xmean)
+ytransform(M::CCA, Y::AbstractVecOrMat{<:Real}) = transpose(M.yproj) * centralize(Y, M.ymean)
 
 ## show & dump
 

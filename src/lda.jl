@@ -135,7 +135,7 @@ classweights(M::MulticlassLDA) = classweights(M.stats)
 withclass_scatter(M::MulticlassLDA) = withclass_scatter(M.stats)
 betweenclass_scatter(M::MulticlassLDA) = betweenclass_scatter(M.stats)
 
-transform(M::MulticlassLDA, x::AbstractVecOrMat{T}) where T<:Real = M.proj'x
+transform(M::MulticlassLDA, x::AbstractVecOrMat{<:Real}) = M.proj'x
 
 function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
              method::Symbol=:gevd,
