@@ -29,7 +29,6 @@ module MultivariateStats
     Whitening,          # Type: Whitening transformation
 
     invsqrtm,           # Compute inverse of matrix square root, i.e. inv(sqrtm(A))
-    invsqrtm!,          # Compute inverse of matrix square root inplace
     cov_whitening,      # Compute a whitening transform based on covariance
     cov_whitening!,     # Compute a whitening transform based on covariance (input will be overwritten)
     invsqrtm,           # Compute C^{-1/2}, i.e. inv(sqrtm(C))
