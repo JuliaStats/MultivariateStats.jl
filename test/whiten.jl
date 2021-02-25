@@ -1,5 +1,5 @@
 using MultivariateStats
-using LinearAlgebra
+using LinearAlgebra, StatsBase, SparseArrays
 using Test
 import Statistics: mean, cov
 import Random
@@ -55,6 +55,9 @@ import Random
     W = f.W
     @test isa(f, Whitening{Float64})
     @test mean(f) === f.mean
+    @test indim(f) == d
+    @test outdim(f) == d
+    @test size(f) == (d,d)
     @test istriu(W)
     @test W'C * W ≈ Matrix(I, d, d)
     @test transform(f, X) ≈ W' * (X .- f.mean)
@@ -92,4 +95,9 @@ import Random
     # type consistency
     @test eltype(mean(M)) == Float64
     @test eltype(mean(MM)) == Float32
+
+    # sparse arrays
+    SX = sprand(Float32, d, n, 0.75)
+    SM = fit(Whitening, SX; mean=sprand(Float32, 3, 0.75))
+    @test transform(SM, SX) isa Matrix{Float32}
 end
