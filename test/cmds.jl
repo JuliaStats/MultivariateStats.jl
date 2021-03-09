@@ -109,4 +109,24 @@ using Test
     @test A ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), Y)
     @test eltype(Y) == Float32
 
+    # different input types
+    d = 3
+    X = randn(Float64, d, 10)
+    XX = convert.(Float32, X)
+
+    y = randn(Float64, d)
+    yy = convert.(Float32, y)
+
+    M = fit(MDS, X, maxoutdim=3, distances=false)
+    MM = fit(MDS, XX, maxoutdim=3, distances=false)
+
+    # test that mixing types doesn't error
+    transform(M, yy)
+    transform(MM, y)
+
+    # type stability
+    for func in (projection, eigvals, stress)
+        @test eltype(func(M)) == Float64
+        @test eltype(func(MM)) == Float32
+    end
 end

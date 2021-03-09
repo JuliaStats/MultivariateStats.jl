@@ -96,25 +96,25 @@ import StatsBase
         @test_throws StatsBase.ConvergenceException fit(ICA, X, k; do_whiten=true, tol=1e-8, maxiter=2)
 
         # Use data of different type
-
         XX = convert(Matrix{Float32}, X)
 
-        M = fit(ICA, XX, k; do_whiten=true, tol=Inf)
-        @test eltype(mean(M)) == Float32
-        @test eltype(M.W) == Float32
+        MM = fit(ICA, XX, k; do_whiten=true, tol=Inf)
+        @test eltype(mean(MM)) == Float32
+        @test eltype(MM.W) == Float32
 
-        M = fit(ICA, XX, k; do_whiten=false, tol=Inf)
-        @test isa(M, ICA)
-        @test eltype(mean(M)) == Float32
-        @test eltype(M.W) == Float32
-        W = M.W
-        @test transform(M, X) ≈ W' * convert(Matrix{Float32}, (X .- μ))
+        MM = fit(ICA, XX, k; do_whiten=false, tol=Inf)
+        @test isa(MM, ICA)
+        @test eltype(mean(MM)) == Float32
+        @test eltype(MM.W) == Float32
+        W = MM.W
+        @test transform(MM, X) ≈ W' * convert(Matrix{Float32}, (X .- μ))
+        @test transform(M, XX) ≈ M.W' * (X .- μ) atol=1e-4
         @test W'W ≈ Matrix{Float32}(I, k, k)
 
         # input as view
         M = fit(ICA, view(XX, :, 1:400), k; do_whiten=true, tol=Inf)
-        @test eltype(mean(M)) == Float32
-        @test eltype(M.W) == Float32
+        @test eltype(mean(MM)) == Float32
+        @test eltype(MM.W) == Float32
     end
 
 end

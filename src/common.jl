@@ -121,8 +121,8 @@ function calcscattermat(Z::DenseMatrix)
 end
 
 # calculate pairwise kernel
-function pairwise!(K::AbstractVecOrMat{T}, kernel::Function,
-                   X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where T<:AbstractFloat
+function pairwise!(K::AbstractVecOrMat{<:Real}, kernel::Function,
+                   X::AbstractVecOrMat{<:Real}, Y::AbstractVecOrMat{<:Real})
     n = size(X, 2)
     m = size(Y, 2)
     for j = 1:m
@@ -137,15 +137,14 @@ function pairwise!(K::AbstractVecOrMat{T}, kernel::Function,
     K
 end
 
-pairwise!(K::AbstractVecOrMat{T}, kernel::Function, X::AbstractVecOrMat{T}) where T<:AbstractFloat =
+pairwise!(K::AbstractVecOrMat{<:Real}, kernel::Function, X::AbstractVecOrMat{<:Real}) =
     pairwise!(K, kernel, X, X)
 
-function pairwise(kernel::Function, X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where T<:AbstractFloat
+function pairwise(kernel::Function, X::AbstractVecOrMat{<:Real}, Y::AbstractVecOrMat{<:Real})
     n = size(X, 2)
     m = size(Y, 2)
     K = similar(X, n, m)
     pairwise!(K, kernel, X, Y)
 end
 
-pairwise(kernel::Function, X::AbstractVecOrMat{T}) where T<:AbstractFloat =
-    pairwise(kernel, X, X)
+pairwise(kernel::Function, X::AbstractVecOrMat{<:Real}) = pairwise(kernel, X, X)

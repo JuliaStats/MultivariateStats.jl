@@ -154,16 +154,28 @@ import SparseArrays
 
     # Different data types
     # --------------------
-    # test that fit works with Float32 values
-    X2 = convert(Array{Float32,2}, X)
-    # Float32 input, default pratio
-    M = fit(PCA, X2; maxoutdim=3)
-    # Float32 input, specified Float64 pratio
-    M = fit(PCA, X2, pratio=0.85)
-    # Float32 input, specified Float32 pratio
-    M = fit(PCA, X2, pratio=0.85f0)
-    # Float64 input, specified Float32 pratio
-    M = fit(PCA, X, pratio=0.85f0)
+
+    XX = convert.(Float32, X)
+    YY = convert.(Float32, Y)
+    p = 0.085
+    pp = convert(Float32, p)
+
+    MM = fit(PCA, XX; maxoutdim=3)
+
+    # mix types
+    fit(PCA, X ; pratio=pp)
+    fit(PCA, XX ; pratio=p)
+    fit(PCA, XX ; pratio=pp)
+    transform(M, XX)
+    transform(MM, X)
+    reconstruct(M, YY)
+    reconstruct(MM, Y)
+
+    # type consistency
+    for func in (mean, projection, principalvars, tprincipalvar, tresidualvar, tvar, principalratio)
+        @test eltype(func(M)) == Float64
+        @test eltype(func(MM)) == Float32
+    end
 
     # views
     M = fit(PCA, view(X, :, 1:500), pratio=0.85)

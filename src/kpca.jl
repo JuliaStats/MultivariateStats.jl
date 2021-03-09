@@ -80,7 +80,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
              maxoutdim::Int = min(size(X)...),
              remove_zero_eig::Bool = false, atol::Real = 1e-10,
              solver::Symbol = :eig,
-             inverse::Bool = false,  β::Real = 1.0,
+             inverse::Bool = false,  β::Real = convert(T, 1.0),
              tol::Real = 0.0, maxiter::Real = 300) where {T<:Real}
 
     d, n = size(X)

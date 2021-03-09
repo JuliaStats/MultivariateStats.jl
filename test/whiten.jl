@@ -78,4 +78,18 @@ import Random
     @test C == C0
     @test R ≈ inv(sqrt(C))
 
+    # mixing types
+    X = rand(Float64, 5, 10)
+    XX = convert.(Float32, X)
+
+    M = fit(Whitening, X)
+    MM = fit(Whitening, XX)
+
+    # mixing types should not error
+    transform(M, XX)
+    transform(MM, X)
+
+    # type consistency
+    @test eltype(mean(M)) == Float64
+    @test eltype(mean(MM)) == Float32
 end

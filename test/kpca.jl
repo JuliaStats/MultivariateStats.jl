@@ -105,12 +105,30 @@ import Random
 
     @test_throws TypeError fit(KernelPCA, rand(1,10), kernel=1)
 
-    # fit a Float32 matrix
-    X = randn(Float32, d, n)
-    M = fit(KernelPCA, X)
-    @test indim(M) == d
-    @test outdim(M) == d
-    @test eltype(transform(M, X[:,1])) == Float32
+    # different types
+    X = randn(Float64, d, n)
+    XX = convert.(Float32, X)
+
+    M = fit(KernelPCA, X ; inverse=true)
+    MM = fit(KernelPCA, XX ; inverse=true)
+
+    Y = randn(Float64, outdim(M))
+    YY = convert.(Float32, Y)
+
+    @test indim(MM) == d
+    @test outdim(MM) == d
+    @test eltype(transform(MM, X[:,1])) == Float32
+
+    for func in (projection, principalvars)
+        @test eltype(func(M)) == Float64
+        @test eltype(func(MM)) == Float32
+    end
+
+    # mixing types should not error
+    transform(M, XX)
+    transform(MM, X)
+    reconstruct(M, YY)
+    reconstruct(MM, Y)
 
     ## fit a sparse matrix
     X = SparseArrays.sprandn(100d, n, 0.6)
