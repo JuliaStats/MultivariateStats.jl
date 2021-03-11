@@ -4,6 +4,7 @@ A Julia package for multivariate statistics and data analysis (e.g. dimensionali
 
 [![Coverage Status](https://coveralls.io/repos/JuliaStats/MultivariateStats.jl/badge.svg?branch=master)](https://coveralls.io/r/JuliaStats/MultivariateStats.jl?branch=master)
 [![Build Status](https://travis-ci.org/JuliaStats/MultivariateStats.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/MultivariateStats.jl)
+[![CI](https://github.com/JuliaStats/MultivariateStats.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaStats/MultivariateStats.jl/actions/workflows/ci.yml)
 
 -------
 
