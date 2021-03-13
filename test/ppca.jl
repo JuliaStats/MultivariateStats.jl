@@ -148,18 +148,37 @@ import StatsBase
 
     @test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:bayes, maxiter=1)
 
-    # test that fit works with Float32 values
-    X2 = convert(Array{Float32,2}, X)
-    # Float32 input, default pratio
-    M = fit(PPCA, X2; maxoutdim=3)
-    M = fit(PPCA, X2; maxoutdim=3, method=:em)
-    M = fit(PPCA, X2; maxoutdim=3, method=:bayes)
+    # Different data types
+    # --------------------
+    X = randn(Float64, 5, 10)
+    XX = convert.(Float32, X)
+
+    Y = randn(Float64, 1, 10)
+    YY = convert.(Float32, Y)
+
+    for method in (:bayes, :em)
+        M = fit(PPCA, X ; maxoutdim=1, method=method)
+        MM = fit(PPCA, XX ; maxoutdim=1, method=method)
+
+        # mix types
+        transform(M, XX)
+        transform(MM, X)
+        reconstruct(M, YY)
+        reconstruct(MM, Y)
+
+        # type consistency
+        for func in (mean, projection, var, loadings)
+            @test eltype(func(M)) == Float64
+            @test eltype(func(MM)) == Float32
+        end
+    end
 
     # views
-    M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3)
-    M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3, method=:em)
-    M = fit(PPCA, view(X2, :, 1:100), maxoutdim=3, method=:bayes)
+    X = randn(5, 200)
+    M = fit(PPCA, view(X, :, 1:100), maxoutdim=3)
+    M = fit(PPCA, view(X, :, 1:100), maxoutdim=3, method=:em)
+    M = fit(PPCA, view(X, :, 1:100), maxoutdim=3, method=:bayes)
     # sparse
-    @test_throws AssertionError fit(PCA, SparseArrays.sprandn(100d, n, 0.6))
+    @test_throws AssertionError fit(PPCA, SparseArrays.sprandn(100d, n, 0.6))
 
 end

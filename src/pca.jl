@@ -43,8 +43,8 @@ principalratio(M::PCA) = M.tprinvar / M.tvar
 
 ## use
 
-transform(M::PCA{T}, x::AbstractVecOrMat{T}) where {T<:Real} = transpose(M.proj) * centralize(x, M.mean)
-reconstruct(M::PCA{T}, y::AbstractVecOrMat{T}) where {T<:Real} = decentralize(M.proj * y, M.mean)
+transform(M::PCA, x::AbstractVecOrMat{<:Real}) = transpose(M.proj) * centralize(x, M.mean)
+reconstruct(M::PCA, y::AbstractVecOrMat{<:Real}) = decentralize(M.proj * y, M.mean)
 
 ## show & dump
 

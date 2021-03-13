@@ -35,7 +35,7 @@ indim(f::Whitening) = size(f.W, 1)
 outdim(f::Whitening) = size(f.W, 2)
 mean(f::Whitening) = fullmean(indim(f), f.mean)
 
-transform(f::Whitening, x::AbstractVecOrMat) = transpose(f.W) * centralize(x, f.mean)
+transform(f::Whitening, x::AbstractVecOrMat{<:Real}) = transpose(f.W) * centralize(x, f.mean)
 
 ## Fit whitening to data
 

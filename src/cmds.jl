@@ -76,7 +76,7 @@ eigvals(M::MDS) = M.λ
 ## use
 
 """Calculate out-of-sample multidimensional scaling transformation"""
-function transform(M::MDS{T}, x::AbstractVector{T}; distances=false) where {T<:Real}
+function transform(M::MDS{T}, x::AbstractVector{<:Real}; distances=false) where {T<:Real}
     d = if isnan(M.d) # model has only distance matrix
         @assert distances "Cannot transform points if model was fitted with a distance matrix. Use point distances."
         size(x, 1) != size(M.X, 1) && throw(
