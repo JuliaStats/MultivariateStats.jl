@@ -99,5 +99,6 @@ import Random
     # sparse arrays
     SX = sprand(Float32, d, n, 0.75)
     SM = fit(Whitening, SX; mean=sprand(Float32, 3, 0.75))
-    @test isa(transform(SM, SX), Matrix{Float32})
+    Y = transform(SM, SX)
+    @test isa(Y, Matrix{Float32})
 end
