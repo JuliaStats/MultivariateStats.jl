@@ -122,29 +122,30 @@ end
 
 # calculate pairwise kernel
 function pairwise!(K::AbstractVecOrMat{<:Real}, kernel::Function,
-                   X::AbstractVecOrMat{<:Real}, Y::AbstractVecOrMat{<:Real})
+                   X::AbstractVecOrMat{<:Real}, Y::AbstractVecOrMat{<:Real};
+                   force_symmetry=false)
     n = size(X, 2)
     m = size(Y, 2)
     for j = 1:m
         aj = view(Y, :, j)
-        for i in j:n
+        for i in (force_symmetry ? j : 1):n
             @inbounds K[i, j] = kernel(view(X, :, i), aj)[]
         end
-        j <= n && for i in 1:(j - 1)
+        force_symmetry && j <= n && for i in 1:(j - 1)
             @inbounds K[i, j] = K[j, i]   # leveraging the symmetry
         end
     end
     K
 end
 
-pairwise!(K::AbstractVecOrMat{<:Real}, kernel::Function, X::AbstractVecOrMat{<:Real}) =
-    pairwise!(K, kernel, X, X)
+pairwise!(K::AbstractVecOrMat{<:Real}, kernel::Function, X::AbstractVecOrMat{<:Real}; kwargs...) =
+    pairwise!(K, kernel, X, X; force_symmetry=true)
 
-function pairwise(kernel::Function, X::AbstractVecOrMat{<:Real}, Y::AbstractVecOrMat{<:Real})
+function pairwise(kernel::Function, X::AbstractVecOrMat{<:Real}, Y::AbstractVecOrMat{<:Real}; kwargs...)
     n = size(X, 2)
     m = size(Y, 2)
     K = similar(X, n, m)
-    pairwise!(K, kernel, X, Y)
+    pairwise!(K, kernel, X, Y; kwargs...)
 end
 
-pairwise(kernel::Function, X::AbstractVecOrMat{<:Real}) = pairwise(kernel, X, X)
+pairwise(kernel::Function, X::AbstractVecOrMat{<:Real}) = pairwise(kernel, X, X; force_symmetry=true)

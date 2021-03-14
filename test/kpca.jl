@@ -34,18 +34,29 @@ import Random
     end
 
     # kernel calculations
-    K = MultivariateStats.pairwise((x,y)->norm(x-y), X, X[:,1:2])
+    ker1  = (x,y)->x'y
+    ker2  = (x,y)->norm(x-y)
+
+    K = MultivariateStats.pairwise(ker1, X)
+    @test size(K) == (n,n)
+    @test K[1,2] == K[2,1]
+
+    K = MultivariateStats.pairwise(ker1, X, X.+1)
+    @test size(K) == (n,n)
+    @test K[1,2] != K[2,1]
+
+    K = MultivariateStats.pairwise(ker2, X, X[:,1:2])
     @test size(K) == (n, 2)
     @test K[1,1] == 0
     @test K[3,2] == norm(X[:,3] - X[:,2])
 
-    K = MultivariateStats.pairwise((x,y)->norm(x-y), X[:,1:3], X)
+    K = MultivariateStats.pairwise(ker2, X[:,1:3], X)
     @test size(K) == (3, n)
     @test K[1,1] == 0
     @test K[3,2] == norm(X[:,2] - X[:,3])
 
     K = similar(X, n, n)
-    MultivariateStats.pairwise!(K, (x,y)->norm(x-y), X)
+    MultivariateStats.pairwise!(K, ker2, X)
     @test size(K) == (n, n)
     @test K[1,1] == 0
     @test K[2,1] == norm(X[:,2] - X[:,1])
@@ -54,7 +65,7 @@ import Random
     Iₙ = ones(n,n)/n
     @test MultivariateStats.transform!(KC, copy(K)) ≈ K - Iₙ*K - K*Iₙ + Iₙ*K*Iₙ
 
-    K = MultivariateStats.pairwise((x,y)->norm(x-y), X, X[:,1])
+    K = MultivariateStats.pairwise(ker2, X, X[:,1])
     @test size(K) == (n, 1)
     @test K[1,1] == 0
     @test K[2,1] == norm(X[:,2] - X[:,1])
