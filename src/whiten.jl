@@ -80,17 +80,35 @@ mean(f::Whitening) = fullmean(indim(f), f.mean)
 
 Apply the whitening transform `f` to a vector or a matrix `x` with samples in columns, as ``\\mathbf{W}^T (\\mathbf{x} - \\boldsymbol{\\mu})``.
 """
-transform(f::Whitening, x::AbstractVecOrMat{<:Real}) = transpose(f.W) * centralize(x, f.mean)
+function transform(f::Whitening, x::AbstractVecOrMat{<:Real})
+    s = size(x)
+    Z, dims = if length(s) == 1
+        length(f.mean) == s[1] || throw(DimensionMismatch("Inconsistent dimensions."))
+        x - f.mean, 2
+    else
+        dims = (s[1] == length(f.mean)) + 1
+        length(f.mean) == s[3-dims] || throw(DimensionMismatch("Inconsistent dimensions."))
+        x .- (dims == 2 ? f.mean : transpose(f.mean)), dims
+    end
+    if dims == 2
+        transpose(f.W) * Z
+    else
+        Z * f.W
+    end
+end
 
 """
     fit(::Type{Whitening},  X::AbstractMatrix{T}; kwargs...)
 
-Estimate a whitening transform from the data given in `X`. Here, `X` should be a matrix, whose columns give the samples.
+Estimate a whitening transform from the data given in `X`.
 
 This function returns an instance of [`Whitening`](@ref)
 
 **Keyword Arguments:**
 - `regcoef`: The regularization coefficient. The covariance will be regularized as follows when `regcoef` is positive `C + (eigmax(C) * regcoef) * eye(d)`. Default values is `zero(T)`.
+
+- `dims`: if `1` the transformation calculated from the row samples. fit standardization parameters in column-wise fashion;
+  if `2` the transformation calculated from the column samples. The default is `nothing`, which is equivalent to `dims=2` with a deprecation warning.
 
 - `mean`: The mean vector, which can be either of:
     - `0`: the input data has already been centralized
@@ -100,11 +118,23 @@ This function returns an instance of [`Whitening`](@ref)
 **Note:** This function internally relies on [`cov_whitening`](@ref) to derive the transformation `W`.
 """
 function fit(::Type{Whitening}, X::AbstractMatrix{T};
+             dims::Union{Integer,Nothing}=nothing,
              mean=nothing, regcoef::Real=zero(T)) where {T<:Real}
-    n = size(X, 2)
-    n > 1 || error("X must contain more than one sample.")
-    mv = preprocess_mean(X, mean)
-    Z = centralize(X, mv)
+    if dims === nothing
+        Base.depwarn("fit(Whitening, x) is deprecated: use fit(Whitening, x, dims=2) instead", :fit)
+        dims = 2
+    end
+    if dims == 1
+        n = size(X,1)
+        n >= 2 || error("X must contain at least two rows.")
+    elseif dims == 2
+        n = size(X, 2)
+        n >= 2 || error("X must contain at least two columns.")
+    else
+        throw(DomainError(dims, "fit only accept dims to be 1 or 2."))
+    end
+    mv = preprocess_mean(X, mean; dims=dims)
+    Z = centralize((dims==1 ? transpose(X) : X), mv)
     C = rmul!(Z * transpose(Z), one(T) / (n - 1))
     return Whitening(mv, cov_whitening!(C, regcoef))
 end

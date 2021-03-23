@@ -22,8 +22,8 @@ decentralize(x::AbstractMatrix, m::AbstractVector) = (isempty(m) ? x : x .+ m)
 
 fullmean(d::Int, mv::AbstractVector{T}) where T = (isempty(mv) ? zeros(T, d) : mv)
 
-preprocess_mean(X::AbstractMatrix{T}, m) where T<:Real =
-    (m === nothing ? vec(mean(X, dims=2)) : m == 0 ? T[] :  m)
+preprocess_mean(X::AbstractMatrix{T}, m; dims=2) where T<:Real =
+    (m === nothing ? vec(mean(X, dims=dims)) : m == 0 ? T[] :  m)
 
 # choose the first k values and columns
 #

@@ -101,4 +101,19 @@ import Random
     SM = fit(Whitening, SX; mean=sprand(Float32, 3, 0.75))
     Y = transform(SM, SX)
     @test eltype(Y) == Float32
+
+    # different dimensions
+    @test_throws DomainError fit(Whitening, X'; dims=3)
+    M1 = fit(Whitening, X'; dims=1)
+    M2 = fit(Whitening, X; dims=2)
+    @test M1.W == M2.W
+    @test_throws DimensionMismatch transform(M1, rand(6,4))
+    @test_throws DimensionMismatch transform(M2, rand(4,6))
+    Y1 = transform(M1,X')
+    Y2 = transform(M2,X)
+    @test Y1' == Y2
+    @test_throws DimensionMismatch transform(M1, rand(7))
+    V1 = transform(M1,X[:,1])
+    V2 = transform(M2,X[:,1])
+    @test V1 == V2
 end
