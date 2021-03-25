@@ -55,8 +55,7 @@ import Random
     W = f.W
     @test isa(f, Whitening{Float64})
     @test mean(f) === f.mean
-    @test indim(f) == d
-    @test outdim(f) == d
+    @test length(f) == d
     @test size(f) == (d,d)
     @test istriu(W)
     @test W'C * W ≈ Matrix(I, d, d)

@@ -55,8 +55,12 @@ struct Whitening{T<:Real} <: AbstractDataTransform
 end
 Whitening(mean::AbstractVector{T}, W::AbstractMatrix{T}) where {T<:Real} = Whitening{T}(mean, W)
 
-indim(f::Whitening) = size(f.W, 1)
-outdim(f::Whitening) = size(f.W, 2)
+"""
+    length(f)
+
+Get the dimension of the  whitening transform `f`.
+"""
+length(f::Whitening) = size(f.W, 1)
 
 """
     size(f)

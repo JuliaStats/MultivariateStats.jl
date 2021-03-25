@@ -113,7 +113,6 @@ module MultivariateStats
     facm                    # EM algorithm for probabilistic PCA
 
     ## source files
-    include("types.jl")
     include("common.jl")
     include("lreg.jl")
     include("whiten.jl")
@@ -126,6 +125,9 @@ module MultivariateStats
     include("ica.jl")
     include("fa.jl")
 
+    ## deprecations
+    @deprecate indim(f::Whitening) length(f::Whitening)
+    @deprecate outdim(f::Whitening) length(f::Whitening)
     # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
     # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
