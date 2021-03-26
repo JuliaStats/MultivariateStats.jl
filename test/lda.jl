@@ -25,7 +25,7 @@ end
 
     ## LinearDiscriminant
 
-    @assert LinearDiscriminant <: Discriminant
+    @assert LinearDiscriminant <: RegressionModel
 
     w = [1., 2., 3., 4., 5.]
     b = 2.5
@@ -33,6 +33,9 @@ end
 
     f = LinearDiscriminant(w, b)
     @test length(f) == 5
+    @test dof(f) == 6
+    @test coef(f) == (b, w)
+    @test weights(f) == w
     @test evaluate(f, x) == 39.5
     @test evaluate(f, -x) == -34.5
 

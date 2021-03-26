@@ -12,7 +12,7 @@ end
 
 
 ```@contents
-Pages = []
+Pages = ["lda.md", "api.md"]
 Depth = 2
 ```
 

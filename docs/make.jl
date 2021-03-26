@@ -7,7 +7,7 @@ end
 makedocs(
     sitename = "MultivariateStats.jl",
     modules = [MultivariateStats],
-    pages = ["index.md"]
+    pages = ["Home"=>"index.md", "lda.md", "Development"=>"api.md"]
 )
 
 deploydocs(

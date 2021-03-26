@@ -2,32 +2,31 @@
 
 #### Type to represent a linear discriminant functional
 
-abstract type Discriminant{T} end
+"""
+A linear discriminant functional can be written as
 
-struct LinearDiscriminant{T<:Real} <: Discriminant{T}
+```math
+    f(\\mathbf{x}) = \\mathbf{w}^T \\mathbf{x} + b
+```
+
+Here, ``w`` is the coefficient vector, and ``b`` is the bias constant.
+"""
+struct LinearDiscriminant{T<:Real}  <: RegressionModel
     w::Vector{T}
     b::T
 end
 
-length(f::LinearDiscriminant) = length(f.w)
-
-evaluate(f::LinearDiscriminant, x::AbstractVector) = dot(f.w, x) + f.b
-
-function evaluate(f::LinearDiscriminant, X::AbstractMatrix)
-    R = transpose(X) * f.w
-    if f.b != 0
-        broadcast!(+, R, R, f.b)
-    end
-    return R
-end
-
-predict(f::Discriminant, x::AbstractVector) = evaluate(f, x) > 0
-
-predict(f::Discriminant, X::AbstractMatrix) = (Y = evaluate(f, X); Bool[y > 0 for y in Y])
-
-
 #### function to solve linear discriminant
+"""
+    ldacov(C, μp, μn)
 
+Performs LDA given a covariance matrix `C` and both mean vectors `μp` & `μn`.  Returns a linear discriminant functional of type [`LinearDiscriminant`](@ref).
+
+*Parameters*
+- `C`: The pooled covariane matrix (*i.e* ``(Cp + Cn)/2``)
+- `μp`: The mean vector of the positive class.
+- `μn`: The mean vector of the negative class.
+"""
 function ldacov(C::DenseMatrix{T},
                 μp::DenseVector{T},
                 μn::DenseVector{T}) where T<:Real
@@ -39,13 +38,105 @@ function ldacov(C::DenseMatrix{T},
     LinearDiscriminant(rmul!(w, c), 1 - c * ap)
 end
 
+"""
+    ldacov(Cp, Cn, μp, μn)
+
+Performs LDA given covariances and mean vectors. Returns a linear discriminant functional of type [`LinearDiscriminant`](@ref).
+
+*Parameters*
+- `Cp`: The covariance matrix of the positive class.
+- `Cn`: The covariance matrix of the negative class.
+- `μp`: The mean vector of the positive class.
+- `μn`: The mean vector of the negative class.
+
+**Note:** The coefficient vector is scaled such that ``w'μp + b = 1`` and ``w'μn + b = -1``.
+"""
 ldacov(Cp::DenseMatrix{T},
        Cn::DenseMatrix{T},
        μp::DenseVector{T},
        μn::DenseVector{T}) where T<:Real = ldacov(Cp + Cn, μp, μn)
 
-#### interface functions
+"""
+    evaluate(f, x::AbstractVector)
 
+Evaluate the linear discriminant value, *i.e* ``w'x + b``, it returns a real value.
+"""
+evaluate(f::LinearDiscriminant, x::AbstractVector) = dot(f.w, x) + f.b
+
+"""
+    evaluate(f, X::AbstractMatrix)
+
+Evaluate the linear discriminant value, *i.e* ``w'x + b``, for each sample in columns of `X`. The function returns a vector of length `size(X, 2)`.
+"""
+function evaluate(f::LinearDiscriminant, X::AbstractMatrix)
+    R = transpose(X) * f.w
+    if f.b != 0
+        broadcast!(+, R, R, f.b)
+    end
+    return R
+end
+
+# RegressionModel interface
+
+"""
+    predict(f, x::AbstractVector)
+
+Make prediction for the vector `x`. It returns `true` iff `evaluate(f, x)` is positive.
+"""
+predict(f::LinearDiscriminant, x::AbstractVector) = evaluate(f, x) > 0
+
+"""
+    predict(f, X::AbstractMatrix)
+
+Make predictions for the matrix `X`.
+"""
+predict(f::LinearDiscriminant, X::AbstractMatrix) = Bool[y > 0 for y in evaluate(f, X)]
+
+"""
+    coef(f::LinearDiscriminant)
+
+Return the coefficients of the linear discriminant model.
+"""
+coef(f::LinearDiscriminant) = (f.b, f.w)
+
+"""
+    coef(f::LinearDiscriminant)
+
+Return the coefficients' names of the linear discriminant model.
+"""
+coefnames(f::LinearDiscriminant) = ["Bias", "Weights"]
+
+"""
+    dof(f::LinearDiscriminant)
+
+Return the number of degrees of freedom in the linear discriminant model.
+"""
+dof(f::LinearDiscriminant) = length(f.w)+1
+
+"""
+    weights(f::LinearDiscriminant)
+
+Return the linear discriminant model coefficient vector.
+"""
+weights(f::LinearDiscriminant) = f.w
+
+"""
+Get the length of the coefficient vector.
+"""
+length(f::LinearDiscriminant) = length(f.w)
+
+"""
+    fit(LinearDiscriminant, Xp, Xn; covestimator = SimpleCovariance())
+
+Performs LDA given both positive and negative samples. The function accepts follwing parameters:
+
+**Parameters**
+- `Xp`: The sample matrix of the positive class.
+- `Xn`: The sample matrix of the negative class.
+
+**Keyword arguments:**
+- `covestimator`: Custom covariance estimator for between-class covariance. The covariance matrix will be calculated as `cov(covestimator_between, #=data=#; dims=2, mean=zeros(#=...=#)`. Custom covariance estimators, available in other packages, may result in more robust discriminants for data with more features than observations.
+"""
 function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T};
              covestimator::CovarianceEstimator = SimpleCovariance()) where T<:Real
     μp = vec(mean(Xp, dims=2))
@@ -57,6 +148,7 @@ function fit(::Type{LinearDiscriminant}, Xp::DenseMatrix{T}, Xn::DenseMatrix{T};
     ldacov(Cp, Cn, μp, μn)
 end
 
+#==============================================================================#
 
 #### Multiclass LDA Stats
 
