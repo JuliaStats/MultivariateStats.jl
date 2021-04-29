@@ -154,7 +154,7 @@ end
 
 function multiclass_lda(S::MulticlassLDAStats{T};
                         method::Symbol=:gevd,
-                        outdim::Int=min(size(X,1), S.nclasses-1),
+                        outdim::Int=min(S.dim, S.nclasses-1),
                         regcoef::T=T(1.0e-6)) where T<:Real
 
     P = mclda_solve(S.Sb, S.Sw, method, outdim, regcoef)
