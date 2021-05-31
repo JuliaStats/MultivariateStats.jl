@@ -3,14 +3,14 @@ module MultivariateStats
     using StatsBase: SimpleCovariance, CovarianceEstimator
     import Statistics: mean, var, cov, covm
     import Base: length, size, show, dump
-    import StatsBase: fit, predict, ConvergenceException
+    import StatsBase: RegressionModel, fit, predict, ConvergenceException, dof, coef, weights
     import SparseArrays
     import LinearAlgebra: eigvals
 
     export
 
     ## common
-    evaluate,           # evaluate discriminant function values (imported from Base)
+    evaluate,           # evaluate discriminant function values
     predict,            # use a model to predict responses (imported from StatsBase)
     fit,                # fit a model to data (imported from StatsBase)
     centralize,         # subtract a mean vector from each column
@@ -83,7 +83,6 @@ module MultivariateStats
     dmat2gram, dmat2gram!,  # Distance matrix => Gram matrix
 
     ## lda
-    Discriminant,           # Abstract Type: for all discriminant functionals
     LinearDiscriminant,     # Type: Linear Discriminant functional
     MulticlassLDAStats,     # Type: Statistics required for training multi-class LDA
     MulticlassLDA,          # Type: Multi-class LDA model
