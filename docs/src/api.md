@@ -46,7 +46,6 @@ Note: `?` refers to a possible implementation that is missing or called differen
 |length            |  +  |     |  x  |      |      |     |     |     |     |     |     |
 |size              |  +  |     |     |      |      |     |     |     |     |     |     |
 |                  |     |     |     |      |      |     |     |     |     |     |     |
-|eee               |     |     |     |      |      |     |     |     |     |     |     |
 
 - StatsBase.AbstractDataTransform
     - Whitening

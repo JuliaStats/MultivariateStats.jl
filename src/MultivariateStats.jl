@@ -1,9 +1,10 @@
 module MultivariateStats
     using LinearAlgebra
-    using StatsBase: SimpleCovariance, CovarianceEstimator, pairwise, pairwise!
+    using StatsBase: SimpleCovariance, CovarianceEstimator, RegressionModel,
+                     AbstractDataTransform, pairwise!
     import Statistics: mean, var, cov, covm
     import Base: length, size, show, dump
-    import StatsBase: RegressionModel, fit, predict, ConvergenceException, dof, coef, weights, pairwise
+    import StatsBase: fit, predict, predict!, ConvergenceException, dof_residual, coef, weights, dof, pairwise
     import SparseArrays
     import LinearAlgebra: eigvals
 
@@ -111,7 +112,6 @@ module MultivariateStats
     faem,                   # Maximum likelihood probabilistic PCA
     facm                    # EM algorithm for probabilistic PCA
 
-
     ## source files
     include("common.jl")
     include("lreg.jl")
@@ -124,5 +124,11 @@ module MultivariateStats
     include("lda.jl")
     include("ica.jl")
     include("fa.jl")
+
+    ## deprecations
+    @deprecate indim(f::Whitening) length(f::Whitening)
+    @deprecate outdim(f::Whitening) length(f::Whitening)
+    # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
+    # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
 end # module
