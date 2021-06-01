@@ -95,7 +95,7 @@ function transform(M::MDS{T}, x::AbstractVector{<:Real}; distances=false) where 
     end
 
     # get distance matrix
-    D = isnan(M.d) ? M.X  : pairwise((x,y)->norm(x-y), M.X)
+    D = isnan(M.d) ? M.X : pairwise((x,y)->norm(x-y), eachcol(M.X), symmetric=true)
     d = d.^2
 
     # b = 0.5*(ones(n,n)*d./n - d + D*ones(n,1)./n - ones(n,n)*D*ones(n,1)./n^2)
@@ -142,7 +142,7 @@ function fit(::Type{MDS}, X::AbstractMatrix{T};
 
     # get distance matrix and space dimension
     D, d = if !distances
-        pairwise((x,y)->norm(x-y), X), size(X,1)
+        pairwise((x,y)->norm(x-y), eachcol(X), symmetric=true), size(X,1)
     else
         X, NaN
     end
@@ -203,8 +203,8 @@ end
 
 function stress(M::MDS)
     # calculate distances if original data was stored
-    DX = isnan(M.d) ? M.X : pairwise((x,y)->norm(x-y), M.X)
-    DY = pairwise((x,y)->norm(x-y), transform(M))
+    DX = isnan(M.d) ? M.X : pairwise((x,y)->norm(x-y), eachcol(M.X), symmetric=true)
+    DY = pairwise((x,y)->norm(x-y), eachcol(transform(M)), symmetric=true)
     n = size(DX,1)
     return sqrt(2*sum((DX - DY).^2)/sum(DX.^2));
 end

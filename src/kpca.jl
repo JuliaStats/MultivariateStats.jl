@@ -50,7 +50,7 @@ principalvars(M::KernelPCA) = M.λ
 
 """Calculate transformation to kernel space"""
 function transform(M::KernelPCA, x::AbstractVecOrMat{<:Real})
-    k = pairwise(M.ker, M.X, x)
+    k = pairwise(M.ker, eachcol(M.X), eachcol(x))
     transform!(M.center, k)
     return projection(M)'*k
 end
@@ -63,7 +63,7 @@ function reconstruct(M::KernelPCA, y::AbstractVecOrMat{<:Real})
         throw(ArgumentError("Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"))
     end
     Pᵗ = M.α' .* sqrt.(M.λ)
-    k = pairwise(M.ker, Pᵗ, y)
+    k = pairwise(M.ker, eachcol(Pᵗ), eachcol(y))
     return M.inv*k
 end
 
@@ -88,7 +88,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
 
     # set kernel function if available
     K = if isa(kernel, Function)
-        pairwise(kernel, X)
+        pairwise(kernel, eachcol(X), symmetric=true)
     elseif kernel === nothing
         @assert issymmetric(X) "Precomputed kernel matrix must be symmetric."
         inverse = false
@@ -126,7 +126,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
     Q = zeros(T, 0, 0)
     if inverse
         Pᵗ = α' .* sqrt.(λ)
-        KT = pairwise(kernel, Pᵗ)
+        KT = pairwise(kernel, eachcol(Pᵗ), symmetric=true)
         Q = (KT + diagm(0 => fill(β, size(KT,1)))) \ X'
     end
 

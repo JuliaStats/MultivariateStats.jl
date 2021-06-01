@@ -121,30 +121,5 @@ function calcscattermat(Z::DenseMatrix)
 end
 
 # calculate pairwise kernel
-function pairwise!(K::AbstractVecOrMat{<:Real}, kernel::Function,
-                   X::AbstractVecOrMat{<:Real}, Y::AbstractVecOrMat{<:Real})
-    n = size(X, 2)
-    m = size(Y, 2)
-    for j = 1:m
-        aj = view(Y, :, j)
-        for i in j:n
-            @inbounds K[i, j] = kernel(view(X, :, i), aj)[]
-        end
-        j <= n && for i in 1:(j - 1)
-            @inbounds K[i, j] = K[j, i]   # leveraging the symmetry
-        end
-    end
-    K
-end
-
-pairwise!(K::AbstractVecOrMat{<:Real}, kernel::Function, X::AbstractVecOrMat{<:Real}) =
-    pairwise!(K, kernel, X, X)
-
-function pairwise(kernel::Function, X::AbstractVecOrMat{<:Real}, Y::AbstractVecOrMat{<:Real})
-    n = size(X, 2)
-    m = size(Y, 2)
-    K = similar(X, n, m)
-    pairwise!(K, kernel, X, Y)
-end
-
-pairwise(kernel::Function, X::AbstractVecOrMat{<:Real}) = pairwise(kernel, X, X)
+pairwise(kernel::Function, X::AbstractMatrix, x::AbstractVector; kwargs...) =
+    [kernel(x,y) for y in eachcol(X)]

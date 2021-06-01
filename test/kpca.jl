@@ -34,18 +34,10 @@ import Random
     end
 
     # kernel calculations
-    K = MultivariateStats.pairwise((x,y)->norm(x-y), X, X[:,1:2])
-    @test size(K) == (n, 2)
-    @test K[1,1] == 0
-    @test K[3,2] == norm(X[:,3] - X[:,2])
-
-    K = MultivariateStats.pairwise((x,y)->norm(x-y), X[:,1:3], X)
-    @test size(K) == (3, n)
-    @test K[1,1] == 0
-    @test K[3,2] == norm(X[:,2] - X[:,3])
+    ker  = (x,y)->norm(x-y)
 
     K = similar(X, n, n)
-    MultivariateStats.pairwise!(K, (x,y)->norm(x-y), X)
+    MultivariateStats.pairwise!(ker, K, eachcol(X))
     @test size(K) == (n, n)
     @test K[1,1] == 0
     @test K[2,1] == norm(X[:,2] - X[:,1])
@@ -54,7 +46,7 @@ import Random
     Iₙ = ones(n,n)/n
     @test MultivariateStats.transform!(KC, copy(K)) ≈ K - Iₙ*K - K*Iₙ + Iₙ*K*Iₙ
 
-    K = MultivariateStats.pairwise((x,y)->norm(x-y), X, X[:,1])
+    K = MultivariateStats.pairwise(ker, X, X[:,1])[:,1:1]
     @test size(K) == (n, 1)
     @test K[1,1] == 0
     @test K[2,1] == norm(X[:,2] - X[:,1])
@@ -88,7 +80,7 @@ import Random
     M = fit(KernelPCA, X, inverse=true)
     @test all(isapprox.(reconstruct(M, transform(M)), X, atol=0.75))
 
-    # use rbf kernel
+    # use RBF kernel
     γ = 10.
     rbf=(x,y)->exp(-γ*norm(x-y)^2.0)
     M = fit(KernelPCA, X, kernel=rbf)
@@ -96,7 +88,7 @@ import Random
     @test outdim(M) == d
 
     # use precomputed kernel
-    K = MultivariateStats.pairwise((x,y)->x'*y, X)
+    K = MultivariateStats.pairwise((x,y)->x'*y, eachcol(X), symmetric=true)
     @test_throws AssertionError fit(KernelPCA, rand(1,10), kernel=nothing) # symmetric kernel
     M = fit(KernelPCA, K, maxoutdim = 5, kernel=nothing, inverse=true) # use precomputed kernel
     M2 = fit(PCA, X, method=:cov, pratio=1.0)
@@ -117,7 +109,7 @@ import Random
 
     @test indim(MM) == d
     @test outdim(MM) == d
-    @test eltype(transform(MM, X[:,1])) == Float32
+    @test eltype(transform(MM, XX[:,1])) == Float32
 
     for func in (projection, principalvars)
         @test eltype(func(M)) == Float64

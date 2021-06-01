@@ -1,9 +1,9 @@
 module MultivariateStats
     using LinearAlgebra
-    using StatsBase: SimpleCovariance, CovarianceEstimator
+    using StatsBase: SimpleCovariance, CovarianceEstimator, pairwise, pairwise!
     import Statistics: mean, var, cov, covm
     import Base: length, size, show, dump
-    import StatsBase: RegressionModel, fit, predict, ConvergenceException, dof, coef, weights
+    import StatsBase: RegressionModel, fit, predict, ConvergenceException, dof, coef, weights, pairwise
     import SparseArrays
     import LinearAlgebra: eigvals
 
