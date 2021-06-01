@@ -4,7 +4,7 @@ module MultivariateStats
                      AbstractDataTransform, pairwise!
     import Statistics: mean, var, cov, covm
     import Base: length, size, show, dump
-    import StatsBase: fit, predict, predict!, ConvergenceException, dof_residual, coef, pairwise
+    import StatsBase: fit, predict, predict!, ConvergenceException, dof_residual, coef, weights, dof, pairwise
     import SparseArrays
     import LinearAlgebra: eigvals
 
