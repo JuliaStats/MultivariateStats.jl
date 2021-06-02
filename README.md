@@ -5,8 +5,8 @@ A Julia package for multivariate statistics and data analysis (e.g. dimensionali
 [![Coverage Status](https://coveralls.io/repos/JuliaStats/MultivariateStats.jl/badge.svg?branch=master)](https://coveralls.io/r/JuliaStats/MultivariateStats.jl?branch=master)
 [![Build Status](https://travis-ci.org/JuliaStats/MultivariateStats.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/MultivariateStats.jl)
 [![CI](https://github.com/JuliaStats/MultivariateStats.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaStats/MultivariateStats.jl/actions/workflows/ci.yml)
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliastats.org/MultivariateStats.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliastats.org/MultivariateStats.jl/dev)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](http://multivariatestatsjl.readthedocs.org/en/stable/index.html)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](http://multivariatestatsjl.readthedocs.org/en/latest/index.html)
 
 -------
 
