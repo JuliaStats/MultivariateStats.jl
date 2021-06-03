@@ -22,7 +22,7 @@ Whitening transformation can be fitted to data using the `fit` method.
 
 ```@docs
 fit(::Type{Whitening}, X::AbstractMatrix{T}; kwargs...) where {T<:Real}
-transform(::Whitening, ::AbstractVecOrMat)
+MultivariateStats.transform(::Whitening, ::AbstractVecOrMat{<:Real})
 length(::Whitening)
 mean(::Whitening)
 size(::Whitening)

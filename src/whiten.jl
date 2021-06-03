@@ -74,9 +74,9 @@ size(f::Whitening) = size(f.W)
 
 Get the mean vector of the whitening transformation `f`.
 
-**Note:** if mean is empty, this function returns a zero vector of length [`outdim`](@ref) .
+**Note:** if mean is empty, this function returns a zero vector of `length(f)`.
 """
-mean(f::Whitening) = fullmean(indim(f), f.mean)
+mean(f::Whitening) = fullmean(length(f), f.mean)
 
 
 """
@@ -102,7 +102,7 @@ function transform(f::Whitening, x::AbstractVecOrMat{<:Real})
 end
 
 """
-    fit(::Type{Whitening},  X::AbstractMatrix{T}; kwargs...)
+    fit(Whitening, X::AbstractMatrix{T}; kwargs...)
 
 Estimate a whitening transform from the data given in `X`.
 
