@@ -115,8 +115,8 @@ function pcasvd(Z::AbstractMatrix{T}, mean::Vector{T}, tw::Real;
 
     check_pcaparams(size(Z,1), mean, maxoutdim, pratio)
     Svd = svd(Z)
-    v = Svd.S::Vector{T}
-    U = Svd.U::Matrix{T}
+    v = Svd.S::AbstractVector{T}
+    U = Svd.U::AbstractMatrix{T}
     for i = 1:length(v)
         @inbounds v[i] = abs2(v[i]) / tw
     end
