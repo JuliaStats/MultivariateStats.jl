@@ -128,6 +128,10 @@ module MultivariateStats
     ## deprecations
     @deprecate indim(f::Whitening) length(f::Whitening)
     @deprecate outdim(f::Whitening) length(f::Whitening)
+    @deprecate indim(f::MulticlassLDA) size(f::MulticlassLDA)[1]
+    @deprecate outdim(f::MulticlassLDA) size(f::MulticlassLDA)[2]
+    @deprecate indim(f::SubspaceLDA) size(f::SubspaceLDA)[1]
+    @deprecate outdim(f::SubspaceLDA) size(f::SubspaceLDA)[2]
     # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
     # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
