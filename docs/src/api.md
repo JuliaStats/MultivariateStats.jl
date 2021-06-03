@@ -30,21 +30,21 @@ Note: `?` refers to a possible implementation that is missing or called differen
 | Function \ Model | WHT | CCA | LDA |MC-LDA|SS-LDA| ICA | FA  |PPCA | PCA |KPCA | MDS |
 |------------------|:---:|:---:|:---:|:----:|:----:|:---:|:---:|:---:|:---:|:---:|:---:|
 |fit               |  x  |  x  |  x  |  x   |   x  |  x  |  x  |  x  |  x  |  x  |  x  |
-|transform         |  x  |  x  |     |  x   |   x  |  x  |  x  |  x  |  x  |  x  |  x  |
-|predict           |     |     |  x  |      |      |     |     |     |     |     |     |
-|indim             |  -  |     |     |  x   |   x  |  x  |  x  |  x  |  x  |  x  |  x  |
-|outdim            |  -  |  x  |     |  x   |   x  |  x  |  x  |  x  |  x  |  x  |  x  |
+|transform         |  x  |  x  |  -  |  -   |   -  |  x  |  x  |  x  |  x  |  x  |  x  |
+|predict           |     |     |  x  |  +   |   +  |     |     |     |     |     |     |
+|indim             |  -  |     |     |  -   |   -  |  x  |  x  |  x  |  x  |  x  |  x  |
+|outdim            |  -  |  x  |     |  -   |   -  |  x  |  x  |  x  |  x  |  x  |  x  |
 |mean              |  x  |  x  |     |  x   |   x  |  x  |  x  |  x  |  x  |  ?  |     |
 |var               |     |     |     |      |      |     |  x  |  x  |  ?  |  ?  |  ?  |
 |cov               |     |     |     |      |      |     |  x  |  ?  |     |     |     |
 |cor               |     |  x  |     |      |      |     |     |     |     |     |     |
-|projection        |  ?  |  x  |     |      |      |     |  x  |  x  |  x  |  x  |  x  |
+|projection        |  ?  |  x  |     |  x   |   x  |     |  x  |  x  |  x  |  x  |  x  |
 |reconstruct       |     |     |     |      |      |     |  x  |  x  |  x  |  x  |     |
 |loadings          |     |  ?  |     |      |      |     |  x  |  x  |  ?  |  ?  |  ?  |
-|eigvals           |     |     |     |      |      |     |  ?  |  ?  |  ?  |  ?  |  x  |
+|eigvals           |     |     |     |      |   +  |     |  ?  |  ?  |  ?  |  ?  |  x  |
 |eigvecs           |     |     |     |      |      |     | ?   |  ?  |  ?  |  ?  |  ?  |
-|length            |  +  |     |  x  |      |      |     |     |     |     |     |     |
-|size              |  +  |     |     |      |      |     |     |     |     |     |     |
+|length            |  +  |     |  +  |  +   |   +  |     |     |     |     |     |     |
+|size              |  +  |     |     |  +   |   +  |     |     |     |     |     |     |
 |                  |     |     |     |      |      |     |     |     |     |     |     |
 
 - StatsBase.AbstractDataTransform
@@ -57,9 +57,11 @@ Note: `?` refers to a possible implementation that is missing or called differen
         - Interface: fit, predict, coef, dof, weights
         - New: evaluate, length
     - MulticlassLDA
-      - Methods: fit, transfrom, indim, outdim, mean
+      - Methods: fit, predict, size, mean, projection
+      - New: length
     - SubspaceLDA
-      - Methods: fit, transfrom, indim, outdim, mean
+      - Methods: fit, predict, size, mean, projection
+      - New: length, eigvals
     - CCA
       - Methods: fit, transfrom, indim, outdim, mean
     - Subtypes:
