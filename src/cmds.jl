@@ -73,6 +73,8 @@ outdim(M::MDS) = size(M.U,2)
 projection(M::MDS) = M.U
 eigvals(M::MDS) = M.λ
 
+loadings(M::MDS) = eigvals(M)' .* projection(M)
+
 ## use
 
 """Calculate out-of-sample multidimensional scaling transformation"""
