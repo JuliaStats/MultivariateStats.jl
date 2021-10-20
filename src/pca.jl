@@ -2,7 +2,7 @@
 
 #### PCA type
 
-struct PCA{T<:Real}
+struct PCA{T<:Real} <: LinearDimensionalityReduction
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     proj::Matrix{T}       # projection matrix: of size d x p
     prinvars::Vector{T}   # principal variances: of length p
@@ -25,11 +25,8 @@ end
 
 ## properties
 
-indim(M::PCA) = size(M.proj, 1)
-outdim(M::PCA) = size(M.proj, 2)
-
+size(M::PCA) = size(M.proj)
 mean(M::PCA) = fullmean(indim(M), M.mean)
-
 projection(M::PCA) = M.proj
 
 principalvar(M::PCA, i::Int) = M.prinvars[i]
@@ -37,13 +34,14 @@ principalvars(M::PCA) = M.prinvars
 
 tprincipalvar(M::PCA) = M.tprinvar
 tresidualvar(M::PCA) = M.tvar - M.tprinvar
-tvar(M::PCA) = M.tvar
+var(M::PCA) = M.tvar
 
-principalratio(M::PCA) = M.tprinvar / M.tvar
+r2(M::PCA) = M.tprinvar / M.tvar
+const principalratio = r2
 
 ## use
 
-transform(M::PCA, x::AbstractVecOrMat{<:Real}) = transpose(M.proj) * centralize(x, M.mean)
+predict(M::PCA, x::AbstractVecOrMat{<:Real}) = transpose(M.proj) * centralize(x, M.mean)
 reconstruct(M::PCA, y::AbstractVecOrMat{<:Real}) = decentralize(M.proj * y, M.mean)
 
 ## show & dump
