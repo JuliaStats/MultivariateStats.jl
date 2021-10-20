@@ -15,9 +15,9 @@ end
 function PCA(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T) where {T<:Real}
     d, p = size(proj)
     (isempty(mean) || length(mean) == d) ||
-        throw(DimensionMismatch("Dimensions of mean and proj are inconsistent."))
+        throw(DimensionMismatch("Dimensions of mean and projection matrix are inconsistent."))
     length(pvars) == p ||
-        throw(DimensionMismatch("Dimensions of proj and pvars are inconsistent."))
+        throw(DimensionMismatch("Dimensions of projection matrix and principal variables are inconsistent."))
     tpvar = sum(pvars)
     tpvar <= tvar || isapprox(tpvar,tvar) || throw(ArgumentError("principal variance cannot exceed total variance."))
     PCA(mean, proj, pvars, tpvar, tvar)
@@ -26,7 +26,7 @@ end
 ## properties
 
 size(M::PCA) = size(M.proj)
-mean(M::PCA) = fullmean(indim(M), M.mean)
+mean(M::PCA) = fullmean(size(M.proj,1), M.mean)
 projection(M::PCA) = M.proj
 
 principalvar(M::PCA, i::Int) = M.prinvars[i]
@@ -39,6 +39,8 @@ var(M::PCA) = M.tvar
 r2(M::PCA) = M.tprinvar / M.tvar
 const principalratio = r2
 
+loadings(M::PCA) = sqrt.(principalvars(M))' .* projection(M)
+
 ## use
 
 predict(M::PCA, x::AbstractVecOrMat{<:Real}) = transpose(M.proj) * centralize(x, M.mean)
@@ -47,7 +49,8 @@ reconstruct(M::PCA, y::AbstractVecOrMat{<:Real}) = decentralize(M.proj * y, M.me
 ## show & dump
 
 function show(io::IO, M::PCA)
-    print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $(principalratio(M)))")
+    idim, odim = size(M)
+    print(io, "PCA(indim = $idim, outdim = $odim, principalratio = $(r2(M)))")
 end
 
 function dump(io::IO, M::PCA)
@@ -74,8 +77,8 @@ const default_pca_pratio = 0.99
 function check_pcaparams(d::Int, mean::AbstractVector, md::Int, pr::Real)
     isempty(mean) || length(mean) == d ||
         throw(DimensionMismatch("Incorrect length of mean."))
-    md >= 1 || error("maxoutdim must be a positive integer.")
-    0.0 < pr <= 1.0 || throw(ArgumentError("pratio must be a positive real value with pratio ≤ 1.0."))
+    md >= 1 || error("`maxoutdim` parameter must be a positive integer.")
+    0.0 < pr <= 1.0 || throw(ArgumentError("principal ratio must be a positive real value ≤ 1.0."))
 end
 
 function choose_pcadim(v::AbstractVector{T}, ord::Vector{Int}, vsum::T, md::Int,

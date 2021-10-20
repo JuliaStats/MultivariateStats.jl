@@ -46,6 +46,7 @@ module MultivariateStats
 
     tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
     tresidualvar,       # total residual variance
+    loadings,           # model loadings
 
     ## ppca
     PPCA,               # Type: the Probabilistic PCA model

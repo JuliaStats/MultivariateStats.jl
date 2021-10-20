@@ -1,7 +1,7 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
-import Statistics: mean, cov
+import Statistics: mean, var, cov
 import Random
 import SparseArrays
 
@@ -16,21 +16,26 @@ import SparseArrays
 
     P = qr(randn(5, 5)).Q[:, 1:3]
     pvars = [5., 4., 3.]
+    l = [-0.809509  -1.14456    0.944145
+         -0.738713  -1.23353   -0.607874;
+         -1.64431    0.875826  -0.479549;
+         -0.816033   0.613632   1.06775 ;
+          0.655236   0.157369   0.607475]
     M = PCA(Float64[], P, pvars, 15.0)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5, 3)
     @test mean(M) == zeros(5)
     @test projection(M) == P
     @test principalvars(M) == pvars
     @test principalvar(M, 2) == pvars[2]
-    @test tvar(M) == 15.0
+    @test var(M) == 15.0
     @test tprincipalvar(M) == 12.0
     @test tresidualvar(M) == 3.0
     @test principalratio(M) == 0.8
+    @test isapprox(loadings(M),l, atol = 0.001)
 
-    @test transform(M, X[:,1]) ≈ P'X[:,1]
-    @test transform(M, X) ≈ P'X
+    @test predict(M, X[:,1]) ≈ P'X[:,1]
+    @test predict(M, X) ≈ P'X
 
     @test reconstruct(M, Y[:,1]) ≈ P * Y[:,1]
     @test reconstruct(M, Y) ≈ P * Y
@@ -41,19 +46,18 @@ import SparseArrays
     mval = rand(5)
     M = PCA(mval, P, pvars, 15.0)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test mean(M) == mval
     @test projection(M) == P
     @test principalvars(M) == pvars
     @test principalvar(M, 2) == pvars[2]
-    @test tvar(M) == 15.0
+    @test var(M) == 15.0
     @test tprincipalvar(M) == 12.0
     @test tresidualvar(M) == 3.0
     @test principalratio(M) == 0.8
 
-    @test transform(M, X[:,1]) ≈ P' * (X[:,1] .- mval)
-    @test transform(M, X) ≈ P' * (X .- mval)
+    @test predict(M, X[:,1]) ≈ P' * (X[:,1] .- mval)
+    @test predict(M, X) ≈ P' * (X .- mval)
 
     @test reconstruct(M, Y[:,1]) ≈ P * Y[:,1] .+ mval
     @test reconstruct(M, Y) ≈ P * Y .+ mval
@@ -82,16 +86,15 @@ import SparseArrays
     P = projection(M)
     pvs = principalvars(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 5
+    @test size(M) == (5,5)
     @test mean(M) == mval
     @test P'P ≈ Matrix(I, 5, 5)
     @test C*P ≈ P*Diagonal(pvs)
     @test issorted(pvs; rev=true)
     @test pvs ≈ pvs0
-    @test tvar(M) ≈ tv
+    @test var(M) ≈ tv
     @test sum(pvs) ≈ tvar(M)
-    @test reconstruct(M, transform(M, X)) ≈ X
+    @test reconstruct(M, predict(M, X)) ≈ X
 
     M = fit(PCA, X; mean=mval)
     @test projection(M) ≈ P
@@ -102,15 +105,13 @@ import SparseArrays
     M = fit(PCA, X; maxoutdim=3)
     P = projection(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test P'P ≈ Matrix(I, 3, 3)
     @test issorted(pvs; rev=true)
 
     M = fit(PCA, X; pratio=0.85)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test P'P ≈ Matrix(I, 3, 3)
     @test issorted(pvs; rev=true)
 
@@ -120,8 +121,7 @@ import SparseArrays
     P = projection(M)
     pvs = principalvars(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 5
+    @test size(M) == (5,5)
     @test mean(M) == mval
     @test P'P ≈ Matrix(I, 5, 5)
     @test isapprox(C*P, P*Diagonal(pvs), atol=1.0e-3)
@@ -140,15 +140,13 @@ import SparseArrays
     M = fit(PCA, X; method=:svd, maxoutdim=3)
     P = projection(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test P'P ≈ Matrix(I, 3, 3)
     @test issorted(pvs; rev=true)
 
     M = fit(PCA, X; method=:svd, pratio=0.85)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test P'P ≈ Matrix(I, 3, 3)
     @test issorted(pvs; rev=true)
 
@@ -166,8 +164,8 @@ import SparseArrays
     fit(PCA, X ; pratio=pp)
     fit(PCA, XX ; pratio=p)
     fit(PCA, XX ; pratio=pp)
-    transform(M, XX)
-    transform(MM, X)
+    predict(M, XX)
+    predict(MM, X)
     reconstruct(M, YY)
     reconstruct(MM, Y)
 
