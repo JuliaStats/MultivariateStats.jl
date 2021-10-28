@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Principal Component Analysis · MultivariateStats.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">MultivariateStats.jl</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../whiten/">Data Transformation</a></li><li><a class="tocitem" href="../lda/">Linear Discriminant Analysis</a></li><li class="is-active"><a class="tocitem" href>Principal Component Analysis</a><ul class="internal"><li><a class="tocitem" href="#Example"><span>Example</span></a></li><li><a class="tocitem" href="#Linear-Principal-Component-Analysis"><span>Linear Principal Component Analysis</span></a></li></ul></li><li><a class="tocitem" href="../api/">Development</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Principal Component Analysis</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Principal Component Analysis</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/master/docs/src/pca.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Principal-Component-Analysis"><a class="docs-heading-anchor" href="#Principal-Component-Analysis">Principal Component Analysis</a><a id="Principal-Component-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Principal-Component-Analysis" title="Permalink"></a></h1><p><a href="http://en.wikipedia.org/wiki/Principal_component_analysis">Principal Component Analysis</a> (PCA) derives an orthogonal projection to convert a given set of observations to linearly uncorrelated variables, called <em>principal components</em>.</p><h2 id="Example"><a class="docs-heading-anchor" href="#Example">Example</a><a id="Example-1"></a><a class="docs-heading-anchor-permalink" href="#Example" title="Permalink"></a></h2><p>Performing <a href="#MultivariateStats.PCA"><code>PCA</code></a> on <em>Iris</em> data set:</p><pre><code class="language-julia">using MultivariateStats, RDatasets, Plots
+plotly() # using plotly for 3D-interacive graphing
+
+# load iris dataset
+iris = dataset(&quot;datasets&quot;, &quot;iris&quot;)
+
+# split half to training set
+Xtr = Matrix(iris[1:2:end,1:4])&#39;
+Xtr_labels = Vector(iris[1:2:end,5])
+
+# split other half to testing set
+Xte = Matrix(iris[2:2:end,1:4])&#39;
+Xte_labels = Vector(iris[2:2:end,5])</code></pre><pre class="documenter-example-output">[ Info: For saving to png with the Plotly backend PlotlyBase has to be installed.</pre><p>Suppose <code>Xtr</code> and <code>Xte</code> are training and testing data matrix, with each observation in a column. We train a PCA model, allowing up to 3 dimensions:</p><pre><code class="language-julia">M = fit(PCA, Xtr; maxoutdim=3)</code></pre><pre class="documenter-example-output">PCA(indim = 4, outdim = 3, principalratio = 0.9957325846529407)</pre><p>Then, apply PCA model to the testing set</p><pre><code class="language-julia">Yte = predict(M, Xte)</code></pre><pre class="documenter-example-output">3×75 Matrix{Float64}:
+  2.72714    2.75491     2.32396   …  -1.92047   -1.74161   -1.37706
+ -0.230916  -0.406149    0.646374      0.246554   0.127625  -0.280295
+  0.253119   0.0271266  -0.230469     -0.180044  -0.123165  -0.314992</pre><p>And, reconstruct testing observations (approximately) to the original space</p><pre><code class="language-julia">Xr = reconstruct(M, Yte)</code></pre><pre class="documenter-example-output">4×75 Matrix{Float64}:
+ 4.86449  4.61087   5.40782   5.00775   …  6.79346  6.58825  6.46774  5.94384
+ 3.04262  3.08695   3.89061   3.39069      3.20785  3.13416  3.03873  2.94737
+ 1.46099  1.48132   1.68656   1.48668      5.91124  5.39197  5.25542  5.02469
+ 0.10362  0.229519  0.421233  0.221041     2.28224  1.99665  1.91243  1.91901</pre><p>Now, we group results by testing set labels for color coding and visualize first 3 principal components in 3D interactive plot</p><pre><code class="language-julia">setosa = Yte[:,Xte_labels.==&quot;setosa&quot;]
+versicolor = Yte[:,Xte_labels.==&quot;versicolor&quot;]
+virginica = Yte[:,Xte_labels.==&quot;virginica&quot;]
+
+p = scatter(setosa[1,:],setosa[2,:],setosa[3,:],marker=:circle,linewidth=0)
+scatter!(versicolor[1,:],versicolor[2,:],versicolor[3,:],marker=:circle,linewidth=0)
+scatter!(virginica[1,:],virginica[2,:],virginica[3,:],marker=:circle,linewidth=0)
+plot!(p,xlabel=&quot;PC1&quot;,ylabel=&quot;PC2&quot;,zlabel=&quot;PC3&quot;)</code></pre><script src="https://cdn.plot.ly/plotly-1.57.1.min.js"></script>    <div id="2ab076b8-6b06-471c-ad6c-cab7f2e73347" style="width:600px;height:400px;"></div>
+    <script>
+    
+        var PLOT = document.getElementById('2ab076b8-6b06-471c-ad6c-cab7f2e73347');
+    Plotly.plot(PLOT, [
+    {
+        "xaxis": "x",
+        "colorbar": {
+            "title": ""
+        },
+        "yaxis": "y",
+        "zaxis": "z",
+        "x": [
+            2.727137022991071,
+            2.754914126352502,
+            2.3239602739230834,
+            2.6510544129423876,
+            2.689168203630764,
+            2.633674661206393,
+            3.2263809526967275,
+            2.4477438936236924,
+            2.676766823053665,
+            2.6239074375368103,
+            2.5761164255318683,
+            2.323905304948032,
+            2.521427320445945,
+            2.5936411485959314,
+            2.6459310704554233,
+            2.440645860239591,
+            2.6535985674968874,
+            2.8864002764725396,
+            2.829762111410005,
+            2.6168643731277608,
+            2.8360651099130982,
+            2.428964609971362,
+            2.7245028660835553,
+            2.85164077300055,
+            2.725847429024839
+        ],
+        "showlegend": true,
+        "mode": "markers",
+        "name": "y1",
+        "zmin": null,
+        "legendgroup": "y1",
+        "z": [
+            0.2531186297819424,
+            0.027126589264421803,
+            -0.23046868160032044,
+            0.025285307468910674,
+            0.23150687337431902,
+            -0.08209787262044464,
+            0.021108526683512034,
+            -0.40646930956873006,
+            -0.03861267148451762,
+            -0.2489757903662365,
+            -0.2336085570511164,
+            -0.026611774131785518,
+            0.2911989120953626,
+            0.05838443253602433,
+            0.003411862740606572,
+            0.12221802423337882,
+            -0.2599397823843653,
+            0.1800979406058965,
+            -0.10244626318187167,
+            0.07585463596733667,
+            0.480690263774293,
+            -0.25968794201180445,
+            0.1498770026688975,
+            -0.03466841957281407,
+            0.09956936249115235
+        ],
+        "marker": {
+            "symbol": "circle",
+            "color": "rgba(0, 154, 250, 1.000)",
+            "line": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "width": 1
+            },
+            "size": 8
+        },
+        "zmax": null,
+        "y": [
+            -0.23091552150748376,
+            -0.406149089406404,
+            0.6463738633842842,
+            0.08281441013246808,
+            -0.17410970550165508,
+            -0.08251829646713248,
+            -0.614305339454285,
+            1.2239155891936484,
+            0.22849233585807055,
+            0.403932819243962,
+            0.32998460619191317,
+            0.02916871861531133,
+            -0.19110516082323478,
+            0.29519901316321895,
+            -0.2850020381985633,
+            0.3596871900898716,
+            0.9839869288811038,
+            0.0058530143163879784,
+            0.16400415893141848,
+            0.15690956490915792,
+            -0.969267717484297,
+            0.0908506282649049,
+            -0.31476459585885264,
+            -0.32481239888281294,
+            0.03576251370131772
+        ],
+        "type": "scatter3d",
+        "scene": "scene"
+    },
+    {
+        "xaxis": "x",
+        "colorbar": {
+            "title": ""
+        },
+        "yaxis": "y",
+        "zaxis": "z",
+        "x": [
+            -0.9010492733733463,
+            -0.18959270231635028,
+            -0.6319378623578613,
+            0.7373057615773899,
+            0.005780312901830747,
+            -0.494753210770058,
+            -0.9660750657862148,
+            -0.8920021800126333,
+            -0.223582801827857,
+            -0.04244088675584379,
+            -0.3398988647901222,
+            -0.9033934876247258,
+            -0.8687789554808042,
+            -1.52800057365336,
+            0.31419941089546904,
+            0.1891261972286277,
+            -1.3705063754424698,
+            -0.7791796802713843,
+            -0.806152346294367,
+            -0.16765907175075365,
+            -0.8693484191381664,
+            0.6921489064799644,
+            -0.31590054097437237,
+            -0.6204015834177,
+            -0.2888985368968626
+        ],
+        "showlegend": true,
+        "mode": "markers",
+        "name": "y2",
+        "zmin": null,
+        "legendgroup": "y2",
+        "z": [
+            -0.0027406044587710717,
+            0.29105843911479284,
+            0.02077682100043732,
+            0.12133149368587265,
+            -0.17923544962155602,
+            -0.10077461381391577,
+            0.08985325826477888,
+            0.27592373467336745,
+            0.32238066964246853,
+            0.31713782407548097,
+            0.2542767504566562,
+            0.26323738742375435,
+            0.2933939381046798,
+            0.1484792322042337,
+            0.3773180116287987,
+            0.39976937230641796,
+            0.04504030402658176,
+            -0.39376928092657165,
+            0.6706349747321906,
+            0.15497937525531538,
+            0.028058249427543053,
+            0.2399403541140374,
+            -0.04389637496691312,
+            0.21807297774783527,
+            0.04575491337044893
+        ],
+        "marker": {
+            "symbol": "circle",
+            "color": "rgba(227, 111, 71, 1.000)",
+            "line": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "width": 1
+            },
+            "size": 8
+        },
+        "zmax": null,
+        "y": [
+            0.35068512419395836,
+            -0.7887000857121296,
+            -0.40525029400299795,
+            -1.0198181828473214,
+            -0.7468198986611747,
+            -0.0967520455055721,
+            -0.0887140950859866,
+            0.5356726116675563,
+            -0.29751808579476197,
+            -0.5495661077851214,
+            -0.02315768966513655,
+            -0.13340054941400054,
+            0.3973831634134952,
+            0.3393621771888285,
+            -0.33295315177150053,
+            -0.6438168423720628,
+            -0.3792752641516555,
+            0.1729391724672608,
+            -0.264508435683491,
+            -0.6603114987573881,
+            -0.007377404562395477,
+            -1.0099173215480024,
+            -0.21568059633491712,
+            0.0637045674502636,
+            -0.3366807058181165
+        ],
+        "type": "scatter3d",
+        "scene": "scene"
+    },
+    {
+        "xaxis": "x",
+        "colorbar": {
+            "title": ""
+        },
+        "yaxis": "y",
+        "zaxis": "z",
+        "x": [
+            -1.4125988859796461,
+            -1.9535904145912901,
+            -3.355165020717573,
+            -2.89580963229431,
+            -2.871101599824601,
+            -1.7892587875979091,
+            -1.3514068420875098,
+            -1.8817214980724923,
+            -3.424204566357208,
+            -1.302756423769068,
+            -1.1985565250592383,
+            -1.3752052256001401,
+            -2.571439652535539,
+            -1.2739247001224907,
+            -2.3482052269263494,
+            -3.161656758446427,
+            -1.4252854828814092,
+            -3.03420429715024,
+            -1.8800869924750716,
+            -2.0757499503493895,
+            -1.8921188496979275,
+            -2.533040645522499,
+            -1.9204654167167214,
+            -1.7416127469210358,
+            -1.377064283223735
+        ],
+        "showlegend": true,
+        "mode": "markers",
+        "name": "y3",
+        "zmin": null,
+        "legendgroup": "y3",
+        "z": [
+            -0.2141152488141257,
+            -0.07589798702936822,
+            0.29300162475154923,
+            0.38608363630737336,
+            -0.49697945981654645,
+            0.07681167599142588,
+            -0.1750332889751897,
+            -0.47407517811574107,
+            -0.2596621238950553,
+            0.44415478538239656,
+            -0.42347669017032924,
+            0.10389273847762921,
+            0.1501292812972397,
+            -0.20136451430843919,
+            0.4040419885709598,
+            -0.03444530039145728,
+            0.18138105620674014,
+            0.26944897148325353,
+            -0.1551631992979164,
+            -0.054088929557137795,
+            -0.14069995750886563,
+            -0.3092650026770541,
+            -0.18004360566848224,
+            -0.12316536682147967,
+            -0.31499221749029693
+        ],
+        "marker": {
+            "symbol": "circle",
+            "color": "rgba(62, 164, 78, 1.000)",
+            "line": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "width": 1
+            },
+            "size": 8
+        },
+        "zmax": null,
+        "y": [
+            -0.5567273324290708,
+            -0.1338210372473029,
+            0.6929245391407992,
+            0.48713373119605496,
+            0.8284059878306517,
+            -0.14644119786137105,
+            -0.75182259668896,
+            0.13551459122676865,
+            1.2536777251155558,
+            -0.6733504149176102,
+            -0.6161924739873184,
+            -0.14221284487850178,
+            0.6570486479901381,
+            -0.09782027399977015,
+            0.5824526942771943,
+            1.472803064956954,
+            -0.08304158676953675,
+            0.8332238399992346,
+            0.08580510153034913,
+            0.44416151373598445,
+            0.47608086572528885,
+            0.32904082805620627,
+            0.24655386564831752,
+            0.12762531481897246,
+            -0.2802953776455902
+        ],
+        "type": "scatter3d",
+        "scene": "scene"
+    }
+]
+, {
+    "showlegend": true,
+    "paper_bgcolor": "rgba(255, 255, 255, 1.000)",
+    "annotations": [],
+    "height": 400,
+    "margin": {
+        "l": 0,
+        "b": 20,
+        "r": 0,
+        "t": 20
+    },
+    "plot_bgcolor": "rgba(255, 255, 255, 1.000)",
+    "scene": {
+        "camera": {
+            "eye": {
+                "y": -1.9499999999999997,
+                "z": 1.3,
+                "x": 1.12583302491977
+            }
+        },
+        "xaxis": {
+            "tickangle": 0,
+            "showline": true,
+            "gridcolor": "rgba(0, 0, 0, 0.100)",
+            "showticklabels": true,
+            "gridwidth": 0.5,
+            "titlefont": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "family": "sans-serif",
+                "size": 15
+            },
+            "visible": true,
+            "ticks": "inside",
+            "range": [
+                -3.623722131928826,
+                3.4258985182683457
+            ],
+            "tickmode": "array",
+            "tickvals": [
+                -3.0,
+                -2.0,
+                -1.0,
+                0.0,
+                1.0,
+                2.0,
+                3.0
+            ],
+            "tickcolor": "rgb(0, 0, 0)",
+            "ticktext": [
+                "−3",
+                "−2",
+                "−1",
+                "0",
+                "1",
+                "2",
+                "3"
+            ],
+            "linecolor": "rgba(0, 0, 0, 1.000)",
+            "showgrid": true,
+            "zeroline": false,
+            "type": "-",
+            "tickfont": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "family": "sans-serif",
+                "size": 11
+            },
+            "title": "PC1",
+            "zerolinecolor": "rgba(0, 0, 0, 1.000)",
+            "mirror": false
+        },
+        "domain": {
+            "y": [
+                0.07581474190726165,
+                0.9901574803149606
+            ],
+            "x": [
+                0.09128390201224845,
+                0.9934383202099738
+            ]
+        },
+        "yaxis": {
+            "tickangle": 0,
+            "showline": true,
+            "gridcolor": "rgba(0, 0, 0, 0.100)",
+            "showticklabels": true,
+            "gridwidth": 0.5,
+            "titlefont": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "family": "sans-serif",
+                "size": 15
+            },
+            "visible": true,
+            "ticks": "inside",
+            "range": [
+                -1.0945968202814496,
+                1.547581702391082
+            ],
+            "tickmode": "array",
+            "tickvals": [
+                -1.0,
+                -0.5,
+                0.0,
+                0.5,
+                1.0,
+                1.5
+            ],
+            "tickcolor": "rgb(0, 0, 0)",
+            "ticktext": [
+                "−1.0",
+                "−0.5",
+                "0.0",
+                "0.5",
+                "1.0",
+                "1.5"
+            ],
+            "linecolor": "rgba(0, 0, 0, 1.000)",
+            "showgrid": true,
+            "zeroline": false,
+            "type": "-",
+            "tickfont": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "family": "sans-serif",
+                "size": 11
+            },
+            "title": "PC2",
+            "zerolinecolor": "rgba(0, 0, 0, 1.000)",
+            "mirror": false
+        },
+        "zaxis": {
+            "tickangle": 0,
+            "showline": true,
+            "gridcolor": "rgba(0, 0, 0, 0.100)",
+            "showticklabels": true,
+            "gridwidth": 0.5,
+            "titlefont": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "family": "sans-serif",
+                "size": 15
+            },
+            "visible": true,
+            "ticks": "inside",
+            "range": [
+                -0.5320078928530085,
+                0.7056634077686527
+            ],
+            "tickmode": "array",
+            "tickvals": [
+                -0.5,
+                -0.25,
+                0.0,
+                0.25,
+                0.5
+            ],
+            "tickcolor": "rgb(0, 0, 0)",
+            "ticktext": [
+                "−0.50",
+                "−0.25",
+                "0.00",
+                "0.25",
+                "0.50"
+            ],
+            "linecolor": "rgba(0, 0, 0, 1.000)",
+            "showgrid": true,
+            "zeroline": false,
+            "type": "-",
+            "tickfont": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "family": "sans-serif",
+                "size": 11
+            },
+            "title": "PC3",
+            "zerolinecolor": "rgba(0, 0, 0, 1.000)",
+            "mirror": false
+        }
+    },
+    "legend_position": {
+        "yanchor": "auto",
+        "xanchor": "auto",
+        "bordercolor": "rgba(0, 0, 0, 1.000)",
+        "bgcolor": "rgba(255, 255, 255, 1.000)",
+        "borderwidth": 1,
+        "tracegroupgap": 0,
+        "y": 1.0,
+        "font": {
+            "color": "rgba(0, 0, 0, 1.000)",
+            "family": "sans-serif",
+            "size": 11
+        },
+        "title": {
+            "font": {
+                "color": "rgba(0, 0, 0, 1.000)",
+                "family": "sans-serif",
+                "size": 15
+            },
+            "text": ""
+        },
+        "traceorder": "normal",
+        "x": 1.0
+    },
+    "width": 600
+}
+);
+
+    
+    </script>
+<h2 id="Linear-Principal-Component-Analysis"><a class="docs-heading-anchor" href="#Linear-Principal-Component-Analysis">Linear Principal Component Analysis</a><a id="Linear-Principal-Component-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Linear-Principal-Component-Analysis" title="Permalink"></a></h2><p>This package uses the <a href="#MultivariateStats.PCA"><code>PCA</code></a> type to define a linear PCA model:</p><article class="docstring"><header><a class="docstring-binding" id="MultivariateStats.PCA" href="#MultivariateStats.PCA"><code>MultivariateStats.PCA</code></a> — <span class="docstring-category">Type</span></header><section><div><p>Linear Principal Component Analysis</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L3-L5">source</a></section></article><p>This type comes with several methods where <span>$M$</span> be an instance of  <a href="#MultivariateStats.PCA"><code>PCA</code></a>, <span>$d$</span> be the dimension of observations, and <span>$p$</span> be the output dimension (<em>i.e</em> the dimension of the principal subspace).</p><article class="docstring"><header><a class="docstring-binding" id="StatsBase.fit-Union{Tuple{T}, Tuple{Type{PCA}, AbstractMatrix{T}}} where T&lt;:Real" href="#StatsBase.fit-Union{Tuple{T}, Tuple{Type{PCA}, AbstractMatrix{T}}} where T&lt;:Real"><code>StatsBase.fit</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">fit(PCA, X; ...)</code></pre><p>Perform PCA over the data given in a matrix <code>X</code>. Each column of <code>X</code> is an <strong>observation</strong>.</p><p><strong>Keyword arguments</strong></p><ul><li><code>method</code>: The choice of methods:<ul><li><code>:auto</code>: use <code>:cov</code> when <code>d &lt; n</code> or <code>:svd</code> otherwise (<em>default</em>).</li><li><code>:cov</code>: based on covariance matrix decomposition.</li><li><code>:svd</code>: based on SVD of the input data.</li></ul></li><li><code>maxoutdim</code>: The output dimension, i.e. dimension of the transformed space (<em>min(d, nc-1)</em>)</li><li><code>pratio</code>: The ratio of variances preserved in the principal subspace (<em>0.99</em>)</li><li><code>mean</code>: The mean vector, which can be either of<ul><li><code>0</code>: the input data has already been centralized</li><li><code>nothing</code>: this function will compute the mean (<em>default</em>)</li><li>a pre-computed mean vector</li></ul></li></ul><p><strong>Notes:</strong></p><ul><li><p>The output dimension <code>p</code> depends on both <code>maxoutdim</code> and <code>pratio</code>, as follows. Suppose the first <code>k</code> principal components preserve at least <code>pratio</code> of the total variance, while the first <code>k-1</code> preserves less than <code>pratio</code>, then the actual output dimension will be <span>$\min(k, maxoutdim)$</span>.</p></li><li><p>This function calls <a href="#MultivariateStats.pcacov"><code>pcacov</code></a> or <a href="#MultivariateStats.pcasvd"><code>pcasvd</code></a> internally, depending on the choice of method.</p></li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L232-L257">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="StatsBase.predict-Union{Tuple{T}, Tuple{PCA, AbstractVecOrMat{T}}} where T&lt;:Real" href="#StatsBase.predict-Union{Tuple{T}, Tuple{PCA, AbstractVecOrMat{T}}} where T&lt;:Real"><code>StatsBase.predict</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">predict(M::PCA, x::AbstractVecOrMat{&lt;:Real})</code></pre><p>Given a PCA model <code>M</code>, retur transform observations <code>x</code> into principal components space, as</p><p class="math-container">\[\mathbf{y} = \mathbf{P}^T (\mathbf{x} - \boldsymbol{\mu})\]</p><p>Here, <code>x</code> can be either a vector of length <code>d</code> or a matrix where each column is an observation, and <code>\mathbf{P}</code> is the projection matrix.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L100-L109">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MultivariateStats.reconstruct-Union{Tuple{T}, Tuple{PCA, AbstractVecOrMat{T}}} where T&lt;:Real" href="#MultivariateStats.reconstruct-Union{Tuple{T}, Tuple{PCA, AbstractVecOrMat{T}}} where T&lt;:Real"><code>MultivariateStats.reconstruct</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">reconstruct(M::PCA, y::AbstractVecOrMat{&lt;:Real})</code></pre><p>Given a PCA model <code>M</code>, returns a (approximately) reconstructed observations from principal components space, as</p><p class="math-container">\[\tilde{\mathbf{x}} = \mathbf{P} \mathbf{y} + \boldsymbol{\mu}\]</p><p>Here, <code>y</code> can be either a vector of length <code>p</code> or a matrix where each column gives the principal components for an observation, and <span>$\mathbf{P}$</span> is the projection matrix.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L112-L122">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Base.size-Tuple{PCA}" href="#Base.size-Tuple{PCA}"><code>Base.size</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">size(M)</code></pre><p>Returns a tuple with the dimensions of input (the dimension of the observation space) and output (the dimension of the principal subspace).</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L28-L33">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Statistics.mean-Tuple{PCA}" href="#Statistics.mean-Tuple{PCA}"><code>Statistics.mean</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">mean(M::PCA)</code></pre><p>Returns the mean vector (of length <code>d</code>).</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L36-L40">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MultivariateStats.projection-Tuple{PCA}" href="#MultivariateStats.projection-Tuple{PCA}"><code>MultivariateStats.projection</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">projection(M::PCA)</code></pre><p>Returns the projection matrix (of size <code>(d, p)</code>). Each column of the projection matrix corresponds to a principal component. The principal components are arranged in descending order of the corresponding variances.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L43-L48">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Statistics.var-Tuple{PCA}" href="#Statistics.var-Tuple{PCA}"><code>Statistics.var</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">var(M::PCA)</code></pre><p>Returns the total observation variance, which is equal to <code>tprincipalvar(M) + tresidualvar(M)</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L75-L79">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MultivariateStats.tprincipalvar-Tuple{PCA}" href="#MultivariateStats.tprincipalvar-Tuple{PCA}"><code>MultivariateStats.tprincipalvar</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">tprincipalvar(M::PCA)</code></pre><p>Returns the total variance of principal components, which is equal to <code>sum(principalvars(M))</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L61-L65">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MultivariateStats.tresidualvar-Tuple{PCA}" href="#MultivariateStats.tresidualvar-Tuple{PCA}"><code>MultivariateStats.tresidualvar</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">tresidualvar(M::PCA)</code></pre><p>Returns the total residual variance.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L68-L72">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="StatsBase.r2-Tuple{PCA}" href="#StatsBase.r2-Tuple{PCA}"><code>StatsBase.r2</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">r2(M::PCA)
+principalratio(M::PCA)</code></pre><p>Returns the ratio of variance preserved in the principal subspace, which is equal to <code>tprincipalvar(M) / var(M)</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L82-L87">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MultivariateStats.loadings-Tuple{PCA}" href="#MultivariateStats.loadings-Tuple{PCA}"><code>MultivariateStats.loadings</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">loadings(M::PCA)</code></pre><p>Returns model loadings, i.e. the weights for each original variable when calculating the principal component.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L91-L95">source</a></section></article><div class="admonition is-warning"><header class="admonition-header">Missing docstring.</header><div class="admonition-body"><p>Missing docstring for <code>eigvals(M::PCA)</code>. Check Documenter&#39;s build log for details.</p></div></div><div class="admonition is-warning"><header class="admonition-header">Missing docstring.</header><div class="admonition-body"><p>Missing docstring for <code>eigvecs(M::PCA)</code>. Check Documenter&#39;s build log for details.</p></div></div><p>Auxiliary functions</p><article class="docstring"><header><a class="docstring-binding" id="MultivariateStats.pcacov" href="#MultivariateStats.pcacov"><code>MultivariateStats.pcacov</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">pcacov(C, mean; ...)</code></pre><p>Compute and return a PCA model based on eigenvalue decomposition of a given covariance matrix <code>C</code>.</p><p><strong>Parameters:</strong></p><ul><li><code>C</code>: The covariance matrix of the samples.</li><li><code>mean</code>: The mean vector of original samples, which can be a vector of length <code>d</code>,          or an empty vector <code>Float64[]</code> indicating a zero mean.</li></ul><p><em>Note:</em> This function accepts two keyword arguments: <code>maxoutdim</code> and <code>pratio</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L174-L185">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MultivariateStats.pcasvd" href="#MultivariateStats.pcasvd"><code>MultivariateStats.pcasvd</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">pcasvd(Z, mean, tw; ...)</code></pre><p>Compute and return a PCA model based on singular value decomposition of a centralized sample matrix <code>Z</code>.</p><p><strong>Parameters:</strong></p><ul><li><code>Z</code>: a matrix of centralized samples.</li><li><code>mean</code>: The mean vector of the <strong>original</strong> samples, which can be a vector of length <code>d</code>,         or an empty vector <code>Float64[]</code> indicating a zero mean.</li><li><code>n</code>: a number of samples.</li></ul><p><em>Note:</em> This function accepts two keyword arguments: <code>maxoutdim</code> and <code>pratio</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaStats/MultivariateStats.jl/blob/c0f74de21093ca4433d44187fec11bee4723a56c/src/pca.jl#L200-L212">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../lda/">« Linear Discriminant Analysis</a><a class="docs-footer-nextpage" href="../api/">Development »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 28 October 2021 20:49">Thursday 28 October 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
