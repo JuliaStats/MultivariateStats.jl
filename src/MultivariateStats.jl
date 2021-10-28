@@ -4,9 +4,10 @@ module MultivariateStats
                      AbstractDataTransform, pairwise!
     import Statistics: mean, var, cov, covm
     import Base: length, size, show, dump
-    import StatsBase: fit, predict, predict!, ConvergenceException, dof_residual, coef, weights, dof, pairwise
+    import StatsBase: fit, predict, predict!, ConvergenceException, coef, weights,
+                      dof, pairwise, r2
     import SparseArrays
-    import LinearAlgebra: eigvals
+    import LinearAlgebra: eigvals, eigvecs
 
     export
 
@@ -45,7 +46,7 @@ module MultivariateStats
 
     tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
     tresidualvar,       # total residual variance
-    tvar,               # total variance
+    loadings,           # model loadings
 
     ## ppca
     PPCA,               # Type: the Probabilistic PCA model
@@ -97,8 +98,7 @@ module MultivariateStats
     betweenclass_scatter,   # between-class scatter matrix
     multiclass_lda_stats,   # compute statistics for multiclass LDA training
     multiclass_lda,         # train multi-class LDA based on statistics
-    mclda_solve,            # solve multi-class LDA projection given scatter matrices
-    mclda_solve!,           # solve multi-class LDA projection (inputs are overriden)
+    mclda_solve,            # solve multi-class LDA projection given sStatisticalModel
 
     ## ica
     ICA,                    # Type: the Fast ICA model
@@ -113,6 +113,7 @@ module MultivariateStats
     facm                    # EM algorithm for probabilistic PCA
 
     ## source files
+    include("types.jl")
     include("common.jl")
     include("lreg.jl")
     include("whiten.jl")
@@ -132,6 +133,10 @@ module MultivariateStats
     @deprecate outdim(f::MulticlassLDA) size(f::MulticlassLDA)[2]
     @deprecate indim(f::SubspaceLDA) size(f::SubspaceLDA)[1]
     @deprecate outdim(f::SubspaceLDA) size(f::SubspaceLDA)[2]
+    @deprecate indim(f::PCA) size(f::PCA)[1]
+    @deprecate outdim(f::PCA) size(f::PCA)[2]
+    @deprecate tvar(f::PCA) var(f::PCA) # total variance
+    @deprecate transform(f::PCA, x) predict(f::PCA, x) #ex=false
     # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
     # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 

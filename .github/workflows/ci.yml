@@ -9,19 +9,26 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.allow-to-fail }}
     strategy:
       fail-fast: false
       matrix:
         version:
           - '1.1'
           - '1' # automatically expands to the latest stable 1.x release of Julia
-          - 'nightly'
+          # - 'nightly'
         os:
           - ubuntu-latest
           # - macOS-latest
           # - windows-latest
         arch:
           - x64
+        allow-to-fail: [false]
+        include:
+          - version: 'nightly'
+            os: ubuntu-latest
+            arch: x64
+            allow-to-fail: true
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
