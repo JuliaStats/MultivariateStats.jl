@@ -3,11 +3,14 @@ os:
     - osx
     - linux
 julia:
-    - 0.7
     - 1.0
+    - 1
     - nightly
 notifications:
     email: false
+matrix:
+  allow_failures:
+    - julia: nightly
 sudo: false
 after_success:
   - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'

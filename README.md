@@ -2,13 +2,19 @@
 
 A Julia package for multivariate statistics and data analysis (e.g. dimensionality reduction).
 
-[![MultivariateStats](http://pkg.julialang.org/badges/MultivariateStats_0.6.svg)](http://pkg.julialang.org/?pkg=MultivariateStats)
 [![Coverage Status](https://coveralls.io/repos/JuliaStats/MultivariateStats.jl/badge.svg?branch=master)](https://coveralls.io/r/JuliaStats/MultivariateStats.jl?branch=master)
 [![Build Status](https://travis-ci.org/JuliaStats/MultivariateStats.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/MultivariateStats.jl)
-
-**Note:** This package is aimed to replace [DimensionalityReduction.jl](https://github.com/JuliaStats/DimensionalityReduction.jl), and to provide more multivariate analysis techniques.
+[![CI](https://github.com/JuliaStats/MultivariateStats.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaStats/MultivariateStats.jl/actions/workflows/ci.yml)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliastats.org/MultivariateStats.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliastats.org/MultivariateStats.jl/dev)
 
 -------
+
+#### Documentation
+
+- Stable : <http://multivariatestatsjl.readthedocs.org/en/stable/index.html>
+- Latest : <http://multivariatestatsjl.readthedocs.org/en/latest/index.html>
+
 
 ## Functionalities
 
@@ -33,9 +39,3 @@ A Julia package for multivariate statistics and data analysis (e.g. dimensionali
 - Other algorithms for ICA (*e.g.* JADE)
 
 
-## Resources
-
-#### Documentation
-
-- Stable : <http://multivariatestatsjl.readthedocs.org/en/stable/index.html>
-- Latest : <http://multivariatestatsjl.readthedocs.org/en/latest/index.html>

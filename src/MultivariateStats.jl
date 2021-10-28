@@ -1,15 +1,18 @@
 module MultivariateStats
     using LinearAlgebra
-    using StatsBase: SimpleCovariance, CovarianceEstimator
+    using StatsBase: SimpleCovariance, CovarianceEstimator, RegressionModel,
+                     AbstractDataTransform, pairwise!
     import Statistics: mean, var, cov, covm
     import Base: length, size, show, dump
-    import StatsBase: fit, predict, ConvergenceException, CoefTable
+    import StatsBase: fit, predict, predict!, ConvergenceException, coef, weights,
+                      dof, pairwise, r2, CoefTable
     import SparseArrays
+    import LinearAlgebra: eigvals, eigvecs
 
     export
 
     ## common
-    evaluate,           # evaluate discriminant function values (imported from Base)
+    evaluate,           # evaluate discriminant function values
     predict,            # use a model to predict responses (imported from StatsBase)
     fit,                # fit a model to data (imported from StatsBase)
     centralize,         # subtract a mean vector from each column
@@ -28,7 +31,6 @@ module MultivariateStats
     Whitening,          # Type: Whitening transformation
 
     invsqrtm,           # Compute inverse of matrix square root, i.e. inv(sqrtm(A))
-    invsqrtm!,          # Compute inverse of matrix square root inplace
     cov_whitening,      # Compute a whitening transform based on covariance
     cov_whitening!,     # Compute a whitening transform based on covariance (input will be overwritten)
     invsqrtm,           # Compute C^{-1/2}, i.e. inv(sqrtm(C))
@@ -44,7 +46,7 @@ module MultivariateStats
 
     tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
     tresidualvar,       # total residual variance
-    tvar,               # total variance
+    loadings,           # model loadings
 
     ## ppca
     PPCA,               # Type: the Probabilistic PCA model
@@ -74,13 +76,15 @@ module MultivariateStats
     correlations,       # correlations of all projected directions
 
     ## cmds
+    MDS,
     classical_mds,      # perform classical MDS over a given distance matrix
+    eigvals,            # eignenvalues of the transformation
+    stress,             # stress evaluation
 
     gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix
     dmat2gram, dmat2gram!,  # Distance matrix => Gram matrix
 
     ## lda
-    Discriminant,           # Abstract Type: for all discriminant functionals
     LinearDiscriminant,     # Type: Linear Discriminant functional
     MulticlassLDAStats,     # Type: Statistics required for training multi-class LDA
     MulticlassLDA,          # Type: Multi-class LDA model
@@ -94,8 +98,7 @@ module MultivariateStats
     betweenclass_scatter,   # between-class scatter matrix
     multiclass_lda_stats,   # compute statistics for multiclass LDA training
     multiclass_lda,         # train multi-class LDA based on statistics
-    mclda_solve,            # solve multi-class LDA projection given scatter matrices
-    mclda_solve!,           # solve multi-class LDA projection (inputs are overriden)
+    mclda_solve,            # solve multi-class LDA projection given sStatisticalModel
 
     ## ica
     ICA,                    # Type: the Fast ICA model
@@ -109,8 +112,8 @@ module MultivariateStats
     faem,                   # Maximum likelihood probabilistic PCA
     facm                    # EM algorithm for probabilistic PCA
 
-
     ## source files
+    include("types.jl")
     include("common.jl")
     include("lreg.jl")
     include("whiten.jl")
@@ -122,5 +125,19 @@ module MultivariateStats
     include("lda.jl")
     include("ica.jl")
     include("fa.jl")
+
+    ## deprecations
+    @deprecate indim(f::Whitening) length(f::Whitening)
+    @deprecate outdim(f::Whitening) length(f::Whitening)
+    @deprecate indim(f::MulticlassLDA) size(f::MulticlassLDA)[1]
+    @deprecate outdim(f::MulticlassLDA) size(f::MulticlassLDA)[2]
+    @deprecate indim(f::SubspaceLDA) size(f::SubspaceLDA)[1]
+    @deprecate outdim(f::SubspaceLDA) size(f::SubspaceLDA)[2]
+    @deprecate indim(f::PCA) size(f::PCA)[1]
+    @deprecate outdim(f::PCA) size(f::PCA)[2]
+    @deprecate tvar(f::PCA) var(f::PCA) # total variance
+    @deprecate transform(f::PCA, x) predict(f::PCA, x) #ex=false
+    # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
+    # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
 end # module

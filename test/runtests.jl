@@ -8,7 +8,8 @@ tests = ["lreg",
          "ica",
          "ppca",
          "kpca",
-         "fa"]
+         "fa"
+         ]
 
 for test in tests
     include(test*".jl")

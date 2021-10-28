@@ -27,7 +27,6 @@ import Random
     Random.seed!(34568)
 
     ## prepare data
-    let
     d = 5
     ns = [10, 15, 20]
     nc = length(ns)
@@ -120,22 +119,20 @@ import Random
     test_approx_eq_vecs(P1, P2)
 
 
-    ## LDA
+    ## MC-LDA
 
     for T in (Float32, Float64)
         M = fit(MulticlassLDA, nc, convert(Matrix{T}, X), y; method=:gevd, regcoef=convert(T, lambda))
-        @test indim(M) == d
-        @test outdim(M) == nc - 1
+        @test size(M) == (d, nc - 1)
         @test projection(M) ≈ P1
         @test M.pmeans ≈ M.proj'cmeans
-        @test transform(M, X) ≈ M.proj'X
+        @test predict(M, X) ≈ M.proj'X
 
         M = fit(MulticlassLDA, nc, convert(Matrix{T}, X), y; method=:whiten, regcoef=convert(T, lambda))
-        @test indim(M) == d
-        @test outdim(M) == nc - 1
+        @test size(M) == (d, nc - 1)
         # @test projection(M) P2  # signs may change
         @test M.pmeans ≈ M.proj'cmeans
-        @test transform(M, X) ≈ M.proj'X
+        @test predict(M, X) ≈ M.proj'X
     end
 
 
@@ -172,7 +169,7 @@ import Random
         @test classmeans(M) ≈ centers
         @test classweights(M) == w
         x = rand(5)
-        @test transform(M, x) ≈ projection(M)'*x
+        @test predict(M, x) ≈ projection(M)'*x
         dcenters = centers .- totcenter
         Hb = dcenters.*sqrt.(w)'
         Sb = Hb*Hb'
@@ -239,6 +236,14 @@ import Random
         Sw = dX*dX'/(n1+n2)
         @test Sb*proj ≈ Sw*proj*Diagonal(M.λ)
     end
+
+    # Test various input data types
+    for (T, nrm) in Iterators.product((Float64, Float32), (false, true))
+        n2 = 100
+        X, dX, label = gen_ldadata_2(centers, n1, n2)
+        M = fit(SubspaceLDA, convert(Matrix{T}, X), label; normalize=nrm)
+        proj = projection(M)
+        @test eltype(proj) === T
     end
 
 end

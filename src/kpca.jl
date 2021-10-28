@@ -16,7 +16,7 @@ function fit(::Type{KernelCenter}, K::AbstractMatrix{T}) where {T<:Real}
 end
 
 """Center kernel matrix."""
-function transform!(C::KernelCenter{T}, K::AbstractMatrix{T}) where {T<:Real}
+function transform!(C::KernelCenter, K::AbstractMatrix{<:Real})
     r, c = size(K)
     tot = C.total
     means = mean(K, dims=1)
@@ -30,12 +30,12 @@ end
 
 """Kernel PCA type"""
 struct KernelPCA{T<:Real}
-    X::AbstractMatrix{T}  # fitted data
-    ker::Function         # kernel function
-    center::KernelCenter  # kernel center
-    λ::AbstractVector{T}     # eigenvalues  in feature space
-    α::AbstractMatrix{T}     # eigenvectors in feature space
-    inv::AbstractMatrix{T}   # inverse transform coefficients
+    X::AbstractMatrix{T}           # fitted data or precomputed kernel
+    ker::Union{Nothing, Function}  # kernel function
+    center::KernelCenter           # kernel center
+    λ::AbstractVector{T}           # eigenvalues  in feature space
+    α::AbstractMatrix{T}           # eigenvectors in feature space
+    inv::AbstractMatrix{T}         # inverse transform coefficients
 end
 
 ## properties
@@ -49,23 +49,21 @@ principalvars(M::KernelPCA) = M.λ
 ## use
 
 """Calculate transformation to kernel space"""
-function transform(M::KernelPCA{T}, x::AbstractVecOrMat{T}) where {T<:Real}
-    k = pairwise(M.ker, M.X, x)
+function transform(M::KernelPCA, x::AbstractVecOrMat{<:Real})
+    k = pairwise(M.ker, eachcol(M.X), eachcol(x))
     transform!(M.center, k)
     return projection(M)'*k
 end
 
-function transform(M::KernelPCA{T}) where {T<:Real}
-    return projection(M)'*M.X
-end
+transform(M::KernelPCA) = sqrt.(M.λ) .* M.α'
 
 """Calculate inverse transformation to original space"""
-function reconstruct(M::KernelPCA{T}, y::AbstractVecOrMat{T}) where {T<:Real}
+function reconstruct(M::KernelPCA, y::AbstractVecOrMat{<:Real})
     if size(M.inv, 1) == 0
         throw(ArgumentError("Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"))
     end
     Pᵗ = M.α' .* sqrt.(M.λ)
-    k = pairwise(M.ker, Pᵗ, y)
+    k = pairwise(M.ker, eachcol(Pᵗ), eachcol(y))
     return M.inv*k
 end
 
@@ -75,65 +73,28 @@ function Base.show(io::IO, M::KernelPCA)
     print(io, "Kernel PCA(indim = $(indim(M)), outdim = $(outdim(M)))")
 end
 
-## core algorithms
-
-function pairwise!(K::AbstractVecOrMat{T}, kernel::Function,
-                   X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where {T<:Real}
-    n = size(X, 2)
-    m = size(Y, 2)
-    for j = 1:m
-        aj = view(Y, :, j)
-        for i in j:n
-            @inbounds K[i, j] = kernel(view(X, :, i), aj)[]
-        end
-        j <= n && for i in 1:(j - 1)
-            @inbounds K[i, j] = K[j, i]   # leveraging the symmetry
-        end
-    end
-    K
-end
-
-pairwise!(K::AbstractVecOrMat{T}, kernel::Function, X::AbstractVecOrMat{T}) where {T<:Real} =
-    pairwise!(K, kernel, X, X)
-
-function pairwise(kernel::Function, X::AbstractVecOrMat{T}, Y::AbstractVecOrMat{T}) where {T<:Real}
-    n = size(X, 2)
-    m = size(Y, 2)
-    K = similar(X, n, m)
-    pairwise!(K, kernel, X, Y)
-end
-
-pairwise(kernel::Function, X::AbstractVecOrMat{T}) where {T<:Real} =
-    pairwise(kernel, X, X)
-
 ## interface functions
 
 function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
-             kernel = (x,y)->x'y,
+             kernel::Union{Nothing, Function} = (x,y)->x'y,
              maxoutdim::Int = min(size(X)...),
              remove_zero_eig::Bool = false, atol::Real = 1e-10,
              solver::Symbol = :eig,
-             inverse::Bool = false,  β::Real = 1.0,
+             inverse::Bool = false,  β::Real = convert(T, 1.0),
              tol::Real = 0.0, maxiter::Real = 300) where {T<:Real}
 
     d, n = size(X)
-    Kfunc = (x,y)->error("Kernel is precomputed.")
-
     maxoutdim = min(min(d, n), maxoutdim)
 
+    # set kernel function if available
     K = if isa(kernel, Function)
-        pairwise(kernel, X)
+        pairwise(kernel, eachcol(X), symmetric=true)
     elseif kernel === nothing
         @assert issymmetric(X) "Precomputed kernel matrix must be symmetric."
         inverse = false
         X
     else
-        throw(ArgumentError("Incorrect kernel type. Use function or symmetric matrix."))
-    end
-
-    # set kernel function if available
-    if isa(kernel, Function)
-        Kfunc = kernel
+        throw(ArgumentError("Incorrect kernel type. Use a function or a precomputed kernel."))
     end
 
     # center kernel
@@ -150,7 +111,8 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
     end
 
     # sort eigenvalues in descending order
-    ord = sortperm(evl; rev=true)[1:maxoutdim]
+    ord = sortperm(evl; rev=true)
+    ord = ord[1:min(length(ord), maxoutdim)]
 
     # remove zero eigenvalues
     λ, α = if remove_zero_eig
@@ -164,9 +126,9 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
     Q = zeros(T, 0, 0)
     if inverse
         Pᵗ = α' .* sqrt.(λ)
-        KT = pairwise(Kfunc, Pᵗ)
+        KT = pairwise(kernel, eachcol(Pᵗ), symmetric=true)
         Q = (KT + diagm(0 => fill(β, size(KT,1)))) \ X'
     end
 
-    KernelPCA(X, Kfunc, center, λ, α, Q')
+    KernelPCA(X, kernel, center, λ, α, Q')
 end
