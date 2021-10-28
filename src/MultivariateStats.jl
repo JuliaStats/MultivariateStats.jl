@@ -7,7 +7,7 @@ module MultivariateStats
     import StatsBase: fit, predict, predict!, ConvergenceException, coef, weights,
                       dof, pairwise, r2
     import SparseArrays
-    import LinearAlgebra: eigvals
+    import LinearAlgebra: eigvals, eigvecs
 
     export
 

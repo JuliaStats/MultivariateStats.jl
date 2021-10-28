@@ -1,7 +1,8 @@
 # Principal Component Analysis
 
-#### PCA type
-
+"""
+Linear Principal Component Analysis
+"""
 struct PCA{T<:Real} <: LinearDimensionalityReduction
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     proj::Matrix{T}       # projection matrix: of size d x p
@@ -24,27 +25,102 @@ function PCA(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T) where 
 end
 
 ## properties
+"""
+    size(M)
 
+Returns a tuple with the dimensions of input (the dimension of the observation space)
+and output (the dimension of the principal subspace).
+"""
 size(M::PCA) = size(M.proj)
+
+"""
+    mean(M::PCA)
+
+Returns the mean vector (of length `d`).
+"""
 mean(M::PCA) = fullmean(size(M.proj,1), M.mean)
+
+"""
+    projection(M::PCA)
+
+Returns the projection matrix (of size `(d, p)`). Each column of the projection matrix corresponds to a principal component.
+The principal components are arranged in descending order of the corresponding variances.
+"""
 projection(M::PCA) = M.proj
+eigvecs(M::PCA) = projection(M)
 
-principalvar(M::PCA, i::Int) = M.prinvars[i]
+"""
+    principalvars(M::PCA)
+
+Returns the variances of principal components.
+"""
 principalvars(M::PCA) = M.prinvars
+principalvar(M::PCA, i::Int) = M.prinvars[i]
+eigvals(M::PCA) = principalvars(M)
 
+"""
+    tprincipalvar(M::PCA)
+
+Returns the total variance of principal components, which is equal to `sum(principalvars(M))`.
+"""
 tprincipalvar(M::PCA) = M.tprinvar
+
+"""
+    tresidualvar(M::PCA)
+
+Returns the total residual variance.
+"""
 tresidualvar(M::PCA) = M.tvar - M.tprinvar
+
+"""
+    var(M::PCA)
+
+Returns the total observation variance, which is equal to `tprincipalvar(M) + tresidualvar(M)`.
+"""
 var(M::PCA) = M.tvar
 
+"""
+    r2(M::PCA)
+    principalratio(M::PCA)
+
+Returns the ratio of variance preserved in the principal subspace, which is equal to `tprincipalvar(M) / var(M)`.
+"""
 r2(M::PCA) = M.tprinvar / M.tvar
 const principalratio = r2
 
+"""
+    loadings(M::PCA)
+
+Returns model loadings, i.e. the weights for each original variable when calculating the principal component.
+"""
 loadings(M::PCA) = sqrt.(principalvars(M))' .* projection(M)
 
 ## use
 
-predict(M::PCA, x::AbstractVecOrMat{<:Real}) = transpose(M.proj) * centralize(x, M.mean)
-reconstruct(M::PCA, y::AbstractVecOrMat{<:Real}) = decentralize(M.proj * y, M.mean)
+"""
+    predict(M::PCA, x::AbstractVecOrMat{<:Real})
+
+Given a PCA model `M`, retur transform observations `x` into principal components space, as
+
+\$\\mathbf{y} = \\mathbf{P}^T (\\mathbf{x} - \\boldsymbol{\\mu})\$
+
+Here, `x` can be either a vector of length `d` or a matrix where each column is an observation,
+and `\\mathbf{P}` is the projection matrix.
+"""
+predict(M::PCA, x::AbstractVecOrMat{T}) where {T<:Real} = transpose(M.proj) * centralize(x, M.mean)
+
+"""
+    reconstruct(M::PCA, y::AbstractVecOrMat{<:Real})
+
+Given a PCA model `M`, returns a (approximately) reconstructed observations
+from principal components space, as
+
+\$\\tilde{\\mathbf{x}} = \\mathbf{P} \\mathbf{y} + \\boldsymbol{\\mu}\$
+
+Here, `y` can be either a vector of length `p` or a matrix where each column
+gives the principal components for an observation, and \$\\mathbf{P}\$ is the projection matrix.
+"""
+reconstruct(M::PCA, y::AbstractVecOrMat{T}) where {T<:Real} = decentralize(M.proj * y, M.mean)
 
 ## show & dump
 
@@ -95,7 +171,18 @@ end
 
 
 ## core algorithms
+"""
+    pcacov(C, mean; ...)
 
+Compute and return a PCA model based on eigenvalue decomposition of a given covariance matrix `C`.
+
+**Parameters:**
+- `C`: The covariance matrix of the samples.
+- `mean`: The mean vector of original samples, which can be a vector of length `d`,
+           or an empty vector `Float64[]` indicating a zero mean.
+
+*Note:* This function accepts two keyword arguments: `maxoutdim` and `pratio`.
+"""
 function pcacov(C::AbstractMatrix{T}, mean::Vector{T};
                 maxoutdim::Int=size(C,1),
                 pratio::Real=default_pca_pratio) where {T<:Real}
@@ -110,7 +197,20 @@ function pcacov(C::AbstractMatrix{T}, mean::Vector{T};
     PCA(mean, P, v, vsum)
 end
 
-function pcasvd(Z::AbstractMatrix{T}, mean::Vector{T}, tw::Real;
+"""
+    pcasvd(Z, mean, tw; ...)
+
+Compute and return a PCA model based on singular value decomposition of a centralized sample matrix `Z`.
+
+**Parameters:**
+- `Z`: a matrix of centralized samples.
+- `mean`: The mean vector of the **original** samples, which can be a vector of length `d`,
+          or an empty vector `Float64[]` indicating a zero mean.
+- `n`: a number of samples.
+
+*Note:* This function accepts two keyword arguments: `maxoutdim` and `pratio`.
+"""
+function pcasvd(Z::AbstractMatrix{T}, mean::Vector{T}, n::Real;
                 maxoutdim::Int=min(size(Z)...),
                 pratio::Real=default_pca_pratio) where {T<:Real}
 
@@ -119,7 +219,7 @@ function pcasvd(Z::AbstractMatrix{T}, mean::Vector{T}, tw::Real;
     v = Svd.S::Vector{T}
     U = Svd.U::Matrix{T}
     for i = 1:length(v)
-        @inbounds v[i] = abs2(v[i]) / tw
+        @inbounds v[i] = abs2(v[i]) / n
     end
     ord = sortperm(v; rev=true)
     vsum = sum(v)
@@ -129,7 +229,32 @@ function pcasvd(Z::AbstractMatrix{T}, mean::Vector{T}, tw::Real;
 end
 
 ## interface functions
+"""
+    fit(PCA, X; ...)
 
+Perform PCA over the data given in a matrix `X`. Each column of `X` is an **observation**.
+
+**Keyword arguments**
+
+- `method`: The choice of methods:
+    - `:auto`: use `:cov` when `d < n` or `:svd` otherwise (*default*).
+    - `:cov`: based on covariance matrix decomposition.
+    - `:svd`: based on SVD of the input data.
+- `maxoutdim`: The output dimension, i.e. dimension of the transformed space (*min(d, nc-1)*)
+- `pratio`: The ratio of variances preserved in the principal subspace (*0.99*)
+- `mean`: The mean vector, which can be either of
+    - `0`: the input data has already been centralized
+    - `nothing`: this function will compute the mean (*default*)
+    - a pre-computed mean vector
+
+**Notes:**
+
+- The output dimension `p` depends on both `maxoutdim` and `pratio`, as follows. Suppose
+  the first `k` principal components preserve at least `pratio` of the total variance, while the
+  first `k-1` preserves less than `pratio`, then the actual output dimension will be \$\\min(k, maxoutdim)\$.
+
+- This function calls [`pcacov`](@ref) or [`pcasvd`](@ref) internally, depending on the choice of method.
+"""
 function fit(::Type{PCA}, X::AbstractMatrix{T};
              method::Symbol=:auto,
              maxoutdim::Int=size(X,1),

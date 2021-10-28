@@ -20,8 +20,8 @@ Table of the package models and corresponding function names used by these model
 |loadings          |  ?  |     |     |  ?  |  x  |  x  |  ?  |  ?  |  ?  |
 |eigvals           |     |     |     |     |  ?  |  ?  |  ?  |  ?  |  x  |
 |eigvecs           |     |     |     |     | ?   |  ?  |  ?  |  ?  |  ?  |
-|length            |     |     |     |     |    |    |    |    |    |
-|size              |     |     |     |     |    |    |    |    |    |
+|length            |     |     |     |     |     |     |     |     |     |
+|size              |     |     |     |     |     |     |     |     |     |
 
 Note: `?` refers to a possible implementation that is missing or called differently.
 
@@ -35,44 +35,43 @@ Note: `?` refers to a possible implementation that is missing or called differen
 |indim             |  -  |     |     |  -   |   -  |  x  |  x  |  x  |  x  |  x  |  x  |
 |outdim            |  -  |  x  |     |  -   |   -  |  x  |  x  |  x  |  x  |  x  |  x  |
 |mean              |  x  |  x  |     |  x   |   x  |  x  |  x  |  x  |  x  |  ?  |     |
-|var               |     |     |     |      |      |     |  x  |  x  |  ?  |  ?  |  ?  |
-|cov               |     |     |     |      |      |     |  x  |  ?  |     |     |     |
+|var               |     |     |     |      |      |     |  x  |  x  |  x  |  ?  |  ?  |
+|cov               |     |     |     |      |      |     |  x  |  x  |     |     |     |
 |cor               |     |  x  |     |      |      |     |     |     |     |     |     |
 |projection        |  ?  |  x  |     |  x   |   x  |     |  x  |  x  |  x  |  x  |  x  |
 |reconstruct       |     |     |     |      |      |     |  x  |  x  |  x  |  x  |     |
-|loadings          |     |  ?  |     |      |      |     |  x  |  x  |  ?  |  ?  |  ?  |
-|eigvals           |     |     |     |      |   +  |     |  ?  |  ?  |  ?  |  ?  |  x  |
-|eigvecs           |     |     |     |      |      |     | ?   |  ?  |  ?  |  ?  |  ?  |
+|loadings          |     |  ?  |     |      |      |     |  x  |  x  |  x  |  ?  |  ?  |
+|eigvals           |     |     |     |      |   +  |     |  ?  |  ?  |  x  |  ?  |  x  |
+|eigvecs           |     |     |     |      |      |     |  ?  |  ?  |  x  |  ?  |  ?  |
 |length            |  +  |     |  +  |  +   |   +  |     |     |     |     |     |     |
-|size              |  +  |     |     |  +   |   +  |     |     |     |     |     |     |
+|size              |  +  |     |     |  +   |   +  |     |     |     |  x  |     |     |
 |                  |     |     |     |      |      |     |     |     |     |     |     |
 
 - StatsBase.AbstractDataTransform
     - Whitening
-      - Interface: fit, transfrom
+      - Interface: fit, transform
       - New: length, mean, size
 - StatsBase.RegressionModel
+    - *Interface:* fit, predict
     - LinearDiscriminant
-      - Methods:
-        - Interface: fit, predict, coef, dof, weights
-        - New: evaluate, length
+      - Functions: coef, dof, weights, evaluate, length
     - MulticlassLDA
-      - Methods: fit, predict, size, mean, projection
-      - New: length
+      - Functions: size, mean, projection, length
     - SubspaceLDA
-      - Methods: fit, predict, size, mean, projection
-      - New: length, eigvals
+      - Functions: size, mean, projection, length, eigvals
     - CCA
-      - Methods: fit, transfrom, indim, outdim, mean
+      - Functions: indim, outdim, mean
     - Subtypes:
         - AbstractDimensionalityReduction
-        - Methods: projection, var, reconstruct, loadings
+          - *Interface:* projection, var, reconstruct, loadings
+          - *Interface:* projection == weights
         - Subtypes:
             - LinearDimensionalityReduction
                 - Methods: ICA, PCA
             - NonlinearDimensionalityReduction
                 - Methods: KPCA, MDS
+                  - Functions: modelmatrix (X),
             - LatentVariableModel or LatentVariableDimensionalityReduction
                 - Methods: FA, PPCA
-                - Methods: cov
+                  - Functions: cov
 
