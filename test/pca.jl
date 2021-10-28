@@ -93,7 +93,7 @@ import SparseArrays
     @test issorted(pvs; rev=true)
     @test pvs ≈ pvs0
     @test var(M) ≈ tv
-    @test sum(pvs) ≈ tvar(M)
+    @test sum(pvs) ≈ var(M)
     @test reconstruct(M, predict(M, X)) ≈ X
 
     M = fit(PCA, X; mean=mval)
@@ -127,9 +127,9 @@ import SparseArrays
     @test isapprox(C*P, P*Diagonal(pvs), atol=1.0e-3)
     @test issorted(pvs; rev=true)
     @test isapprox(pvs, pvs0, atol=1.0e-3)
-    @test isapprox(tvar(M), tv, atol=1.0e-3)
-    @test sum(pvs) ≈ tvar(M)
-    @test reconstruct(M, transform(M, X)) ≈ X
+    @test isapprox(var(M), tv, atol=1.0e-3)
+    @test sum(pvs) ≈ var(M)
+    @test reconstruct(M, predict(M, X)) ≈ X
 
     M = fit(PCA, X; method=:svd, mean=mval)
     @test projection(M) ≈ P
