@@ -4,16 +4,16 @@
 Linear Principal Component Analysis
 """
 struct PCA{T<:Real} <: LinearDimensionalityReduction
-    mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
-    proj::Matrix{T}       # projection matrix: of size d x p
-    prinvars::Vector{T}   # principal variances: of length p
+    mean::AbstractVector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
+    proj::AbstractMatrix{T}       # projection matrix: of size d x p
+    prinvars::AbstractVector{T}   # principal variances: of length p
     tprinvar::T           # total principal variance, i.e. sum(prinvars)
     tvar::T               # total input variance
 end
 
 ## constructor
 
-function PCA(mean::Vector{T}, proj::Matrix{T}, pvars::Vector{T}, tvar::T) where {T<:Real}
+function PCA(mean::AbstractVector{T}, proj::AbstractMatrix{T}, pvars::AbstractVector{T}, tvar::T) where {T<:Real}
     d, p = size(proj)
     (isempty(mean) || length(mean) == d) ||
         throw(DimensionMismatch("Dimensions of mean and projection matrix are inconsistent."))
@@ -183,7 +183,7 @@ Compute and return a PCA model based on eigenvalue decomposition of a given cova
 
 *Note:* This function accepts two keyword arguments: `maxoutdim` and `pratio`.
 """
-function pcacov(C::AbstractMatrix{T}, mean::Vector{T};
+function pcacov(C::AbstractMatrix{T}, mean::AbstractVector{T};
                 maxoutdim::Int=size(C,1),
                 pratio::Real=default_pca_pratio) where {T<:Real}
 
@@ -210,7 +210,7 @@ Compute and return a PCA model based on singular value decomposition of a centra
 
 *Note:* This function accepts two keyword arguments: `maxoutdim` and `pratio`.
 """
-function pcasvd(Z::AbstractMatrix{T}, mean::Vector{T}, n::Real;
+function pcasvd(Z::AbstractMatrix{T}, mean::AbstractVector{T}, n::Real;
                 maxoutdim::Int=min(size(Z)...),
                 pratio::Real=default_pca_pratio) where {T<:Real}
 
