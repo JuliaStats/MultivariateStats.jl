@@ -10,44 +10,6 @@ Properties
 
 Let ``M`` be an instance of ``PCA``, ``d`` be the dimension of observations, and ``p`` be the output dimension (*i.e* the dimension of the principal subspace)
 
-.. function:: indim(M)
-
-    Get the input dimension ``d``, *i.e* the dimension of the observation space.
-
-.. function:: outdim(M)
-
-    Get the output dimension ``p``, *i.e* the dimension of the principal subspace.
-
-.. function:: mean(M)
-
-    Get the mean vector (of length ``d``).
-
-.. function:: projection(M)
-
-    Get the projection matrix (of size ``(d, p)``). Each column of the projection matrix corresponds to a principal component.
-
-    The principal components are arranged in descending order of the corresponding variances.
-
-.. function:: principalvars(M)
-
-    The variances of principal components.
-
-.. function:: tprincipalvar(M)
-
-    The total variance of principal components, which is equal to ``sum(principalvars(M))``.
-
-.. function:: tresidualvar(M)
-
-    The total residual variance.
-
-.. function:: tvar(M)
-
-    The total observation variance, which is equal to ``tprincipalvar(M) + tresidualvar(M)``.
-
-.. function:: principalratio(M)
-
-    The ratio of variance preserved in the principal subspace, which is equal to ``tprincipalvar(M) / tvar(M)``.
-
 
 Transformation and Construction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -70,7 +32,7 @@ The package provides methods to do so:
 
 .. function:: transform(M, x)
 
-    Transform observations ``x`` into principal components. 
+    Transform observations ``x`` into principal components.
 
     Here, ``x`` can be either a vector of length ``d`` or a matrix where each column is an observation.
 
@@ -116,10 +78,10 @@ One can use the ``fit`` method to perform PCA over a given dataset.
                 - a pre-computed mean vector
     =========== =============================================================== ===============
 
-    **Notes:** 
+    **Notes:**
 
     - The output dimension ``p`` depends on both ``maxoutdim`` and ``pratio``, as follows. Suppose
-      the first ``k`` principal components preserve at least ``pratio`` of the total variance, while the 
+      the first ``k`` principal components preserve at least ``pratio`` of the total variance, while the
       first ``k-1`` preserves less than ``pratio``, then the actual output dimension will be ``min(k, maxoutdim)``.
 
     - This function calls ``pcacov`` or ``pcasvd`` internally, depending on the choice of method.
@@ -134,7 +96,7 @@ One can use the ``fit`` method to perform PCA over a given dataset.
     # with each observation in a column
 
     # train a PCA model
-    M = fit(PCA, Xtr; maxoutdim=100) 
+    M = fit(PCA, Xtr; maxoutdim=100)
 
     # apply PCA model to testing set
     Yte = transform(M, Xte)
@@ -149,7 +111,7 @@ One can use the ``fit`` method to perform PCA over a given dataset.
     using MultivariateStats, RDatasets, Plots
     plotly() # using plotly for 3D-interacive graphing
 
-    # load iris dataset 
+    # load iris dataset
     iris = dataset("datasets", "iris")
 
     # split half to training set
@@ -186,7 +148,7 @@ One can use the ``fit`` method to perform PCA over a given dataset.
 Core Algorithms
 ~~~~~~~~~~~~~~~~~
 
-Two algorithms are implemented in this package: ``pcacov`` and ``pcasvd``. 
+Two algorithms are implemented in this package: ``pcacov`` and ``pcasvd``.
 
 .. function:: pcacov(C, mean; ...)
 
@@ -194,7 +156,7 @@ Two algorithms are implemented in this package: ``pcacov`` and ``pcasvd``.
 
     :param C: The covariance matrix.
 
-    :param mean: The mean vector of original samples, which can be a vector of length ``d``, 
+    :param mean: The mean vector of original samples, which can be a vector of length ``d``,
            or an empty vector ``Float64[]`` indicating a zero mean.
 
     :return: The resultant PCA model.
@@ -205,9 +167,9 @@ Two algorithms are implemented in this package: ``pcacov`` and ``pcasvd``.
 
     Compute PCA based on singular value decomposition of a centralized sample matrix ``Z``.
 
-    :param Z: provides centralized samples. 
+    :param Z: provides centralized samples.
 
-    :param mean: The mean vector of the **original** samples, which can be a vector of length ``d``, 
+    :param mean: The mean vector of the **original** samples, which can be a vector of length ``d``,
                  or an empty vector ``Float64[]`` indicating a zero mean.
 
     :return: The resultant PCA model.

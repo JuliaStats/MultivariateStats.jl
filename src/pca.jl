@@ -55,7 +55,13 @@ eigvecs(M::PCA) = projection(M)
 Returns the variances of principal components.
 """
 principalvars(M::PCA) = M.prinvars
-principalvar(M::PCA, i::Int) = M.prinvars[i]
+
+"""
+    principalvar(M::PCA, i::Int)
+
+Returns the `i`th component of variance.
+"""
+principalvar(M::PCA, i::Int) = principalvars(M)[i]
 eigvals(M::PCA) = principalvars(M)
 
 """
@@ -134,7 +140,7 @@ function dump(io::IO, M::PCA)
     println(io)
     print(io, "principal vars: ")
     printvecln(io, M.prinvars)
-    println(io, "total var = $(tvar(M))")
+    println(io, "total var = $(var(M))")
     println(io, "total principal var = $(tprincipalvar(M))")
     println(io, "total residual var  = $(tresidualvar(M))")
     println(io, "mean:")
