@@ -100,14 +100,27 @@ import Random
     LL(m, x) = (-size(x,2)/2)*(size(x,1)*log(2π) + log(det(cov(m))) + tr(inv(cov(m))*cov(x, dims=2)))
     @test LL(M1, X) ≈ LL(M2, X) # log likelihood
 
-    # test that fit works with Float32 values
-    X2 = convert(Array{Float32,2}, X)
-    # Float32 input
-    M = fit(FactorAnalysis, X2; method=:cm, maxoutdim=3)
-    M = fit(FactorAnalysis, X2; method=:em, maxoutdim=3)
+    # test with different types
+    XX = convert.(Float32, X)
+    YY = convert.(Float32, Y)
+
+    for method in (:cm, :em)
+        MM = fit(FactorAnalysis, XX; method=method, maxoutdim=3)
+
+        # mixing types
+        transform(M, XX)
+        transform(MM, X)
+        reconstruct(M, YY)
+        reconstruct(MM, Y)
+
+        # type stability
+        for func in (mean, projection, cov, var, loadings)
+            @test eltype(func(M)) == Float64
+            @test eltype(func(MM)) == Float32
+        end
+    end
 
     # views
-    M = fit(FactorAnalysis, view(X2, :, 1:100), method=:cm, maxoutdim=3)
-    M = fit(FactorAnalysis, view(X2, :, 1:100), method=:em, maxoutdim=3)
-
+    M = fit(FactorAnalysis, view(XX, :, 1:100), method=:cm, maxoutdim=3)
+    M = fit(FactorAnalysis, view(XX, :, 1:100), method=:em, maxoutdim=3)
 end

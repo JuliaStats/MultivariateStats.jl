@@ -11,7 +11,7 @@ indim(M::ICA) = size(M.W, 1)
 outdim(M::ICA) = size(M.W, 2)
 mean(M::ICA) = fullmean(indim(M), M.mean)
 
-transform(M::ICA, x::AbstractVecOrMat) = transpose(M.W) * centralize(x, M.mean)
+transform(M::ICA, x::AbstractVecOrMat{<:Real}) = transpose(M.W) * centralize(x, M.mean)
 
 
 #### core algorithm

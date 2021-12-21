@@ -18,7 +18,7 @@ The package uses ``Whitening`` defined below to represent a whitening transform:
 
 .. code-block:: julia
 
-    immutable Whitening{T<:FloatingPoint}
+    struct Whitening{T<:FloatingPoint}
         mean::Vector{T}     # mean vector (can be empty to indicate zero mean), of length d
         W::Matrix{T}        # the transform coefficient matrix, of size (d, d)
     end

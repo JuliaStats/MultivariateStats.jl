@@ -16,7 +16,7 @@ function fit(::Type{KernelCenter}, K::AbstractMatrix{T}) where {T<:Real}
 end
 
 """Center kernel matrix."""
-function transform!(C::KernelCenter{T}, K::AbstractMatrix{T}) where {T<:Real}
+function transform!(C::KernelCenter, K::AbstractMatrix{<:Real})
     r, c = size(K)
     tot = C.total
     means = mean(K, dims=1)
@@ -49,8 +49,8 @@ principalvars(M::KernelPCA) = M.λ
 ## use
 
 """Calculate transformation to kernel space"""
-function transform(M::KernelPCA{T}, x::AbstractVecOrMat{T}) where {T<:Real}
-    k = pairwise(M.ker, M.X, x)
+function transform(M::KernelPCA, x::AbstractVecOrMat{<:Real})
+    k = pairwise(M.ker, eachcol(M.X), eachcol(x))
     transform!(M.center, k)
     return projection(M)'*k
 end
@@ -58,12 +58,12 @@ end
 transform(M::KernelPCA) = sqrt.(M.λ) .* M.α'
 
 """Calculate inverse transformation to original space"""
-function reconstruct(M::KernelPCA{T}, y::AbstractVecOrMat{T}) where {T<:Real}
+function reconstruct(M::KernelPCA, y::AbstractVecOrMat{<:Real})
     if size(M.inv, 1) == 0
         throw(ArgumentError("Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"))
     end
     Pᵗ = M.α' .* sqrt.(M.λ)
-    k = pairwise(M.ker, Pᵗ, y)
+    k = pairwise(M.ker, eachcol(Pᵗ), eachcol(y))
     return M.inv*k
 end
 
@@ -80,7 +80,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
              maxoutdim::Int = min(size(X)...),
              remove_zero_eig::Bool = false, atol::Real = 1e-10,
              solver::Symbol = :eig,
-             inverse::Bool = false,  β::Real = 1.0,
+             inverse::Bool = false,  β::Real = convert(T, 1.0),
              tol::Real = 0.0, maxiter::Real = 300) where {T<:Real}
 
     d, n = size(X)
@@ -88,7 +88,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
 
     # set kernel function if available
     K = if isa(kernel, Function)
-        pairwise(kernel, X)
+        pairwise(kernel, eachcol(X), symmetric=true)
     elseif kernel === nothing
         @assert issymmetric(X) "Precomputed kernel matrix must be symmetric."
         inverse = false
@@ -126,7 +126,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
     Q = zeros(T, 0, 0)
     if inverse
         Pᵗ = α' .* sqrt.(λ)
-        KT = pairwise(kernel, Pᵗ)
+        KT = pairwise(kernel, eachcol(Pᵗ), symmetric=true)
         Q = (KT + diagm(0 => fill(β, size(KT,1)))) \ X'
     end
 

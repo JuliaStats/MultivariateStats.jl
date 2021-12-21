@@ -132,14 +132,21 @@ import Random
     @test Px ≈ MultivariateStats.qnormalize!(Cxx \ (Cxy * Py), Cxx)
     @test Py ≈ MultivariateStats.qnormalize!(Cyy \ (Cyx * Px), Cyy)
 
-    # different input type
-    XX = convert(Matrix{Float32}, X)
-    YY = convert(Matrix{Float32}, Y)
-    M = fit(CCA, view(XX, :, 1:400), view(YY, :, 1:400); method=:svd, outdim=p)
-    @test eltype(xmean(M)) == Float32
-    @test eltype(ymean(M)) == Float32
-    @test eltype(xprojection(M)) == Float32
-    @test eltype(yprojection(M)) == Float32
-    @test eltype(correlations(M)) == Float32
+    # different input types
+    XX = convert.(Float32, X)
+    YY = convert.(Float32, Y)
 
+    MM = fit(CCA, view(XX, :, 1:400), view(YY, :, 1:400); method=:svd, outdim=p)
+
+    # test that mixing types doesn't error
+    xtransform(M, XX)
+    ytransform(M, YY)
+    xtransform(MM, XX)
+    ytransform(MM, YY)
+    
+    # type stability
+    for func in (xmean, ymean, xprojection, yprojection, correlations)
+        @test eltype(func(M)) == Float64
+        @test eltype(func(MM)) == Float32
+    end
 end

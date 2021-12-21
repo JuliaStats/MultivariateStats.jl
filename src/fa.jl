@@ -18,14 +18,14 @@ loadings(M::FactorAnalysis) = M.W
 
 ## use
 
-function transform(m::FactorAnalysis{T}, x::AbstractVecOrMat{T}) where T<:Real
+function transform(m::FactorAnalysis, x::AbstractVecOrMat{<:Real})
     xn = centralize(x, mean(m))
     W = m.W
     WᵀΨ⁻¹ = W'*diagm(0 => 1 ./ m.Ψ)  # (q x d) * (d x d) = (q x d)
     return inv(I+WᵀΨ⁻¹*W)*(WᵀΨ⁻¹*xn)  # (q x q) * (q x d) * (d x 1) = (q x 1)
 end
 
-function reconstruct(m::FactorAnalysis{T}, z::AbstractVecOrMat{T}) where T<:Real
+function reconstruct(m::FactorAnalysis, z::AbstractVecOrMat{<:Real})
     W  = m.W
     # ΣW(W'W)⁻¹z+μ = ΣW(W'W)⁻¹W'Σ⁻¹(x-μ)+μ = Σ(WW⁻¹)((W')⁻¹W')Σ⁻¹(x-μ)+μ = ΣΣ⁻¹(x-μ)+μ = (x-μ)+μ = x
     return cov(m)*W*inv(W'W)*z .+ mean(m)

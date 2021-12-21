@@ -74,7 +74,7 @@ The package defines a ``MulticlassLDA`` type to represent a multi-class LDA mode
 
 .. code-block:: julia
 
-    type MulticlassLDA
+    mutable struct MulticlassLDA
         proj::Matrix{Float64}
         pmeans::Matrix{Float64}
         stats::MulticlassLDAStats
@@ -205,7 +205,7 @@ Sometimes, it is useful to only perform one of these tasks. The package exposes 
 
     .. code-block:: julia
 
-        type MulticlassLDAStats
+        mutable struct MulticlassLDAStats
             dim::Int                    # sample dimensions
             nclasses::Int               # number of classes
             cweights::Vector{Float64}   # class weights
@@ -269,7 +269,7 @@ serves to regularize the computation.
 
 .. code-block:: julia
 
-    immutable SubspaceLDA{T<:Real}
+    struct SubspaceLDA{T<:Real}
         projw::Matrix{T}   # P, project down to the subspace spanned by within-class scatter
         projLDA::Matrix{T} # L, LDA directions in the projected subspace
         λ::Vector{T}
