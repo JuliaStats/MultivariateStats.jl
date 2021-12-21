@@ -1,38 +1,39 @@
 module MultivariateStats
     using LinearAlgebra
-    using StatsBase: SimpleCovariance, CovarianceEstimator
+    using StatsBase: SimpleCovariance, CovarianceEstimator, RegressionModel,
+                     AbstractDataTransform, pairwise!
     import Statistics: mean, var, cov, covm
-    import Base: length, size, show, dump, eltype
-    import StatsBase: fit, predict, ConvergenceException
+    import Base: length, size, show, dump
+    import StatsBase: fit, predict, predict!, ConvergenceException, coef, weights,
+                      dof, pairwise, r2
     import SparseArrays
-    import LinearAlgebra: eigvals
+    import LinearAlgebra: eigvals, eigvecs
 
     export
 
     ## common
-    evaluate,                  # evaluate discriminant function values (imported from Base)
-    predict,                   # use a model to predict responses (imported from StatsBase)
-    fit,                       # fit a model to data (imported from StatsBase)
-    centralize,                # subtract a mean vector from each column
-    decentralize,              # add a mean vector to each column
-    indim,                     # the input dimension of a model
-    outdim,                    # the output dimension of a model
-    projection,                # the projection matrix
-    reconstruct,               # reconstruct the input (approximately) given the output
-    transform,                 # apply a model to transform a vector or a matrix
+    evaluate,           # evaluate discriminant function values
+    predict,            # use a model to predict responses (imported from StatsBase)
+    fit,                # fit a model to data (imported from StatsBase)
+    centralize,         # subtract a mean vector from each column
+    decentralize,       # add a mean vector to each column
+    indim,              # the input dimension of a model
+    outdim,             # the output dimension of a model
+    projection,         # the projection matrix
+    reconstruct,        # reconstruct the input (approximately) given the output
+    transform,          # apply a model to transform a vector or a matrix
 
-    ## lreg
-    llsq,                      # Linear Least Square regression
-    ridge,                     # Ridge regression
+    # lreg
+    llsq,               # Linear Least Square regression
+    ridge,              # Ridge regression
 
-    ## whiten
-    Whitening,                 # Type: Whitening transformation
+    # whiten
+    Whitening,          # Type: Whitening transformation
 
-    invsqrtm,                  # Compute inverse of matrix square root, i.e. inv(sqrtm(A))
-    invsqrtm!,                 # Compute inverse of matrix square root inplace
-    cov_whitening,             # Compute a whitening transform based on covariance
-    cov_whitening!,            # Compute a whitening transform based on covariance (input will be overwritten)
-    invsqrtm,                  # Compute C^{-1/2}, i.e. inv(sqrtm(C))
+    invsqrtm,           # Compute inverse of matrix square root, i.e. inv(sqrtm(A))
+    cov_whitening,      # Compute a whitening transform based on covariance
+    cov_whitening!,     # Compute a whitening transform based on covariance (input will be overwritten)
+    invsqrtm,           # Compute C^{-1/2}, i.e. inv(sqrtm(C))
 
     ## pca
     PCA,                       # Type: Principal Component Analysis model
@@ -43,9 +44,9 @@ module MultivariateStats
     principalvar,              # the variance along a specific principal direction
     principalvars,             # the variances along all principal directions
 
-    tprincipalvar,             # total principal variance, i.e. sum(principalvars(M))
-    tresidualvar,              # total residual variance
-    tvar,                      # total variance
+    tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
+    tresidualvar,       # total residual variance
+    loadings,           # model loadings
 
     ## ppca
     PPCA,                      # Type: the Probabilistic PCA model
@@ -84,22 +85,20 @@ module MultivariateStats
     dmat2gram, dmat2gram!,     # Distance matrix => Gram matrix
 
     ## lda
-    Discriminant,              # Abstract Type: for all discriminant functionals
-    LinearDiscriminant,        # Type: Linear Discriminant functional
-    MulticlassLDAStats,        # Type: Statistics required for training multi-class LDA
-    MulticlassLDA,             # Type: Multi-class LDA model
-    SubspaceLDA,               # Type: LDA model for high-dimensional spaces
+    LinearDiscriminant,     # Type: Linear Discriminant functional
+    MulticlassLDAStats,     # Type: Statistics required for training multi-class LDA
+    MulticlassLDA,          # Type: Multi-class LDA model
+    SubspaceLDA,            # Type: LDA model for high-dimensional spaces
 
-    ldacov,                    # Linear discriminant analysis based on covariances
+    ldacov,                 # Linear discriminant analysis based on covariances
 
-    classweights,              # class-specific weights
-    classmeans,                # class-specific means
-    withclass_scatter,         # with-class scatter matrix
-    betweenclass_scatter,      # between-class scatter matrix
-    multiclass_lda_stats,      # compute statistics for multiclass LDA training
-    multiclass_lda,            # train multi-class LDA based on statistics
-    mclda_solve,               # solve multi-class LDA projection given scatter matrices
-    mclda_solve!,              # solve multi-class LDA projection (inputs are overriden)
+    classweights,           # class-specific weights
+    classmeans,             # class-specific means
+    withclass_scatter,      # with-class scatter matrix
+    betweenclass_scatter,   # between-class scatter matrix
+    multiclass_lda_stats,   # compute statistics for multiclass LDA training
+    multiclass_lda,         # train multi-class LDA based on statistics
+    mclda_solve,            # solve multi-class LDA projection given sStatisticalModel
 
     ## ica
     ICA,                       # Type: the Fast ICA model
@@ -128,6 +127,7 @@ module MultivariateStats
     rotatefactors              # Alternative interface to factor rotations
 
     ## source files
+    include("types.jl")
     include("common.jl")
     include("lreg.jl")
     include("whiten.jl")
@@ -140,5 +140,19 @@ module MultivariateStats
     include("ica.jl")
     include("fa.jl")
     include("facrot.jl")
+
+    ## deprecations
+    @deprecate indim(f::Whitening) length(f::Whitening)
+    @deprecate outdim(f::Whitening) length(f::Whitening)
+    @deprecate indim(f::MulticlassLDA) size(f::MulticlassLDA)[1]
+    @deprecate outdim(f::MulticlassLDA) size(f::MulticlassLDA)[2]
+    @deprecate indim(f::SubspaceLDA) size(f::SubspaceLDA)[1]
+    @deprecate outdim(f::SubspaceLDA) size(f::SubspaceLDA)[2]
+    @deprecate indim(f::PCA) size(f::PCA)[1]
+    @deprecate outdim(f::PCA) size(f::PCA)[2]
+    @deprecate tvar(f::PCA) var(f::PCA) # total variance
+    @deprecate transform(f::PCA, x) predict(f::PCA, x) #ex=false
+    # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
+    # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
 end # module

@@ -19,19 +19,19 @@ loadings(M::PPCA) = M.W
 
 ## use
 
-function transform(m::PPCA{T}, x::AbstractVecOrMat{T}) where {T<:Real}
+function transform(m::PPCA, x::AbstractVecOrMat{<:Real})
     xn = centralize(x, m.mean)
     W  = m.W
     n = outdim(m)
-    M = W'W .+ m.σ² * Matrix{T}(I, n, n)
+    M = W'W + m.σ² * I
     return inv(M)*m.W'*xn
 end
 
-function reconstruct(m::PPCA{T}, z::AbstractVecOrMat{T}) where {T<:Real}
+function reconstruct(m::PPCA, z::AbstractVecOrMat{<:Real})
     W  = m.W
     WTW = W'W
     n = outdim(m)
-    M  = WTW .+ var(m) * Matrix{T}(I, n, n)
+    M  = WTW + var(m) * I
     return W*inv(WTW)*M*z .+ mean(m)
 end
 

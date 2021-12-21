@@ -9,7 +9,7 @@ using Test
     n = 10
     X0 = randn(d, n)
     G0 = X0'X0
-    D0 = MultivariateStats.pairwise((x,y)->norm(x-y), X0)
+    D0 = MultivariateStats.pairwise((x,y)->norm(x-y), eachcol(X0), symmetric=true)
 
     ## conversion between dmat and gram
 
@@ -25,7 +25,8 @@ using Test
     @test gram2dmat(G) ≈ D0
 
     ## classical MDS
-    M = fit(MDS, X0, maxoutdim=3)
+    @test_throws UndefKeywordError fit(MDS, X0, maxoutdim=3)   # disambiguate distance matrix from data matrix
+    M = fit(MDS, X0, maxoutdim=3, distances=false)
     @test indim(M) == d
     @test outdim(M) == 3
     @test size(projection(M)) == (n,3)
@@ -34,7 +35,7 @@ using Test
 
     X = transform(M)
     @test size(X) == (3,n)
-    @test MultivariateStats.pairwise((x,y)->norm(x-y), X) ≈ D0
+    @test MultivariateStats.pairwise((x,y)->norm(x-y), eachcol(X0), symmetric=true) ≈ D0
 
     @test_throws DimensionMismatch transform(M, rand(d+1))
     y = transform(M, X0[:, 1])
@@ -48,11 +49,11 @@ using Test
 
     X = transform(M)
     @test size(X) == (3,n)
-    @test MultivariateStats.pairwise((x,y)->norm(x-y), X) ≈ D0
+    @test MultivariateStats.pairwise((x,y)->norm(x-y), eachcol(X0), symmetric=true) ≈ D0
 
     @test_throws AssertionError transform(M, X0[:, 1])
     @test_throws DimensionMismatch transform(M, rand(d+1); distances = true)
-    d = MultivariateStats.pairwise((x,y)->norm(x-y), X0, X0[:,2]) |> vec
+    d = MultivariateStats.pairwise((x,y)->norm(x-y), X0, X0[:,2]) #|> vec
     y = transform(M, d, distances=true)
     @test X[:, 2] ≈ y
 
@@ -84,7 +85,7 @@ using Test
     end
 
     #10 - test degenerate problem
-    @test transform(fit(MDS, zeros(10, 10), maxoutdim=3)) == zeros(3, 10)
+    @test transform(fit(MDS, zeros(10, 10), maxoutdim=3, distances=false)) == zeros(3, 10)
 
     # out-of-sample
     D = [0 1 2 1;
@@ -94,18 +95,38 @@ using Test
 
     M = fit(MDS, sqrt.(D), maxoutdim=2, distances=true)
     X = transform(M)
-    @test D ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), X)
+    @test D ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), eachcol(X), symmetric=true)
     @test eltype(X) == Float32
 
     a = Float32[0.5, 0.5, 0.5, 0.5]
     A = vcat(hcat(D, a), hcat(a', zeros(Float32, 1, 1)))
     M⁺ = fit(MDS, sqrt.(A), maxoutdim=2, distances=true)
     X⁺ = transform(M⁺)
-    @test A ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), X⁺)
+    @test A ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), eachcol(X⁺), symmetric=true)
 
     y = transform(M, a, distances=true)
     Y = [X y]
-    @test A ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), Y)
+    @test A ≈ MultivariateStats.pairwise((x,y)->sum(abs2, x-y), eachcol(Y), symmetric=true)
     @test eltype(Y) == Float32
 
+    # different input types
+    d = 3
+    X = randn(Float64, d, 10)
+    XX = convert.(Float32, X)
+
+    y = randn(Float64, d)
+    yy = convert.(Float32, y)
+
+    M = fit(MDS, X, maxoutdim=3, distances=false)
+    MM = fit(MDS, XX, maxoutdim=3, distances=false)
+
+    # test that mixing types doesn't error
+    transform(M, yy)
+    transform(MM, y)
+
+    # type stability
+    for func in (projection, eigvals, stress)
+        @test eltype(func(M)) == Float64
+        @test eltype(func(MM)) == Float32
+    end
 end
