@@ -107,7 +107,7 @@ Given a PCA model `M`, retur transform observations `x` into principal component
 Here, `x` can be either a vector of length `d` or a matrix where each column is an observation,
 and `\\mathbf{P}` is the projection matrix.
 """
-predict(M::PCA, x::AbstractVecOrMat{T}) where {T<:Real} = transpose(M.proj) * centralize(x, M.mean)
+predict(M::PCA{T}, x::AbstractVecOrMat{T}) where {T<:Real} = transpose(M.proj) * centralize(x, M.mean)
 
 """
     reconstruct(M::PCA, y::AbstractVecOrMat{<:Real})
