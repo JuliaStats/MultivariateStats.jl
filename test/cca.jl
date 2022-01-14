@@ -3,7 +3,6 @@ using LinearAlgebra
 using Test
 using StableRNGs
 import Statistics: mean, cov
-import Random
 
 
 @testset "CCA" begin
