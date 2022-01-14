@@ -137,6 +137,11 @@ module MultivariateStats
     @deprecate outdim(f::PCA) size(f::PCA)[2]
     @deprecate tvar(f::PCA) var(f::PCA) # total variance
     @deprecate transform(f::PCA, x) predict(f::PCA, x) #ex=false
+    @deprecate classical_mds(D::AbstractMatrix, p::Int) predict(fit(MDS, D, maxoutdim=p, distances=true))
+    @deprecate indim(f::MDS) size(f::MDS)[1]
+    @deprecate outdim(f::MDS) size(f::MDS)[2]
+    @deprecate transform(f::MDS) predict(f::MDS)
+    @deprecate transform(f::MDS, x) predict(f::MDS, x)
     # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
     # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
