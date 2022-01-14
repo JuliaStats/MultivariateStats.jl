@@ -1,28 +1,28 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
+using StableRNGs
 import SparseArrays
 import Statistics: mean, cov
-import Random
 
 
 @testset "Kernel PCA" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## data
     n = 10
     d = 5
-    X = randn(d, n)
+    X = randn(rng, d, n)
 
     # step-by-step kernel centralization
     for K in [
         reshape(1.:12., 3, 4),
         reshape(1.:9., 3, 3),
         reshape(1.:12., 4, 3),
-        rand(n,d),
-        rand(d,d),
-        rand(d,n) ]
+        rand(rng, n,d),
+        rand(rng, d,d),
+        rand(rng, d,n) ]
 
         x, y = size(K)
         I1 = ones(x,x)/x
@@ -55,7 +55,7 @@ import Random
     @test all(isapprox.(MultivariateStats.transform!(KC, copy(K)), 0.0, atol=10e-7))
 
     ## check different parameters
-    X = randn(d, n)
+    X = randn(rng, d, n)
     M = fit(KernelPCA, X, maxoutdim=d)
     M2 = fit(PCA, X, method=:cov, pratio=1.0)
     @test indim(M) == d
@@ -72,7 +72,7 @@ import Random
     @test abs.(transform(M, X[:,1])) ≈ abs.(transform(M2, X[:,1]))
 
     # issue #44
-    Y = randn(d, 2*n)
+    Y = randn(rng, d, 2*n)
     @test size(transform(M, Y)) == size(transform(M2, Y))
 
     # reconstruction
@@ -89,22 +89,22 @@ import Random
 
     # use precomputed kernel
     K = MultivariateStats.pairwise((x,y)->x'*y, eachcol(X), symmetric=true)
-    @test_throws AssertionError fit(KernelPCA, rand(1,10), kernel=nothing) # symmetric kernel
+    @test_throws AssertionError fit(KernelPCA, rand(rng, 1,10), kernel=nothing) # symmetric kernel
     M = fit(KernelPCA, K, maxoutdim = 5, kernel=nothing, inverse=true) # use precomputed kernel
     M2 = fit(PCA, X, method=:cov, pratio=1.0)
     @test_throws ArgumentError reconstruct(M, X) # no reconstruction for precomputed kernel
     @test abs.(transform(M)) ≈ abs.(transform(M2, X))
 
-    @test_throws TypeError fit(KernelPCA, rand(1,10), kernel=1)
+    @test_throws TypeError fit(KernelPCA, rand(rng, 1,10), kernel=1)
 
     # different types
-    X = randn(Float64, d, n)
+    X = randn(rng, Float64, d, n)
     XX = convert.(Float32, X)
 
     M = fit(KernelPCA, X ; inverse=true)
     MM = fit(KernelPCA, XX ; inverse=true)
 
-    Y = randn(Float64, outdim(M))
+    Y = randn(rng, Float64, outdim(M))
     YY = convert.(Float32, Y)
 
     @test indim(MM) == d
@@ -123,7 +123,7 @@ import Random
     reconstruct(MM, Y)
 
     ## fit a sparse matrix
-    X = SparseArrays.sprandn(100d, n, 0.6)
+    X = SparseArrays.sprandn(rng, 100d, n, 0.6)
     M = fit(KernelPCA, X, maxoutdim=3, solver=:eigs)
     @test indim(M) == 100d
     @test outdim(M) == 3

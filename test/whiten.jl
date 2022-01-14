@@ -1,19 +1,19 @@
 using MultivariateStats
 using LinearAlgebra, StatsBase, SparseArrays
 using Test
+using StableRNGs
 import Statistics: mean, cov
-import Random
 
 @testset "Whitening" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## data
 
     d = 3
     n = 5
 
-    X = rand(d, n)
+    X = rand(rng, d, n)
     mval = vec(mean(X, dims=2))
     C = cov(X, dims=2)
     C0 = copy(C)
@@ -81,7 +81,7 @@ import Random
     @test R ≈ inv(sqrt(C))
 
     # mixing types
-    X = rand(Float64, 5, 10)
+    X = rand(rng, Float64, 5, 10)
     XX = convert.(Float32, X)
 
     M = fit(Whitening, X)
@@ -96,8 +96,8 @@ import Random
     @test eltype(mean(MM)) == Float32
 
     # sparse arrays
-    SX = sprand(Float32, d, n, 0.75)
-    SM = fit(Whitening, SX; mean=sprand(Float32, 3, 0.75))
+    SX = sprand(rng, Float32, d, n, 0.75)
+    SM = fit(Whitening, SX; mean=sprand(rng, Float32, 3, 0.75))
     Y = transform(SM, SX)
     @test eltype(Y) == Float32
 
@@ -106,12 +106,12 @@ import Random
     M1 = fit(Whitening, X'; dims=1)
     M2 = fit(Whitening, X; dims=2)
     @test M1.W == M2.W
-    @test_throws DimensionMismatch transform(M1, rand(6,4))
-    @test_throws DimensionMismatch transform(M2, rand(4,6))
+    @test_throws DimensionMismatch transform(M1, rand(rng, 6,4))
+    @test_throws DimensionMismatch transform(M2, rand(rng, 4,6))
     Y1 = transform(M1,X')
     Y2 = transform(M2,X)
     @test Y1' == Y2
-    @test_throws DimensionMismatch transform(M1, rand(7))
+    @test_throws DimensionMismatch transform(M1, rand(rng, 7))
     V1 = transform(M1,X[:,1])
     V2 = transform(M2,X[:,1])
     @test V1 == V2

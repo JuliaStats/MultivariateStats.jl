@@ -1,13 +1,13 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
+using StableRNGs
 import Statistics: mean, cov
-import Random
 import StatsBase
 
 @testset "ICA" begin
 
-    Random.seed!(15678)
+    rng = StableRNG(15678)
 
     function generatetestdata(n, k, m)
         t = range(0.0, step=10.0, length=n)
@@ -15,14 +15,14 @@ import StatsBase
         s2 = s2 = 1.0 .- 2.0 * Bool[isodd(floor(Int, x / 3)) for x in t]
         s3 = Float64[mod(x, 5.0) for x in t]
 
-        s1 += 0.1 * randn(n)
-        s2 += 0.1 * randn(n)
-        s3 += 0.1 * randn(n)
+        s1 += 0.1 * randn(rng, n)
+        s2 += 0.1 * randn(rng, n)
+        s3 += 0.1 * randn(rng, n)
 
         S = hcat(s1, s2, s3)'
         @assert size(S) == (k, n)
 
-        A = randn(m, k)
+        A = randn(rng, m, k)
 
         X = A * S
         mv = vec(mean(X, dims=2))

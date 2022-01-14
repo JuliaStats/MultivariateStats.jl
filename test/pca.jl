@@ -1,26 +1,26 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
+using StableRNGs
 import Statistics: mean, var, cov
-import Random
 import SparseArrays
 
 @testset "PCA" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## PCA with zero mean
 
-    X = randn(5, 10)
-    Y = randn(3, 10)
+    X = randn(rng, 5, 10)
+    Y = randn(rng, 3, 10)
 
-    P = qr(randn(5, 5)).Q[:, 1:3]
+    P = qr(randn(rng, 5, 5)).Q[:, 1:3]
     pvars = [5., 4., 3.]
-    l = [-0.809509  -1.14456    0.944145
-         -0.738713  -1.23353   -0.607874;
-         -1.64431    0.875826  -0.479549;
-         -0.816033   0.613632   1.06775 ;
-          0.655236   0.157369   0.607475]
+    l = [-0.236399  -0.706558  -1.21106
+          1.27426   -0.047799  -0.212282
+          0.990598   1.22718   -0.882179
+         -1.51861    0.725771  -0.631665
+          0.181386  -1.21069   -0.557706]
     M = PCA(Float64[], P, pvars, 15.0)
 
     @test size(M) == (5, 3)
@@ -32,7 +32,7 @@ import SparseArrays
     @test tprincipalvar(M) == 12.0
     @test tresidualvar(M) == 3.0
     @test principalratio(M) == 0.8
-    @test isapprox(loadings(M),l, atol = 0.001)
+    @test isapprox(loadings(M), l, atol = 0.001)
 
     @test predict(M, X[:,1]) ≈ P'X[:,1]
     @test predict(M, X) ≈ P'X
@@ -43,7 +43,7 @@ import SparseArrays
 
     ## PCA with non-zero mean
 
-    mval = rand(5)
+    mval = rand(rng, 5)
     M = PCA(mval, P, pvars, 15.0)
 
     @test size(M) == (5,3)
@@ -68,11 +68,11 @@ import SparseArrays
     d = 5
     n = 1000
 
-    R = collect(qr(randn(d, d)).Q)
+    R = collect(qr(randn(rng, d, d)).Q)
     @test R'R ≈ Matrix(I, 5, 5)
     rmul!(R, Diagonal(sqrt.([0.5, 0.3, 0.1, 0.05, 0.05])))
 
-    X = R'randn(5, n) .+ randn(5)
+    X = R'randn(rng, 5, n) .+ randn(rng, 5)
     mval = vec(mean(X, dims=2))
     Z = X .- mval
 
@@ -127,7 +127,7 @@ import SparseArrays
     @test isapprox(C*P, P*Diagonal(pvs), atol=1.0e-3)
     @test issorted(pvs; rev=true)
     @test isapprox(pvs, pvs0, atol=1.0e-3)
-    @test isapprox(var(M), tv, atol=1.0e-3)
+    @test isapprox(var(M), tv, atol=1.0e-2)
     @test sum(pvs) ≈ var(M)
     @test reconstruct(M, predict(M, X)) ≈ X
 
@@ -179,6 +179,6 @@ import SparseArrays
     M = fit(PCA, view(X, :, 1:500), pratio=0.85)
 
     # sparse
-    @test_throws AssertionError fit(PCA, SparseArrays.sprandn(100d, n, 0.6))
+    @test_throws AssertionError fit(PCA, SparseArrays.sprandn(rng, 100d, n, 0.6))
 
 end

@@ -1,11 +1,11 @@
 using MultivariateStats
 using Test
 using LinearAlgebra
-import Random
+using StableRNGs
 
 @testset "Ridge Regression" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## data
 
@@ -13,13 +13,13 @@ import Random
     n = 6
     n2 = 3
 
-    X = randn(m, n)
-    A = randn(n, n2)
+    X = randn(rng, m, n)
+    A = randn(rng, n, n2)
     Xt = X'
 
-    b = randn(1, n2)
+    b = randn(rng, 1, n2)
 
-    E = randn(m, n2) * 0.1
+    E = randn(rng, m, n2) * 0.1
     Y0 = X * A + E
     Y1 = X * A .+ b + E
 
@@ -112,7 +112,7 @@ import Random
 
     ## ridge (with diagonal r)
 
-    r = 0.05 .+ 0.1 .* rand(n)
+    r = 0.05 .+ 0.1 .* rand(rng, n)
 
     A = ridge(X, Y0, r; dims=1, bias=false)
     A_r = copy(A)
@@ -149,7 +149,7 @@ import Random
 
     ## ridge (with qudratic r matrix)
 
-    Q = qr(randn(n, n)).Q
+    Q = qr(randn(rng, n, n)).Q
     r = Q' * diagm(0=>r) * Q
 
     A = ridge(X, Y0, r; dims=1, bias=false)

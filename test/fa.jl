@@ -1,19 +1,19 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
+using StableRNGs
 import Statistics: mean, cov, var
-import Random
 
 @testset "Factor Analysis" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## FA with zero mean
 
-    X = randn(5, 10)
-    Y = randn(3, 10)
+    X = randn(rng, 5, 10)
+    Y = randn(rng, 3, 10)
 
-    W = qr(randn(5, 5)).Q[:, 1:3]
+    W = qr(randn(rng, 5, 5)).Q[:, 1:3]
     Ψ = fill(0.1, 5)
     M = FactorAnalysis(Float64[], W, Ψ)
 
@@ -34,7 +34,7 @@ import Random
 
     ## PCA with non-zero mean
 
-    mval = rand(5)
+    mval = rand(rng, 5)
     M = FactorAnalysis(mval, W, Ψ)
 
     @test indim(M) == 5
@@ -55,11 +55,11 @@ import Random
     d = 5
     n = 1000
 
-    R = collect(qr(randn(d, d)).Q)
+    R = collect(qr(randn(rng, d, d)).Q)
     @test R'R ≈ Matrix(I, 5, 5)
     rmul!(R, Diagonal(sqrt.([0.5, 0.3, 0.1, 0.05, 0.05])))
 
-    X = R'randn(5, n) .+ randn(5)
+    X = R'randn(rng, 5, n) .+ randn(rng, 5)
     mval = vec(mean(X, dims=2))
     Z = X .- mval
 
