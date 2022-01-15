@@ -1,6 +1,6 @@
-# Ridge Regression (Tikhonov regularization)
+# Regression
 
-#### auxiliary
+## Auxiliary
 
 function lreg_chkdims(X::AbstractMatrix, Y::AbstractVecOrMat, trans::Bool)
     mX, nX = size(X)
@@ -17,8 +17,23 @@ _vaug(X::AbstractMatrix{T}) where T = vcat(X, ones(T, 1, size(X,2)))::Matrix{T}
 _haug(X::AbstractMatrix{T}) where T = hcat(X, ones(T, size(X,1), 1))::Matrix{T}
 
 
-## linear least square
+## Linear Least Square Regression
 
+
+"""
+    llsq(X, y; ...)
+
+Solve the linear least square problem.
+
+Here, `y` can be either a vector, or a matrix where each column is a response vector.
+
+This function accepts two keyword arguments:
+
+- `dims`: whether input observations are stored as rows (`1`) or columns (`2`). (default is `1`)
+- `bias`: whether to include the bias term `b`. (default is `true`)
+
+The function results the solution `a`. In particular, when `y` is a vector (matrix), `a` is also a vector (matrix). If `bias` is true, then the returned array is augmented as `[a; b]`.
+"""
 function llsq(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T};
               trans::Bool=false, bias::Bool=true,
               dims::Union{Integer,Nothing}=nothing) where {T<:Real}
@@ -38,8 +53,32 @@ function llsq(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T};
     _ridge(X, Y, zero(T), dims == 2, bias)
 end
 
-## ridge regression
+llsq(x::AbstractVector{T}, y::AbstractVector{T}) where {T<:Real} = 
+    llsq(x[:,:], y, dims=1)
 
+## Ridge Regression (Tikhonov regularization)
+
+"""
+
+    ridge(X, y, r; ...)
+
+Solve the ridge regression problem.
+
+Here, ``y`` can be either a vector, or a matrix where each column is a response vector.
+
+The argument `r` gives the quadratic regularization matrix ``Q``, which can be in either of the following forms:
+
+- `r` is a real scalar, then ``Q`` is considered to be `r * eye(n)`, where `n` is the dimension of `a`.
+- `r` is a real vector, then ``Q`` is considered to be `diagm(r)`.
+- `r` is a real symmetric matrix, then ``Q`` is simply considered to be `r`.
+
+This function accepts two keyword arguments:
+
+- `dims`: whether input observations are stored as rows (`1`) or columns (`2`). (default is `1`)
+- `bias`: whether to include the bias term `b`. (default is `true`)
+
+The function results the solution `a`. In particular, when `y` is a vector (matrix), `a` is also a vector (matrix). If `bias` is true, then the returned array is augmented as `[a; b]`.
+"""
 function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::Union{Real, AbstractVecOrMat};
                trans::Bool=false, bias::Bool=true,
                dims::Union{Integer,Nothing}=nothing) where {T<:Real}
@@ -59,7 +98,7 @@ function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::Union{Real, Abst
     _ridge(X, Y, r, dims == 2, bias)
 end
 
-## implementation
+### implementation
 
 function _ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T},
                 r::Union{Real, AbstractVecOrMat}, trans::Bool, bias::Bool) where {T<:Real}
@@ -108,3 +147,4 @@ function _ridge_reg!(Q::AbstractMatrix, r::AbstractMatrix, bias::Bool)
     end
     return Q
 end
+
