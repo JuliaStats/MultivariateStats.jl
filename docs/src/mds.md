@@ -1,11 +1,15 @@
 # Multidimensional Scaling
 
-In general, [Multidimensional Scaling](http://en.wikipedia.org/wiki/Multidimensional_scaling>) (MDS)
+In general, [Multidimensional Scaling](http://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS)
 refers to techniques that transforms samples into lower dimensional space while
 preserving the inter-sample distances as well as possible.
 
 ## Example
 
+```@setup MDSex
+using Plots
+gr(fmt=:svg)
+```
 
 Performing [`MDS`](@ref) on *Iris* data set:
 
