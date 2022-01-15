@@ -52,9 +52,8 @@ function llsq(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T};
     end
     _ridge(X, Y, zero(T), dims == 2, bias)
 end
-
-llsq(x::AbstractVector{T}, y::AbstractVector{T}) where {T<:Real} = 
-    llsq(x[:,:], y, dims=1)
+llsq(x::AbstractVector{T}, y::AbstractVector{T}; kwargs...) where {T<:Real} =
+    llsq(x[:,:], y; dims=1, kwargs...)
 
 ## Ridge Regression (Tikhonov regularization)
 
@@ -89,7 +88,7 @@ function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::Union{Real, Abst
     d = lreg_chkdims(X, Y, dims == 2)
     if isa(r, Real)
         r >= zero(r) || error("r must be non-negative.")
-        r = convert(T, r)
+        r = convert(T <: AbstractFloat ? T : Float64, r)
     elseif isa(r, AbstractVector)
         length(r) == d || throw(DimensionMismatch("Incorrect length of r."))
     elseif isa(r, AbstractMatrix)
@@ -97,11 +96,16 @@ function ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T}, r::Union{Real, Abst
     end
     _ridge(X, Y, r, dims == 2, bias)
 end
+ridge(x::AbstractVector{T}, y::AbstractVector{T}, r::Union{Real, AbstractVecOrMat};
+      kwargs...) where {T<:Real} = ridge(x[:,:], y, r; dims=1, kwargs...)
 
 ### implementation
 
-function _ridge(X::AbstractMatrix{T}, Y::AbstractVecOrMat{T},
+function _ridge(_X::AbstractMatrix{T}, _Y::AbstractVecOrMat{T},
                 r::Union{Real, AbstractVecOrMat}, trans::Bool, bias::Bool) where {T<:Real}
+    # convert integer data to Float64
+    X = T <: AbstractFloat ? _X : convert(Array{Float64}, _X)
+    Y = T <: AbstractFloat ? _Y : convert(Array{Float64}, _Y)
     if bias
         if trans
             X_ = _vaug(X)

@@ -184,4 +184,14 @@ using StableRNGs
     aa = ridge(Xt, y1, r; dims=2, bias=true)
     @test aa ≈ Aa[:,1]
 
+
+    # using various types
+    @testset for (T, TR) in [(Int,Float64), (Float32, Float32)]
+        X, y = rand(T, 10, 3), rand(T, 10)
+        a = llsq(X, y)
+        @test eltype(a) == TR
+        a = ridge(X, y, one(T))
+        @test eltype(a) == TR
+    end
+
 end
