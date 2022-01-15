@@ -30,7 +30,7 @@ import Statistics: mean, cov
         Z = K - I1*K - K*I2 + I1*K*I2
 
         KC = fit(MultivariateStats.KernelCenter, K)
-        @test all(isapprox.(Z, MultivariateStats.transform!(KC, copy(K))))
+        @test all(Z .≈ MultivariateStats.transform!(KC, copy(K)))
     end
 
     # kernel calculations
