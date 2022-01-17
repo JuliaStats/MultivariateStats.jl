@@ -1,12 +1,13 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
+using StableRNGs
 import Statistics: mean, cov
-import Random
+
 
 @testset "CCA" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     dx = 5
     dy = 6
@@ -14,11 +15,11 @@ import Random
 
     # CCA with zero means
 
-    X = rand(dx, 100)
-    Y = rand(dy, 100)
+    X = rand(rng, dx, 100)
+    Y = rand(rng, dy, 100)
 
-    Px = qr(randn(dx, dx)).Q[:, 1:p]
-    Py = qr(randn(dy, dy)).Q[:, 1:p]
+    Px = qr(randn(rng, dx, dx)).Q[:, 1:p]
+    Py = qr(randn(rng, dy, dy)).Q[:, 1:p]
 
     M = CCA(Float64[], Float64[], Px, Py, [0.8, 0.6, 0.4])
 
@@ -35,8 +36,8 @@ import Random
 
     ## CCA with nonzero means
 
-    ux = randn(dx)
-    uy = randn(dy)
+    ux = randn(rng, dx)
+    uy = randn(rng, dy)
 
     M = CCA(ux, uy, Px, Py, [0.8, 0.6, 0.4])
 
@@ -56,10 +57,10 @@ import Random
 
     n = 1000
     dg = 10
-    G = randn(dg, n)
+    G = randn(rng, dg, n)
 
-    X = randn(dx, dg) * G + 0.2 * randn(dx, n)
-    Y = randn(dy, dg) * G + 0.2 * randn(dy, n)
+    X = randn(rng, dx, dg) * G + 0.2 * randn(rng, dx, n)
+    Y = randn(rng, dy, dg) * G + 0.2 * randn(rng, dy, n)
     xm = vec(mean(X, dims=2))
     ym = vec(mean(Y, dims=2))
     Zx = X .- xm

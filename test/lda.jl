@@ -1,8 +1,8 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
+using StableRNGs
 import Statistics: mean, cov
-import Random
 using StatsBase
 
 """
@@ -21,7 +21,7 @@ end
 
 @testset "LDA" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## LinearDiscriminant
 
@@ -42,7 +42,7 @@ end
     @test predict(f, x) == true
     @test predict(f, -x) == false
 
-    X = rand(5, 8)
+    X = rand(rng, 5, 8)
     Y = evaluate(f, X)
     @test size(Y) == (8,)
     for i = 1:8
@@ -59,8 +59,8 @@ end
     R2 = [cos(t2) -sin(t2); sin(t2) cos(t2)]
 
     n = 20
-    Xp = Diagonal([1.2, 3.6]) * randn(2, n) .+ [1.0, -3.0]
-    Xn = Diagonal([2.8, 1.8]) * randn(2, n) .+ [-5.0, 2.0]
+    Xp = Diagonal([1.2, 3.6]) * randn(rng, 2, n) .+ [1.0, -3.0]
+    Xn = Diagonal([2.8, 1.8]) * randn(rng, 2, n) .+ [-5.0, 2.0]
 
     up = vec(mean(Xp, dims=2))
     un = vec(mean(Xn, dims=2))
