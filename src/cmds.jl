@@ -2,6 +2,11 @@
 
 ## convert Gram matrix to Distance matrix
 
+"""
+    gram2dmat!(D, G)
+
+Convert a Gram matrix `G` to a distance matrix, and write the results to `D`.
+"""
 function gram2dmat!(D::AbstractMatrix{DT}, G::AbstractMatrix) where {DT<:Real}
     # argument checking
     m = size(G, 1)
@@ -23,10 +28,20 @@ function gram2dmat!(D::AbstractMatrix{DT}, G::AbstractMatrix) where {DT<:Real}
     return D
 end
 
+"""
+    gram2dmat(G)
+
+Convert a Gram matrix `G` to a distance matrix.
+"""
 gram2dmat(G::AbstractMatrix{T}) where {T<:Real} = gram2dmat!(similar(G, T), G)
 
 ## convert Distance matrix to Gram matrix
 
+"""
+    dmat2gram!(G, D)
+
+Convert a distance matrix `D` to a Gram matrix, and write the results to `G`.
+"""
 function dmat2gram!(G::AbstractMatrix{GT}, D::AbstractMatrix) where GT
     # argument checking
     n = LinearAlgebra.checksquare(D)
@@ -53,12 +68,46 @@ function dmat2gram!(G::AbstractMatrix{GT}, D::AbstractMatrix) where GT
 end
 
 momenttype(T) = typeof((zero(T) * zero(T) + zero(T) * zero(T))/ 2)
+
+"""
+    dmat2gram(D)
+
+Convert a distance matrix `D` to a Gram matrix.
+"""
 dmat2gram(D::AbstractMatrix{T}) where {T<:Real} = dmat2gram!(similar(D, momenttype(T)), D)
 
 ## Classical MDS
 
-"""Classical MDS type"""
-struct MDS{T<:Real}
+"""
+*Classical Multidimensional Scaling* (MDS), also known as Principal Coordinates Analysis (PCoA),
+is a specific technique in this family that accomplishes the embedding in two steps:
+
+1. Convert the distance matrix to a Gram matrix. This conversion is based on
+the following relations between a distance matrix ``D`` and a Gram matrix ``G``:
+
+```math
+\\mathrm{sqr}(\\mathbf{D}) = \\mathbf{g} \\mathbf{1}^T + \\mathbf{1} \\mathbf{g}^T - 2 \\mathbf{G}
+```
+
+Here, ``\\mathrm{sqr}(\\mathbf{D})`` indicates the element-wise square of ``\\mathbf{D}``,
+and ``\\mathbf{g}`` is the diagonal elements of ``\\mathbf{G}``. This relation is
+itself based on the following decomposition of squared Euclidean distance:
+
+```math
+\\| \\mathbf{x} - \\mathbf{y} \\|^2 = \\| \\mathbf{x} \\|^2 + \\| \\mathbf{y} \\|^2 - 2 \\mathbf{x}^T \\mathbf{y}
+```
+
+2. Perform eigenvalue decomposition of the Gram matrix to derive the coordinates.
+
+*Note:*  The Gramian derived from ``D`` may have non-positive or degenerate
+eigenvalues.  The subspace of non-positive eigenvalues is projected out
+of the MDS solution so that the strain function is minimized in a
+least-squares sense.  If the smallest remaining eigenvalue that is used
+for the MDS is degenerate, then the solution is not unique, as any
+linear combination of degenerate eigenvectors will also yield a MDS
+solution with the same strain value.
+"""
+struct MDS{T<:Real} <: NonlinearDimensionalityReduction
     d::Real                  # original dimension
     X::AbstractMatrix{T}     # fitted data, X (d x n)
     λ::AbstractVector{T}     # eigenvalues in feature space, (k x 1)
@@ -66,17 +115,53 @@ struct MDS{T<:Real}
 end
 
 ## properties
+"""
+    size(M)
 
-indim(M::MDS) = M.d
-outdim(M::MDS) = size(M.U,2)
+Returns tuple where the first value is the MDS model `M` input dimension,
+*i.e* the dimension of the observation space, and the second value is the output
+dimension, *i.e* the dimension of the embedding.
+"""
+size(M::MDS) = (M.d, size(M.U,2))
 
+"""
+    projection(M)
+
+Get the MDS model `M` eigenvectors matrix (of size ``(n, p)``) of the embedding space.
+The eigenvectors are arranged in descending order of the corresponding eigenvalues.
+"""
 projection(M::MDS) = M.U
+
+"""
+    eigvecs(M::MDS)
+
+Get the MDS model `M` eigenvectors matrix. 
+"""
+eigvecs(M::MDS) = projection(M)
+
+"""
+    eigvals(M::MDS)
+
+Get the eigenvalues of the MDS model `M`.
+"""
 eigvals(M::MDS) = M.λ
+
+"""
+    loadings(M::MDS)
+
+Get the loading of the MDS model `M`.
+"""
+loadings(M::MDS) = sqrt.(M.λ)' .* M.U
 
 ## use
 
-"""Calculate out-of-sample multidimensional scaling transformation"""
-function transform(M::MDS{T}, x::AbstractVector{<:Real}; distances=false) where {T<:Real}
+"""
+    predict(M, x::AbstractVector)
+
+Calculate the out-of-sample transformation of the observation `x` for the MDS model `M`.
+Here, `x` is a vector of length `d`.
+"""
+function predict(M::MDS{T}, x::AbstractVector{<:Real}; distances=false) where {T<:Real}
     d = if isnan(M.d) # model has only distance matrix
         @assert distances "Cannot transform points if model was fitted with a distance matrix. Use point distances."
         size(x, 1) != size(M.X, 1) && throw(
@@ -107,17 +192,24 @@ function transform(M::MDS{T}, x::AbstractVector{<:Real}; distances=false) where 
     return M.U' * b ./ sqrt.(λ)
 end
 
-"""Calculate multidimensional scaling transformation"""
-function transform(M::MDS{T}) where {T<:Real}
-    # if there are non-positive missing eigval then padd with zeros
-    λ = vcat(M.λ, zeros(T, outdim(M) - length(M.λ)))
+"""
+    predict(M)
+
+Returns a coordinate matrix of size ``(p, n)`` for the MDS model `M`, where each column
+is the coordinates for an observation in the embedding space.
+"""
+function predict(M::MDS{T}) where {T<:Real}
+    d, p = size(M)
+    # if there are non-positive missing eigval then pad with zeros
+    λ = vcat(M.λ, zeros(T, p - length(M.λ)))
     return diagm(0=>sqrt.(λ)) * M.U'
 end
 
 ## show
 
-function Base.show(io::IO, M::MDS)
-    print(io, "Classical MDS(indim = $(indim(M)), outdim = $(outdim(M)))")
+function show(io::IO, M::MDS)
+    d, p = size(M)
+    print(io, "Classical MDS(indim = $d, outdim = $p)")
 end
 
 ## interface functions
@@ -127,14 +219,14 @@ end
 Compute an embedding of points by classical multidimensional scaling (MDS).
 There are two calling options, specified via the required keyword argument `distances`:
 
-    mds = fit(MDS, X; distances=false, maxdim=size(X,1)-1)
+    mds = fit(MDS, X; distances=false, maxoutdim=size(X,1)-1)
 
-`X` is the data matrix. Distances between pairs of columns of `X` are computed using the Euclidean norm.
+where `X` is the data matrix. Distances between pairs of columns of `X` are computed using the Euclidean norm.
 This is equivalent to performing PCA on `X`.
 
-    mds = fit(MDS, D; distances=true,  maxdim=size(D,1)-1)
+    mds = fit(MDS, D; distances=true, maxoutdim=size(D,1)-1)
 
-`D` is a symmetric matrix `D` of distances between points.
+where `D` is a symmetric matrix `D` of distances between points.
 """
 function fit(::Type{MDS}, X::AbstractMatrix{T};
              maxoutdim::Int = size(X,1)-1,
@@ -199,8 +291,12 @@ function fit(::Type{MDS}, X::AbstractMatrix{T};
     return MDS(d, X, λ, U)
 end
 
-@deprecate classical_mds(D::AbstractMatrix, p::Int) transform(fit(MDS, D, maxoutdim=p, distances=true))
 
+"""
+    stress(M)
+
+Get the stress of the MDS mode `M`.
+"""
 function stress(M::MDS)
     # calculate distances if original data was stored
     DX = isnan(M.d) ? M.X : pairwise((x,y)->norm(x-y), eachcol(M.X), symmetric=true)
@@ -208,3 +304,4 @@ function stress(M::MDS)
     n = size(DX,1)
     return sqrt(2*sum((DX - DY).^2)/sum(DX.^2));
 end
+

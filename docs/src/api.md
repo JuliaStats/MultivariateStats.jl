@@ -8,7 +8,7 @@ Table of the package models and corresponding function names used by these model
 |------------------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |fit               |  x  |  x  |  x  |  x  |  x  |  x  |  x  |  x  |  x  |
 |transform         |  x  |  x  |  x  |  x  |  x  |  x  |  x  |  x  |  x  |
-|predict           |     |     |     |  x  |    |    |    |    |    |
+|predict           |     |     |     |  x  |     |     |     |     |     |
 |indim             |     |  x  |  x  |  x  |  x  |  x  |  x  |  x  |  x  |
 |outdim            |  x  |  x  |  x  |  x  |  x  |  x  |  x  |  x  |  x  |
 |mean              |  x  |  x  |  x  |  x  |  x  |  x  |  x  |  ?  |     |
@@ -30,21 +30,21 @@ Note: `?` refers to a possible implementation that is missing or called differen
 | Function \ Model | WHT | CCA | LDA |MC-LDA|SS-LDA| ICA | FA  |PPCA | PCA |KPCA | MDS |
 |------------------|:---:|:---:|:---:|:----:|:----:|:---:|:---:|:---:|:---:|:---:|:---:|
 |fit               |  x  |  x  |  x  |  x   |   x  |  x  |  x  |  x  |  x  |  x  |  x  |
-|transform         |  x  |  x  |  -  |  -   |   -  |  x  |  x  |  x  |  x  |  x  |  x  |
-|predict           |     |     |  x  |  +   |   +  |     |     |     |     |     |     |
-|indim             |  -  |     |     |  -   |   -  |  x  |  x  |  x  |  x  |  x  |  x  |
-|outdim            |  -  |  x  |     |  -   |   -  |  x  |  x  |  x  |  x  |  x  |  x  |
+|transform         |  x  |  x  |  -  |  -   |   -  |  x  |  x  |  x  |  -  |  x  |  -  |
+|predict           |     |     |  x  |  +   |   +  |     |     |     |  +  |     |  +  |
+|indim             |  -  |     |     |  -   |   -  |  x  |  x  |  x  |  -  |  x  |  -  |
+|outdim            |  -  |  x  |     |  -   |   -  |  x  |  x  |  x  |  -  |  x  |  -  |
 |mean              |  x  |  x  |     |  x   |   x  |  x  |  x  |  x  |  x  |  ?  |     |
 |var               |     |     |     |      |      |     |  x  |  x  |  x  |  ?  |  ?  |
 |cov               |     |     |     |      |      |     |  x  |  x  |     |     |     |
 |cor               |     |  x  |     |      |      |     |     |     |     |     |     |
 |projection        |  ?  |  x  |     |  x   |   x  |     |  x  |  x  |  x  |  x  |  x  |
 |reconstruct       |     |     |     |      |      |     |  x  |  x  |  x  |  x  |     |
-|loadings          |     |  ?  |     |      |      |     |  x  |  x  |  x  |  ?  |  ?  |
+|loadings          |     |  ?  |     |      |      |     |  x  |  x  |  x  |  ?  |  +  |
 |eigvals           |     |     |     |      |   +  |     |  ?  |  ?  |  x  |  ?  |  x  |
-|eigvecs           |     |     |     |      |      |     |  ?  |  ?  |  x  |  ?  |  ?  |
+|eigvecs           |     |     |     |      |      |     |  ?  |  ?  |  x  |  ?  |  +  |
 |length            |  +  |     |  +  |  +   |   +  |     |     |     |     |     |     |
-|size              |  +  |     |     |  +   |   +  |     |     |     |  x  |     |     |
+|size              |  +  |     |     |  +   |   +  |     |     |     |  x  |     |  +  |
 |                  |     |     |     |      |      |     |     |     |     |     |     |
 
 - StatsBase.AbstractDataTransform
@@ -70,7 +70,7 @@ Note: `?` refers to a possible implementation that is missing or called differen
                 - Methods: ICA, PCA
             - NonlinearDimensionalityReduction
                 - Methods: KPCA, MDS
-                  - Functions: modelmatrix (X),
+                  - Functions: modelmatrix(X),
             - LatentVariableModel or LatentVariableDimensionalityReduction
                 - Methods: FA, PPCA
                   - Functions: cov
