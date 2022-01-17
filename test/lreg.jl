@@ -3,7 +3,7 @@ using Test
 using LinearAlgebra
 using StableRNGs
 
-@testset "Ridge Regression" begin
+@testset "Regression" begin
 
     rng = StableRNG(34568)
 
@@ -185,7 +185,14 @@ using StableRNGs
     @test aa ≈ Aa[:,1]
 
 
-    # using various types
+    ## isotonic
+    xx = [3.3, 3.3, 3.3, 6, 7.5, 7.5]
+    yy = [4, 5, 1, 6, 8, 7.0]
+    a = isotonic(xx, yy)
+    b = [[1,2,3],[4],[5,6]]
+    @test a ≈ xx atol=0.1
+
+    ## using various types
     @testset for (T, TR) in [(Int,Float64), (Float32, Float32)]
         X, y = rand(T, 10, 3), rand(T, 10)
         a = llsq(X, y)
