@@ -2,8 +2,7 @@ using MultivariateStats
 using LinearAlgebra
 using Test
 using StableRNGs
-import Statistics: mean, cov
-
+using Statistics: mean, cov, cor
 
 @testset "CCA" begin
 
@@ -23,16 +22,18 @@ import Statistics: mean, cov
 
     M = CCA(Float64[], Float64[], Px, Py, [0.8, 0.6, 0.4])
 
-    @test xindim(M) == dx
-    @test yindim(M) == dy
-    @test xmean(M) == zeros(dx)
-    @test ymean(M) == zeros(dy)
-    @test xprojection(M) == Px
-    @test yprojection(M) == Py
-    @test correlations(M) == [0.8, 0.6, 0.4]
+    @test size(M)[1] == dx
+    @test size(M)[2] == dy
+    @test mean(M, :x) == zeros(dx)
+    @test mean(M, :y) == zeros(dy)
+    @test_throws ArgumentError mean(M, :z)
+    @test projection(M, :x) == Px
+    @test projection(M, :y) == Py
+    @test_throws ArgumentError projection(M, :z)
+    @test cor(M) == [0.8, 0.6, 0.4]
 
-    @test xtransform(M, X) ≈ Px'X
-    @test ytransform(M, Y) ≈ Py'Y
+    @test predict(M, X, :x) ≈ Px'X
+    @test predict(M, Y, :y) ≈ Py'Y
 
     ## CCA with nonzero means
 
@@ -41,16 +42,16 @@ import Statistics: mean, cov
 
     M = CCA(ux, uy, Px, Py, [0.8, 0.6, 0.4])
 
-    @test xindim(M) == dx
-    @test yindim(M) == dy
-    @test xmean(M) == ux
-    @test ymean(M) == uy
-    @test xprojection(M) == Px
-    @test yprojection(M) == Py
-    @test correlations(M) == [0.8, 0.6, 0.4]
+    @test size(M)[1] == dx
+    @test size(M)[2] == dy
+    @test mean(M, :x) == ux
+    @test mean(M, :y) == uy
+    @test projection(M, :x) == Px
+    @test projection(M, :y) == Py
+    @test cor(M) == [0.8, 0.6, 0.4]
 
-    @test xtransform(M, X) ≈ Px' * (X .- ux)
-    @test ytransform(M, Y) ≈ Py' * (Y .- uy)
+    @test predict(M, X, :x) ≈ Px' * (X .- ux)
+    @test predict(M, Y, :y) ≈ Py' * (Y .- uy)
 
 
     ## prepare data
@@ -75,14 +76,14 @@ import Statistics: mean, cov
 
     # X ~ Y
     M = fit(CCA, X, Y; method=:cov, outdim=p)
-    Px = xprojection(M)
-    Py = yprojection(M)
-    rho = correlations(M)
-    @test xindim(M) == dx
-    @test yindim(M) == dy
-    @test outdim(M) == p
-    @test xmean(M) == xm
-    @test ymean(M) == ym
+    Px = projection(M, :x)
+    Py = projection(M, :y)
+    rho = cor(M)
+    @test size(M)[1] == dx
+    @test size(M)[2] == dy
+    @test size(M)[3] == p
+    @test mean(M, :x) == xm
+    @test mean(M, :y) == ym
     @test issorted(rho; rev=true)
 
     @test Px' * Cxx * Px ≈ Matrix(I, p, p)
@@ -94,14 +95,14 @@ import Statistics: mean, cov
 
     # Y ~ X
     M = fit(CCA, Y, X; method=:cov, outdim=p)
-    Py = xprojection(M)
-    Px = yprojection(M)
-    rho = correlations(M)
-    @test xindim(M) == dy
-    @test yindim(M) == dx
-    @test outdim(M) == p
-    @test xmean(M) == ym
-    @test ymean(M) == xm
+    Py = projection(M, :x)
+    Px = projection(M, :y)
+    rho = cor(M)
+    @test size(M)[1] == dy
+    @test size(M)[2] == dx
+    @test size(M)[3] == p
+    @test mean(M, :x) == ym
+    @test mean(M, :y) == xm
     @test issorted(rho; rev=true)
 
     @test Px' * Cxx * Px ≈ Matrix(I, p, p)
@@ -116,14 +117,14 @@ import Statistics: mean, cov
 
     # n > d
     M = fit(CCA, X, Y; method=:svd, outdim=p)
-    Px = xprojection(M)
-    Py = yprojection(M)
-    rho = correlations(M)
-    @test xindim(M) == dx
-    @test yindim(M) == dy
-    @test outdim(M) == p
-    @test xmean(M) == xm
-    @test ymean(M) == ym
+    Px = projection(M, :x)
+    Py = projection(M, :y)
+    rho = cor(M)
+    @test size(M)[1] == dx
+    @test size(M)[2] == dy
+    @test size(M)[3] == p
+    @test mean(M, :x) == xm
+    @test mean(M, :y) == ym
     @test issorted(rho; rev=true)
 
     @test Px' * Cxx * Px ≈ Matrix(I, p, p)
@@ -140,10 +141,10 @@ import Statistics: mean, cov
     MM = fit(CCA, view(XX, :, 1:400), view(YY, :, 1:400); method=:svd, outdim=p)
 
     # test that mixing types doesn't error
-    xtransform(M, XX)
-    ytransform(M, YY)
-    xtransform(MM, XX)
-    ytransform(MM, YY)
+    predict(M, XX, :x)
+    predict(M, YY, :y)
+    predict(MM, XX, :x)
+    predict(MM, YY, :y)
     
     # type stability
     for func in (xmean, ymean, xprojection, yprojection, correlations)
