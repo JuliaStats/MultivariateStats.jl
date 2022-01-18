@@ -26,6 +26,7 @@ module MultivariateStats
     # lreg
     llsq,               # Linear Least Square regression
     ridge,              # Ridge regression
+    isotonic,           # Isotonic regression
 
     # whiten
     Whitening,          # Type: Whitening transformation
