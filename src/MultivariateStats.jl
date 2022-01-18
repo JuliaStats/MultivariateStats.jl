@@ -2,7 +2,7 @@ module MultivariateStats
     using LinearAlgebra
     using StatsBase: SimpleCovariance, CovarianceEstimator, RegressionModel,
                      AbstractDataTransform, pairwise!
-    import Statistics: mean, var, cov, covm
+    import Statistics: mean, var, cov, covm, cor
     import Base: length, size, show, dump
     import StatsBase: fit, predict, predict!, ConvergenceException, coef, weights,
                       dof, pairwise, r2
@@ -67,16 +67,7 @@ module MultivariateStats
 
     ccacov,             # CCA based on covariances
     ccasvd,             # CCA based on singular value decomposition of input data
-
-    xindim,             # input dimension of X
-    yindim,             # input dimension of Y
-    xmean,              # sample mean of X
-    ymean,              # sample mean of Y
-    xprojection,        # projection matrix for X
-    yprojection,        # projection matrix for Y
-    xtransform,         # transform for X
-    ytransform,         # transform for Y
-    correlations,       # correlations of all projected directions
+    cor,                # correlations of all projected directions
 
     ## cmds
     MDS,
@@ -146,6 +137,16 @@ module MultivariateStats
     @deprecate indim(f::ICA) size(f::ICA)[1]
     @deprecate outdim(f::ICA) size(f::ICA)[2]
     @deprecate transform(f::ICA, x) predict(f::ICA, x)
+    @deprecate xindim(M::CCA) size(M)[1]
+    @deprecate yindim(M::CCA) size(M)[2]
+    @deprecate outdim(M::CCA) size(M)[3]
+    @deprecate correlations(M::CCA) cor(M)
+    @deprecate xmean(M::CCA) mean(M, :x)
+    @deprecate ymean(M::CCA) mean(M, :y)
+    @deprecate xprojection(M::CCA) projection(M, :x)
+    @deprecate yprojection(M::CCA) projection(M, :y)
+    @deprecate xtransform(M::CCA, x) predict(M, x, :x)
+    @deprecate ytransform(M::CCA, y) predict(M, y, :y)
     # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
     # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
