@@ -114,8 +114,8 @@ and ``p`` be the output dimension (*i.e* the dimension of the principal subspace
 ```@docs
 fit(::Type{KernelPCA}, ::AbstractMatrix{T}; kwargs...) where {T<:Real}
 predict(::KernelPCA)
-predict(::KernelPCA, ::AbstractVecOrMat{T}) where {T<:Real}
-reconstruct(::KernelPCA, ::AbstractVecOrMat{T}) where {T<:Real}
+predict(::KernelPCA, ::AbstractVecOrMat{<:Real})
+reconstruct(::KernelPCA, ::AbstractVecOrMat{<:Real})
 size(::KernelPCA)
 projection(::KernelPCA)
 eigvals(::KernelPCA)
@@ -135,8 +135,8 @@ List of the commonly used kernels:
 This package has a separate interface for adjusting kernel matrices.
 
 ```@docs
-KernelCenter
-fit(::Type{KernelCenter}, ::AbstractMatrix)
-MultivariateStats.transform!(::KernelCenter, ::AbstractMatrix)
+MultivariateStats.KernelCenter
+fit(::Type{MultivariateStats.KernelCenter}, ::AbstractMatrix{<:Real})
+MultivariateStats.transform!(::MultivariateStats.KernelCenter, ::AbstractMatrix{<:Real})
 ```
 

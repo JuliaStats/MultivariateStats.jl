@@ -9,7 +9,7 @@ struct KernelCenter{T<:Real}
 end
 
 """Fit `KernelCenter` object"""
-function fit(::Type{KernelCenter}, K::AbstractMatrix{T}) where {T<:Real}
+function fit(::Type{KernelCenter}, K::AbstractMatrix{<:Real})
     n = size(K, 1)
     means = vec(mean(K, dims=2))
     KernelCenter(means, sum(means) / n)
@@ -28,7 +28,11 @@ function transform!(C::KernelCenter, K::AbstractMatrix{<:Real})
     return K
 end
 
-"""Kernel PCA type"""
+"""
+Kernel Principal Component Analysis
+
+This type contains kernel PCA model parameters.
+"""
 struct KernelPCA{T<:Real} <: NonlinearDimensionalityReduction
     X::AbstractMatrix{T}           # fitted data or precomputed kernel
     ker::Union{Nothing, Function}  # kernel function
