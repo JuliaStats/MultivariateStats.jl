@@ -1,6 +1,6 @@
 # Kernel Principal Component Analysis
 
-import Arpack
+using Arpack: eigs
 
 """Center a kernel matrix"""
 struct KernelCenter{T<:Real}
@@ -29,7 +29,7 @@ function transform!(C::KernelCenter, K::AbstractMatrix{<:Real})
 end
 
 """Kernel PCA type"""
-struct KernelPCA{T<:Real}
+struct KernelPCA{T<:Real} <: NonlinearDimensionalityReduction
     X::AbstractMatrix{T}           # fitted data or precomputed kernel
     ker::Union{Nothing, Function}  # kernel function
     center::KernelCenter           # kernel center
@@ -39,42 +39,107 @@ struct KernelPCA{T<:Real}
 end
 
 ## properties
+"""
+    size(M::KernelPCA)
 
-indim(M::KernelPCA) = size(M.X, 1)
-outdim(M::KernelPCA) = length(M.λ)
+Returns a tuple with the input dimension ``d``, *i.e* the dimension of the observation space, and the output dimension ``p``, *i.e* the dimension of the principal subspace.
+"""
+size(M::KernelPCA) = (size(M.X, 1), length(M.λ))
 
-projection(M::KernelPCA) = M.α ./ sqrt.(M.λ')
-principalvars(M::KernelPCA) = M.λ
+"""
+    eigvals(M::KernelPCA)
+
+Return eigenvalues of the kernel matrix of the model `M`.
+"""
+eigvals(M::KernelPCA) = M.λ
+
+"""
+    eigvecs(M::KernelPCA)
+
+Return eigenvectors of the kernel matrix of the model `M`.
+"""
+eigvecs(M::KernelPCA) = M.α
+
+"""
+    projection(M::KernelPCA)
+
+Return the projection matrix (of size ``n \\times p``).
+Each column of the projection matrix corresponds to an eigenvector, and ``n`` is a number of observations.
+
+The principal components are arranged in descending order of the corresponding eigenvalues.
+"""
+projection(M::KernelPCA) = eigvecs(M) ./ sqrt.(eigvals(M)')
 
 ## use
 
-"""Calculate transformation to kernel space"""
-function transform(M::KernelPCA, x::AbstractVecOrMat{<:Real})
+"""
+    predict(M::KernelPCA, x)
+
+Transform out-of-sample transformation of `x` into a kernel space of the model `M`.
+
+Here, `x` can be either a vector of length `d` or a matrix where each column is an observation.
+"""
+function predict(M::KernelPCA, x::AbstractVecOrMat{<:Real})
     k = pairwise(M.ker, eachcol(M.X), eachcol(x))
     transform!(M.center, k)
     return projection(M)'*k
 end
 
-transform(M::KernelPCA) = sqrt.(M.λ) .* M.α'
 
-"""Calculate inverse transformation to original space"""
+"""
+    predict(M::KernelPCA)
+
+Transform the data fitted to the model `M` to a kernel space of the model.
+"""
+predict(M::KernelPCA) = sqrt.(eigvals(M)) .* eigvecs(M)'
+
+
+"""
+    reconstruct(M::KernelPCA, y)
+
+Approximately reconstruct observations, given in `y`, to the original space using the kernel PCA model `M`.
+
+Here, `y` can be either a vector of length `p` or a matrix where each column gives the principal components for an observation.
+"""
 function reconstruct(M::KernelPCA, y::AbstractVecOrMat{<:Real})
     if size(M.inv, 1) == 0
         throw(ArgumentError("Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"))
     end
-    Pᵗ = M.α' .* sqrt.(M.λ)
+    Pᵗ = predict(M)
     k = pairwise(M.ker, eachcol(Pᵗ), eachcol(y))
     return M.inv*k
 end
 
 ## show
 
-function Base.show(io::IO, M::KernelPCA)
-    print(io, "Kernel PCA(indim = $(indim(M)), outdim = $(outdim(M)))")
+function show(io::IO, M::KernelPCA)
+    indim, outdim = size(M)
+    print(io, "Kernel PCA(indim = $indim, outdim = $outdim)")
 end
 
 ## interface functions
+"""
+    fit(KernelPCA, X; ...)
 
+Perform kernel PCA over the data given in a matrix `X`. Each column of `X` is an observation.
+
+This method returns an instance of [`KernelPCA`](@ref).
+
+**Keyword arguments:**
+
+Let `(d, n) = size(X)` be respectively the input dimension and the number of observations:
+
+- `kernel`: The kernel function. This functions accepts two vector arguments `x` and `y`,
+and returns a scalar value (*default:* `(x,y)->x'y`)
+- `solver`: The choice of solver:
+    - `:eig`: uses `LinearAlgebra.eigen` (*default*)
+    - `:eigs`: uses `Arpack.eigs` (always used for sparse data)
+- `maxoutdim`:  Maximum output dimension (*default* `min(d, n)`)
+- `inverse`: Whether to perform calculation for inverse transform for non-precomputed kernels (*default* `false`)
+- `β`: Hyperparameter of the ridge regression that learns the inverse transform (*default* `1` when `inverse` is `true`).
+- `tol`: Convergence tolerance for `eigs` solver (*default* `0.0`)
+- `maxiter`: Maximum number of iterations for `eigs` solver (*default* `300`)
+"""
 function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
              kernel::Union{Nothing, Function} = (x,y)->x'y,
              maxoutdim::Int = min(size(X)...),
@@ -103,7 +168,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
 
     # perform eigenvalue decomposition
     evl, evc = if solver == :eigs || SparseArrays.issparse(K)
-        evl, evc = Arpack.eigs(K, nev=maxoutdim, which=:LR, v0=2.0*rand(n) .- 1.0, tol=tol, maxiter=maxiter)
+        evl, evc = eigs(K, nev=maxoutdim, which=:LR, v0=2.0*rand(n) .- 1.0, tol=tol, maxiter=maxiter)
         real.(evl), real.(evc)
     else
         Eg = eigen(Hermitian(K))
