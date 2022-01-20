@@ -33,7 +33,7 @@ mean(M::ICA) = fullmean(size(M,1), M.mean)
     predict(M::ICA, x)
 
 Transform `x` to the output space to extract independent components,
-as ``\\mathbf{W}^T (\\mathbf{x} - \\boldsymbol{\\mu})`, given the model `M`.
+as ``\\mathbf{W}^T (\\mathbf{x} - \\boldsymbol{\\mu})``, given the model `M`.
 """
 predict(M::ICA, x::AbstractVecOrMat{<:Real}) = transpose(M.W) * centralize(x, M.mean)
 
@@ -75,7 +75,7 @@ function update!(f::Tanh{T}, U::AbstractMatrix{T}, E::AbstractVector{T}) where {
 end
 
 """
-Derivative for ``-e^{-u^2/2)``
+Derivative for ``-e^{\\frac{-u^2}{2}}``
 """
 struct Gaus <: ICAGDeriv end
 function update!(f::Gaus, U::AbstractMatrix{T}, E::AbstractVector{T}) where {T}

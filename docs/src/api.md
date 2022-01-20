@@ -30,10 +30,10 @@ Note: `?` refers to a possible implementation that is missing or called differen
 | Function \ Model | WHT | CCA | LDA |MC-LDA|SS-LDA| ICA | FA  |PPCA | PCA |KPCA | MDS |
 |------------------|:---:|:---:|:---:|:----:|:----:|:---:|:---:|:---:|:---:|:---:|:---:|
 |fit               |  x  |  x  |  x  |  x   |   x  |  x  |  x  |  x  |  x  |  x  |  x  |
-|transform         |  x  |  x  |  -  |  -   |   -  |  x  |  x  |  x  |  -  |  -  |  -  |
-|predict           |     |     |  x  |  +   |   +  |     |     |     |  +  |  +  |  +  |
-|indim             |  -  |     |     |  -   |   -  |  x  |  x  |  x  |  -  |  -  |  -  |
-|outdim            |  -  |  x  |     |  -   |   -  |  x  |  x  |  x  |  -  |  -  |  -  |
+|transform         |  x  |  x  |  -  |  -   |   -  |  -  |  x  |  x  |  -  |  -  |  -  |
+|predict           |     |     |  x  |  +   |   +  |  +  |     |     |  +  |  +  |  +  |
+|indim             |  -  |     |     |  -   |   -  |  -  |  x  |  x  |  -  |  -  |  -  |
+|outdim            |  -  |  x  |     |  -   |   -  |  -  |  x  |  x  |  -  |  -  |  -  |
 |mean              |  x  |  x  |     |  x   |   x  |  x  |  x  |  x  |  x  |     |     |
 |var               |     |     |     |      |      |     |  x  |  x  |  x  |     |  ?  |
 |cov               |     |     |     |      |      |     |  x  |  x  |     |     |     |
@@ -44,7 +44,7 @@ Note: `?` refers to a possible implementation that is missing or called differen
 |eigvals           |     |     |     |      |   +  |     |  ?  |  ?  |  x  |  x  |  x  |
 |eigvecs           |     |     |     |      |      |     |  ?  |  ?  |  x  |  +  |  +  |
 |length            |  +  |     |  +  |  +   |   +  |     |     |     |     |     |     |
-|size              |  +  |     |     |  +   |   +  |     |     |     |  x  |  +  |  +  |
+|size              |  +  |     |     |  +   |   +  |  +  |     |     |  x  |  +  |  +  |
 |                  |     |     |     |      |      |     |     |     |     |     |     |
 
 - StatsBase.AbstractDataTransform
