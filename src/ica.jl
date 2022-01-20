@@ -27,7 +27,7 @@ size(M::ICA) = size(M.W)
 
 Returns the mean vector.
 """
-mean(M::ICA) = fullmean(size(M,1), M.mean)
+mean(M::ICA) = fullmean(size(M.W,1), M.mean)
 
 """
     predict(M::ICA, x)

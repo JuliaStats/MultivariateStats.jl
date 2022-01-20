@@ -105,7 +105,6 @@ module MultivariateStats
     ## ica
     ICA,                    # Type: the Fast ICA model
 
-    icagfun,                # a function to get a ICA approx neg-entropy functor
     fastica!,               # core algorithm function for the Fast ICA
 
     ## fa
@@ -144,6 +143,9 @@ module MultivariateStats
     @deprecate outdim(f::MDS) size(f::MDS)[2]
     @deprecate transform(f::MDS) predict(f::MDS)
     @deprecate transform(f::MDS, x) predict(f::MDS, x)
+    @deprecate indim(f::ICA) size(f::ICA)[1]
+    @deprecate outdim(f::ICA) size(f::ICA)[2]
+    @deprecate transform(f::ICA, x) predict(f::ICA, x)
     # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
     # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
