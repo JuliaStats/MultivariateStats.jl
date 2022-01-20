@@ -22,6 +22,8 @@ module MultivariateStats
     projection,         # the projection matrix
     reconstruct,        # reconstruct the input (approximately) given the output
     transform,          # apply a model to transform a vector or a matrix
+    eigvals,            # eignenvalues of the transformation
+    eigvecs,            # eignenvectors of the transformation
 
     # lreg
     llsq,               # Linear Least Square regression
@@ -48,6 +50,7 @@ module MultivariateStats
     tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
     tresidualvar,       # total residual variance
     loadings,           # model loadings
+    var,                # model variance
 
     ## ppca
     PPCA,               # Type: the Probabilistic PCA model
@@ -55,7 +58,6 @@ module MultivariateStats
     ppcaml,             # Maximum likelihood probabilistic PCA
     ppcaem,             # EM algorithm for probabilistic PCA
     bayespca,           # Bayesian PCA
-    loadings,           # factor loadings matrix
 
     ## kpca
     KernelPCA,          # Type: the Kernel PCA model
@@ -79,7 +81,6 @@ module MultivariateStats
     ## cmds
     MDS,
     classical_mds,      # perform classical MDS over a given distance matrix
-    eigvals,            # eignenvalues of the transformation
     stress,             # stress evaluation
 
     gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix

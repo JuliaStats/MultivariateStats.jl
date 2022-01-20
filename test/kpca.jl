@@ -58,34 +58,32 @@ import Statistics: mean, cov
     X = randn(rng, d, n)
     M = fit(KernelPCA, X, maxoutdim=d)
     M2 = fit(PCA, X, method=:cov, pratio=1.0)
-    @test indim(M) == d
-    @test outdim(M) == d
-    @test abs.(transform(M)) ≈ abs.(transform(M2, X))
-    @test abs.(transform(M, X)) ≈ abs.(transform(M2, X))
-    @test abs.(transform(M, X[:,1])) ≈ abs.(transform(M2, X[:,1]))
+    @test size(M) == (d,d)
+    @test abs.(predict(M)) ≈ abs.(predict(M2, X))
+    @test abs.(predict(M, X)) ≈ abs.(predict(M2, X))
+    @test abs.(predict(M, X[:,1])) ≈ abs.(predict(M2, X[:,1]))
 
     M = fit(KernelPCA, X, maxoutdim=3, solver=:eigs)
     M2 = fit(PCA, X, method=:cov, maxoutdim=3)
-    @test indim(M) == d
-    @test outdim(M) == 3
-    @test abs.(transform(M, X)) ≈ abs.(transform(M2, X))
-    @test abs.(transform(M, X[:,1])) ≈ abs.(transform(M2, X[:,1]))
+    @test size(M)[1] == d
+    @test size(M)[2] == 3
+    @test abs.(predict(M, X)) ≈ abs.(predict(M2, X))
+    @test abs.(predict(M, X[:,1])) ≈ abs.(predict(M2, X[:,1]))
 
     # issue #44
     Y = randn(rng, d, 2*n)
-    @test size(transform(M, Y)) == size(transform(M2, Y))
+    @test size(predict(M, Y)) == size(predict(M2, Y))
 
     # reconstruction
     @test_throws ArgumentError reconstruct(M, X)
     M = fit(KernelPCA, X, inverse=true)
-    @test all(isapprox.(reconstruct(M, transform(M)), X, atol=0.75))
+    @test all(isapprox.(reconstruct(M, predict(M)), X, atol=0.75))
 
     # use RBF kernel
     γ = 10.
     rbf=(x,y)->exp(-γ*norm(x-y)^2.0)
     M = fit(KernelPCA, X, kernel=rbf)
-    @test indim(M) == d
-    @test outdim(M) == d
+    @test size(M) == (d,d)
 
     # use precomputed kernel
     K = MultivariateStats.pairwise((x,y)->x'*y, eachcol(X), symmetric=true)
@@ -93,7 +91,7 @@ import Statistics: mean, cov
     M = fit(KernelPCA, K, maxoutdim = 5, kernel=nothing, inverse=true) # use precomputed kernel
     M2 = fit(PCA, X, method=:cov, pratio=1.0)
     @test_throws ArgumentError reconstruct(M, X) # no reconstruction for precomputed kernel
-    @test abs.(transform(M)) ≈ abs.(transform(M2, X))
+    @test abs.(predict(M)) ≈ abs.(predict(M2, X))
 
     @test_throws TypeError fit(KernelPCA, rand(rng, 1,10), kernel=1)
 
@@ -104,27 +102,26 @@ import Statistics: mean, cov
     M = fit(KernelPCA, X ; inverse=true)
     MM = fit(KernelPCA, XX ; inverse=true)
 
-    Y = randn(rng, Float64, outdim(M))
+    Y = randn(rng, Float64, size(M)[2])
     YY = convert.(Float32, Y)
 
-    @test indim(MM) == d
-    @test outdim(MM) == d
-    @test eltype(transform(MM, XX[:,1])) == Float32
+    @test size(MM) == (d,d)
+    @test eltype(predict(MM, XX[:,1])) == Float32
 
-    for func in (projection, principalvars)
+    for func in (projection, eigvals)
         @test eltype(func(M)) == Float64
         @test eltype(func(MM)) == Float32
     end
 
     # mixing types should not error
-    transform(M, XX)
-    transform(MM, X)
+    predict(M, XX)
+    predict(MM, X)
     reconstruct(M, YY)
     reconstruct(MM, Y)
 
     ## fit a sparse matrix
     X = SparseArrays.sprandn(rng, 100d, n, 0.6)
     M = fit(KernelPCA, X, maxoutdim=3, solver=:eigs)
-    @test indim(M) == 100d
-    @test outdim(M) == 3
+    @test size(M)[1] == 100d
+    @test size(M)[2] == 3
 end

@@ -4,11 +4,11 @@
 Linear Principal Component Analysis
 """
 struct PCA{T<:Real} <: LinearDimensionalityReduction
-    mean::AbstractVector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
-    proj::AbstractMatrix{T}       # projection matrix: of size d x p
-    prinvars::AbstractVector{T}   # principal variances: of length p
-    tprinvar::T           # total principal variance, i.e. sum(prinvars)
-    tvar::T               # total input variance
+    mean::AbstractVector{T}     # sample mean: of length d (mean can be empty, which indicates zero mean)
+    proj::AbstractMatrix{T}     # projection matrix: of size d x p
+    prinvars::AbstractVector{T} # principal variances: of length p
+    tprinvar::T                 # total principal variance, i.e. sum(prinvars)
+    tvar::T                     # total input variance
 end
 
 ## constructor
@@ -47,6 +47,12 @@ Returns the projection matrix (of size `(d, p)`). Each column of the projection 
 The principal components are arranged in descending order of the corresponding variances.
 """
 projection(M::PCA) = M.proj
+
+"""
+    eigvecs(M::PCA)
+
+Get the eigenvalues of the PCA model `M`.
+"""
 eigvecs(M::PCA) = projection(M)
 
 """
@@ -56,6 +62,12 @@ Returns the variances of principal components.
 """
 principalvars(M::PCA) = M.prinvars
 principalvar(M::PCA, i::Int) = M.prinvars[i]
+
+"""
+    eigvals(M::PCA)
+
+Get the eigenvalues of the PCA model `M`.
+"""
 eigvals(M::PCA) = principalvars(M)
 
 """
@@ -128,21 +140,6 @@ function show(io::IO, M::PCA)
     idim, odim = size(M)
     print(io, "PCA(indim = $idim, outdim = $odim, principalratio = $(r2(M)))")
 end
-
-function dump(io::IO, M::PCA)
-    show(io, M)
-    println(io)
-    print(io, "principal vars: ")
-    printvecln(io, M.prinvars)
-    println(io, "total var = $(tvar(M))")
-    println(io, "total principal var = $(tprincipalvar(M))")
-    println(io, "total residual var  = $(tresidualvar(M))")
-    println(io, "mean:")
-    printvecln(io, mean(M))
-    println(io, "projection:")
-    printarrln(io, projection(M))
-end
-
 
 #### PCA Training
 
