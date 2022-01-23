@@ -1,8 +1,10 @@
 # Canonical Correlation Analysis
 
 #### CCA Type
-
-struct CCA{T<:Real}
+"""
+Canonical Correlation Analysis Model
+"""
+struct CCA{T<:Real} <: RegressionModel
     xmean::Vector{T}  # sample mean of X: of length dx (can be empty)
     ymean::Vector{T}  # sample mean of Y: of length dy (can be empty)
     xproj::Matrix{T}  # projection matrix for X, of size (dx, p)
@@ -36,49 +38,103 @@ end
 
 ## properties
 
-xindim(M::CCA) = size(M.xproj, 1)
-yindim(M::CCA) = size(M.yproj, 1)
-outdim(M::CCA) = size(M.xproj, 2)
+"""
+    size(M:CCA)
 
-xmean(M::CCA) = fullmean(xindim(M), M.xmean)
-ymean(M::CCA) = fullmean(yindim(M), M.ymean)
+Return a tuple with the dimension of `X`, `Y`, and the output dimension.
+"""
+size(M::CCA) = (size(M.xproj, 1), size(M.yproj, 1), size(M.xproj, 2))
 
-xprojection(M::CCA) = M.xproj
-yprojection(M::CCA) = M.yproj
+"""
+    mean(M::CCA, c::Symbol)
 
-correlations(M::CCA) = M.corrs
+Get the mean vector for the component `c` of the model `M`.
+The component parameter can be `:x` or `:y`.
+"""
+function mean(M::CCA, c::Symbol)
+    if c == :x
+        fullmean(xindim(M), M.xmean)
+    elseif c == :y
+        fullmean(yindim(M), M.ymean)
+    else
+        throw(ArgumentError("Unknown component $c"))
+    end
+end
+
+"""
+    projection(M::CCA, c::Symbol)
+
+Get the projection matrix for the component `c` of the model `M`.
+The component parameter can be `:x` or `:y`.
+"""
+function projection(M::CCA, c::Symbol)
+    if c == :x
+        M.xproj
+    elseif c == :y
+        M.yproj
+    else
+        throw(ArgumentError("Unknown component $c"))
+    end
+end
+
+"""
+    cor(M::CCA)
+
+The correlations of the projected componnents (a vector of length `p`).
+"""
+cor(M::CCA) = M.corrs
 
 ## use
+"""
+    predict(M::CCA, Z::AbstractVecOrMat{<:Real}, c::Symbol)
 
-xtransform(M::CCA, X::AbstractVecOrMat{<:Real}) = transpose(M.xproj) * centralize(X, M.xmean)
-ytransform(M::CCA, Y::AbstractVecOrMat{<:Real}) = transpose(M.yproj) * centralize(Y, M.ymean)
+Given a [`CCA`](@ref) model, one can transform observations into both spaces into a common space, as
 
-## show & dump
+```math
+\\mathbf{z}_x = \\mathbf{P}_x^T (\\mathbf{x} - \\boldsymbol{\\mu}_x) \\\\
+\\mathbf{z}_y = \\mathbf{P}_y^T (\\mathbf{y} - \\boldsymbol{\\mu}_y)
+```
+
+Here, ``\\mathbf{P}_x`` and ``\\mathbf{P}_y`` are projection matrices for ``X`` and ``Y``;
+``\\boldsymbol{\\mu}_x`` and ``\\boldsymbol{\\mu}_y`` are mean vectors.
+
+Parameter `Z` can be either a vector of length `dx`, `dy`, or a matrix where each column is an observation. The component parameter `c` can be `:x` or `:y`.
+"""
+function predict(M::CCA, Z::AbstractVecOrMat{<:Real}, c::Symbol)
+    if c == :x
+        transpose(M.xproj) * centralize(Z, M.xmean)
+    elseif c == :y
+        transpose(M.yproj) * centralize(Z, M.ymean)
+    else
+        throw(ArgumentError("Unknown component $c"))
+    end
+end
+
+## show
 
 function show(io::IO, M::CCA)
     print(io, "CCA (xindim = $(xindim(M)), yindim = $(yindim(M)), outdim = $(outdim(M)))")
 end
 
-function dump(io::IO, M::CCA)
-    show(io, M)
-    println(io)
-    println(io, "correlations: ")
-    printvecln(io, correlations(M))
-    println(io, "xmean:")
-    printvecln(io, xmean(M))
-    println(io, "ymean:")
-    printvecln(io, ymean(M))
-    println(io, "xprojection:")
-    printarrln(io, xprojection(M))
-    println(io, "yprojection:")
-    printarrln(io, yprojection(M))
-end
-
 
 #### Perform CCA on data
 
-## ccacov
+"""
+    ccacov(Cxx, Cyy, Cxy, xmean, ymean, p)
 
+Compute CCA based on analysis of the given covariance matrices, using generalized
+eigenvalue decomposition, and return [`CCA`](@ref) model.
+
+Parameters:
+- `Cxx`: The covariance matrix of `X`.
+- `Cyy`: The covariance matrix of `Y`.
+- `Cxy`: The covariance matrix between `X` and `Y`.
+- `xmean`: The mean vector of the **original** samples of `X`, which can be
+a vector of length `dx`, or an empty vector indicating a zero mean.
+- `ymean`: The mean vector of the **original** samples of `Y`, which can be
+a vector of length `dy`, or an empty vector indicating a zero mean.
+- `p`: The output dimension, *i.e* the dimension of the common space.
+"""
 function ccacov(Cxx::DenseMatrix{T},
                 Cyy::DenseMatrix{T},
                 Cxy::DenseMatrix{T},
@@ -141,8 +197,20 @@ function _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p::Int)
     CCA(xmean, ymean, Px, Py, crs)
 end
 
-## ccasvd
+"""
+    ccasvd(Zx, Zy, xmean, ymean, p)
 
+Compute CCA based on singular value decomposition of centralized sample matrices `Zx` and `Zy`, and return [`CCA`](@ref) model[^1].
+
+Parameters:
+- `Zx`: The centralized sample matrix for `X`.
+- `Zy`: The centralized sample matrix for `Y`.
+- `xmean`: The mean vector of the **original** samples of `X`, which can be
+a vector of length `dx`, or an empty vector indicating a zero mean.
+- `ymean`: The mean vector of the **original** samples of `Y`, which can be
+a vector of length `dy`, or an empty vector indicating a zero mean.
+- `p`: The output dimension, *i.e* the dimension of the common space.
+"""
 function ccasvd(Zx::DenseMatrix{T},
                 Zy::DenseMatrix{T},
                 xmean::Vector{T},
@@ -210,6 +278,28 @@ end
 
 ## interface functions
 
+"""
+    fit(CCA, X, Y; ...)
+
+Perform CCA over the data given in matrices `X` and `Y`.
+Each column of `X` and `Y` is an observation.
+
+`X` and `Y` should have the same number of columns (denoted by `n` below).
+
+This method returns an instance of [`CCA`](@ref).
+
+**Keyword arguments:**
+- `method`: The choice of methods:
+    - `:cov`: based on covariance matrices
+    - `:svd`: based on SVD of the input data (*default*)
+- `outdim`: The output dimension, *i.e* dimension of the common space (*default*: `min(dx, dy, n)`)
+- `mean`: The mean vector, which can be either of:
+    - `0`: the input data has already been centralized
+    - `nothing`: this function will compute the mean (*default*)
+    - a pre-computed mean vector
+
+**Notes:** This function calls [`ccacov`](@ref) or [`ccasvd`](@ref) internally, depending on the choice of method.
+"""
 function fit(::Type{CCA}, X::AbstractMatrix{T}, Y::AbstractMatrix{T};
              outdim::Int=min(min(size(X)...), min(size(Y)...)),
              method::Symbol=:svd,
