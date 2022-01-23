@@ -109,13 +109,13 @@ function ppcaml(Z::AbstractMatrix{T}, mean::Vector{T};
 
     check_pcaparams(size(Z,1), mean, maxoutdim, 1.)
 
-    d = size(Z,1)
+    d, n = size(Z)
 
     # SVD decomposition
     Svd = svd(Z)
     λ = Svd.S
     ord = sortperm(λ; rev=true)
-    V = λ[ord]
+    V = abs2.(λ[ord]) ./ (n-1)
 
     # filter 0 eigenvalues and adjust number of latent dimensions
     idxs = findall(V .< tol)
