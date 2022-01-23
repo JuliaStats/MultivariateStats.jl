@@ -12,6 +12,7 @@ makedocs(
              "lreg.md",
              "lda.md",
              "pca.md",
+             "ica.md",
              "mds.md",
              "Development"=>"api.md"]
 )
