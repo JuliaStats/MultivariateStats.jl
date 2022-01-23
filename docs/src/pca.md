@@ -107,9 +107,9 @@ This package defines a [`KernelPCA`](@ref) type to represent a kernel PCA model.
 KernelPCA
 ```
 
-The package provides a set of methods to access the properties of the kernel PCA model.
-Let ``M`` be an instance of [`KernelPCA`](@ref), ``d`` be the dimension of observations,
-and ``p`` be the output dimension (*i.e* the dimension of the principal subspace).
+The package provides a set of methods to access the properties of the kernel PCA
+model. Let ``M`` be an instance of [`KernelPCA`](@ref), ``d`` be the dimension of
+observations, and ``p`` be the output dimension (*i.e* the dimension of the principal subspace).
 
 ```@docs
 fit(::Type{KernelPCA}, ::AbstractMatrix{T}; kwargs...) where {T<:Real}
@@ -140,3 +140,64 @@ fit(::Type{MultivariateStats.KernelCenter}, ::AbstractMatrix{<:Real})
 MultivariateStats.transform!(::MultivariateStats.KernelCenter, ::AbstractMatrix{<:Real})
 ```
 
+
+## Probabilistic Principal Component Analysis
+
+[Probabilistic Principal Component Analysis](https://www.microsoft.com/en-us/research/publication/probabilistic-principal-component-analysis) (PPCA)
+represents a constrained form of the Gaussian distribution in which the number of
+free parameters can be restricted while still allowing the model to capture
+the dominant correlations in a data set. It is expressed as the maximum likelihood
+solution of a probabilistic latent variable model[^1].
+
+This package defines a [`PPCA`](@ref) type to represent a probabilistic PCA model,
+and provides a set of methods to access the properties.
+
+```@docs
+PPCA
+```
+
+Let ``M`` be an instance of [`PPCA`](@ref), ``d`` be the dimension of observations,
+and ``p`` be the output dimension (*i.e* the dimension of the principal subspace).
+
+```@docs
+fit
+size(::PPCA)
+mean(::PPCA)
+var(::PPCA)
+projection(::PPCA)
+loadings(::PPCA)
+```
+
+Given a probabilistic PCA model ``M``, one can use it to transform observations into
+latent variables, as
+
+```@math
+\mathbf{z} = (\mathbf{W}^T \mathbf{W} + \sigma^2 \mathbf{I}) \mathbf{W}^T (\mathbf{x} - \boldsymbol{\mu})
+```
+
+or use it to reconstruct (approximately) the observations from latent variables, as
+
+```@math
+\tilde{\mathbf{x}} = \mathbf{W} \mathbb{E}[\mathbf{z}] + \boldsymbol{\mu}
+```
+
+Here, ``\mathbf{W}`` is the factor loadings or weight matrix.
+
+```@docs
+predict
+reconstruct
+```
+
+Auxiliary functions:
+
+```@docs
+ppcaml
+ppcaem
+bayespca
+```
+
+---
+
+### References
+
+[^1]: Bishop, C. M. Pattern Recognition and Machine Learning, 2006.
