@@ -19,15 +19,14 @@ import StatsBase
     σ² = 0.1
     M = PPCA(Float64[], W, σ²)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test mean(M) == zeros(5)
     @test loadings(M) == W
     @test var(M) == σ²
 
     T = inv(W'*W .+ σ²*Matrix(I, 3, 3))*W'
-    @test transform(M, X[:,1]) ≈ T * X[:,1]
-    @test transform(M, X) ≈ T * X
+    @test predict(M, X[:,1]) ≈ T * X[:,1]
+    @test predict(M, X) ≈ T * X
 
     R = W*inv(W'W)*(W'W .+ σ²*Matrix(I, 3, 3))
     @test reconstruct(M, Y[:,1]) ≈ R * Y[:,1]
@@ -39,14 +38,13 @@ import StatsBase
     mval = rand(rng, 5)
     M = PPCA(mval, W, σ²)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test mean(M) == mval
     @test loadings(M) == W
     @test var(M) == σ²
 
-    @test transform(M, X[:,1]) ≈ T * (X[:,1] .- mval)
-    @test transform(M, X) ≈ T * (X .- mval)
+    @test predict(M, X[:,1]) ≈ T * (X[:,1] .- mval)
+    @test predict(M, X) ≈ T * (X .- mval)
 
     @test reconstruct(M, Y[:,1]) ≈ R * Y[:,1] .+ mval
     @test reconstruct(M, Y) ≈ R * Y .+ mval
@@ -73,11 +71,10 @@ import StatsBase
     P = projection(M)
     W = loadings(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 4
+    @test size(M) == (5,4)
     @test mean(M) == mval
     @test P'P ≈ Matrix(I, 4, 4)
-    @test reconstruct(M, transform(M, X)) ≈ reconstruct(M0, transform(M0, X))
+    @test reconstruct(M, predict(M, X)) ≈ reconstruct(M0, predict(M0, X))
 
     M = fit(PPCA, X; mean=mval)
     @test loadings(M) ≈ W
@@ -89,8 +86,7 @@ import StatsBase
     P = projection(M)
     W = loadings(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test P'P ≈ Matrix(I, 3, 3)
 
     # ppcaem
@@ -99,11 +95,10 @@ import StatsBase
     P = projection(M)
     W = loadings(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 4
+    @test size(M) == (5,4)
     @test mean(M) == mval
     @test P'P ≈ Matrix(I, 4, 4)
-    @test all(isapprox.(reconstruct(M, transform(M, X)), reconstruct(M0, transform(M0, X)), atol=1e-2))
+    @test all(isapprox.(reconstruct(M, predict(M, X)), reconstruct(M0, predict(M0, X)), atol=1e-2))
 
     M = fit(PPCA, X; method=:em, mean=mval)
     @test loadings(M) ≈ W
@@ -114,8 +109,7 @@ import StatsBase
     M = fit(PPCA, X; method=:em, maxoutdim=3)
     P = projection(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test P'P ≈ Matrix(I, 3, 3)
 
     @test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:em, maxiter=1)
@@ -127,11 +121,10 @@ import StatsBase
     P = projection(M)
     W = loadings(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5,3)
     @test mean(M) == mval
     @test P'P ≈ Matrix(I, 3, 3)
-    @test reconstruct(M, transform(M, X)) ≈ reconstruct(M0, transform(M0, X))
+    @test reconstruct(M, predict(M, X)) ≈ reconstruct(M0, predict(M0, X))
 
     M = fit(PPCA, X; method=:bayes, mean=mval)
     @test loadings(M) ≈ W
@@ -142,8 +135,7 @@ import StatsBase
     M = fit(PPCA, X; method=:em, maxoutdim=2)
     P = projection(M)
 
-    @test indim(M) == 5
-    @test outdim(M) == 2
+    @test size(M) == (5,2)
     @test P'P ≈ Matrix(I, 2, 2)
 
     @test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:bayes, maxiter=1)
@@ -161,8 +153,8 @@ import StatsBase
         MM = fit(PPCA, XX ; maxoutdim=1, method=method)
 
         # mix types
-        transform(M, XX)
-        transform(MM, X)
+        predict(M, XX)
+        predict(MM, X)
         reconstruct(M, YY)
         reconstruct(MM, Y)
 
