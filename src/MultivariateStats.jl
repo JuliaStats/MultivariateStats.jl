@@ -147,6 +147,9 @@ module MultivariateStats
     @deprecate yprojection(M::CCA) projection(M, :y)
     @deprecate xtransform(M::CCA, x) predict(M, x, :x)
     @deprecate ytransform(M::CCA, y) predict(M, y, :y)
+    @deprecate indim(f::PPCA) size(f::PPCA)[1]
+    @deprecate outdim(f::PPCA) size(f::PPCA)[2]
+    @deprecate transform(f::PPCA, x) predict(f::PPCA, x)
     # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
     # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
