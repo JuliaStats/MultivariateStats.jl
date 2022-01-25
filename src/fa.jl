@@ -61,7 +61,7 @@ loadings(M::FactorAnalysis) = M.W
 Transform observations `x` into latent variables. Here, `x` can be either a vector
 of length `d` or a matrix where each column is an observation.
 """
-function transform(m::FactorAnalysis, x::AbstractVecOrMat{<:Real})
+function predict(m::FactorAnalysis, x::AbstractVecOrMat{<:Real})
     xn = centralize(x, mean(m))
     W = m.W
     WᵀΨ⁻¹ = W'*diagm(0 => 1 ./ m.Ψ)  # (q x d) * (d x d) = (q x d)
@@ -129,9 +129,9 @@ function faem(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
         # log likelihood
         Ψ⁻¹ = diagm(0 => 1 ./ Ψ)
         WᵀΨ⁻¹ = W'*Ψ⁻¹
-        detΣ = prod(Ψ)*det(I + WᵀΨ⁻¹*W)
+        logdetΣ = sum(log, Ψ) + logabsdet(I + WᵀΨ⁻¹*W)[1]
         Σ⁻¹ = Ψ⁻¹ - Ψ⁻¹*W*inv(I + WᵀΨ⁻¹*W)*WᵀΨ⁻¹
-        L = (-n/2)*(d*log(2π) + log(detΣ) + tr(Σ⁻¹*S))
+        L = (-n/2)*(d*log(2π) + logdetΣ + tr(Σ⁻¹*S))
         @debug "Likelihood" iter=c L=L ΔL=abs(L_old - L)
         if abs(L_old - L) < tol
             break
