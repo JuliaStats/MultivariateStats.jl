@@ -85,7 +85,8 @@ end
 ## show
 
 function show(io::IO, M::FactorAnalysis)
-    print(io, "Factor Analysis(indim = $(indim(M)), outdim = $(outdim(M)))")
+    i,o = size(M)
+    print(io, "Factor Analysis(indim = $i, outdim = $o)")
 end
 
 ## core algorithms
