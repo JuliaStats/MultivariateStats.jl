@@ -17,15 +17,14 @@ import Statistics: mean, cov, var
     Ψ = fill(0.1, 5)
     M = FactorAnalysis(Float64[], W, Ψ)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5, 3)
     @test mean(M) == zeros(5)
     @test loadings(M) == W
     @test var(M) == Ψ
 
     T = inv(I+W'*diagm(0 => 1 ./ var(M))*W)*W'*diagm(0 => 1 ./ var(M))
-    @test transform(M, X[:,1]) ≈ T * X[:,1]
-    @test transform(M, X) ≈ T * X
+    @test predict(M, X[:,1]) ≈ T * X[:,1]
+    @test predict(M, X) ≈ T * X
 
     R = cov(M)*W*inv(W'W)
     @test reconstruct(M, Y[:,1]) ≈ R * Y[:,1]
@@ -37,14 +36,13 @@ import Statistics: mean, cov, var
     mval = rand(rng, 5)
     M = FactorAnalysis(mval, W, Ψ)
 
-    @test indim(M) == 5
-    @test outdim(M) == 3
+    @test size(M) == (5, 3)
     @test mean(M) == mval
     @test loadings(M) == W
     @test var(M) == Ψ
 
-    @test transform(M, X[:,1]) ≈ T * (X[:,1] .- mval)
-    @test transform(M, X) ≈ T * (X .- mval)
+    @test predict(M, X[:,1]) ≈ T * (X[:,1] .- mval)
+    @test predict(M, X) ≈ T * (X .- mval)
 
     @test reconstruct(M, Y[:,1]) ≈ R * Y[:,1] .+ mval
     @test reconstruct(M, Y) ≈ R * Y .+ mval
@@ -73,8 +71,7 @@ import Statistics: mean, cov, var
             W = loadings(M)
         push!(fas,M)
 
-        @test indim(M) == 5
-        @test outdim(M) == 4
+        @test size(M) == (5, 4)
         @test mean(M) == mval
         @test P'P ≈ Matrix(I, 4, 4)
         @test all(isapprox.(cov(M), cov(X, dims=2), atol=1e-3))
@@ -88,8 +85,7 @@ import Statistics: mean, cov, var
         M = fit(FactorAnalysis, X; maxoutdim=3, method=method)
         P = projection(M)
 
-        @test indim(M) == 5
-        @test outdim(M) == 3
+        @test size(M) == (5, 3)
         @test P'P ≈ Matrix(I, 3, 3)
         end
     end
@@ -108,8 +104,8 @@ import Statistics: mean, cov, var
         MM = fit(FactorAnalysis, XX; method=method, maxoutdim=3)
 
         # mixing types
-        transform(M, XX)
-        transform(MM, X)
+        predict(M, XX)
+        predict(MM, X)
         reconstruct(M, YY)
         reconstruct(MM, Y)
 
