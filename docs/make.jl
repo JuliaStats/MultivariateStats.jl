@@ -13,8 +13,9 @@ makedocs(
              "lda.md",
              "pca.md",
              "ica.md",
-             "mds.md",
              "cca.md",
+             "fa.md",
+             "mds.md",
              "Development"=>"api.md"]
 )
 
