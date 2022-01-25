@@ -185,7 +185,8 @@ function facm(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
         ord = sortperm(λ, rev=true)
         λ = λ[ord]
 
-        q′ = λ[q] > 0 ? q : findlast(λ .> 0)
+        q′ = λ[q] > 1 ? q : findlast(λ .> 1)
+        q′ === nothing && error("Eigenvalues less then 1")
 
         λq = 0.0
         @inbounds for i in 1:q′
