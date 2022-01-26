@@ -161,7 +161,7 @@ loadings(M::MDS) = sqrt.(M.λ)' .* M.U
 Calculate the out-of-sample transformation of the observation `x` for the MDS model `M`.
 Here, `x` is a vector of length `d`.
 """
-function predict(M::MDS{T}, x::AbstractVector{T}; distances=false) where {T<:Real}
+function predict(M::MDS, x::AbstractVector{T}; distances=false) where {T<:Real}
     d = if isnan(M.d) # model has only distance matrix
         @assert distances "Cannot transform points if model was fitted with a distance matrix. Use point distances."
         size(x, 1) != size(M.X, 1) && throw(

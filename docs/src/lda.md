@@ -108,7 +108,7 @@ Several methods are provided to access properties of the LDA model. Let `M` be a
 
 ```@docs
 fit(::Type{MulticlassLDA}, ::Int, ::DenseMatrix{T}, ::AbstractVector{Int}; kwargs...) where T<:Real
-predict(::MulticlassLDA, ::AbstractVecOrMat{<:Real})
+predict(::MulticlassLDA, ::AbstractVecOrMat{T}) where {T<:Real}
 mean(::MulticlassLDA)
 size(::MulticlassLDA)
 length(::MulticlassLDA)
@@ -152,7 +152,7 @@ Several methods are provided to access properties of the LDA model. Let `M` be a
 
 ```@docs
 fit(::Type{SubspaceLDA}, ::DenseMatrix{T}, ::AbstractVector{Int}, ::Int; kwargs...) where T<:Real
-predict(::SubspaceLDA, ::AbstractVecOrMat{<:Real})
+predict(::SubspaceLDA, ::AbstractVecOrMat{T}) where {T<:Real}
 mean(::SubspaceLDA)
 projection(::SubspaceLDA)
 size(::SubspaceLDA)
