@@ -100,8 +100,8 @@ module MultivariateStats
     ## fa
     FactorAnalysis,         # Type: the Factor Analysis model
 
-    faem,                   # Maximum likelihood probabilistic PCA
-    facm                    # EM algorithm for probabilistic PCA
+    faem,                   # EM algorithm for factor analysis
+    facm                    # CM algorithm for factor analysis
 
     ## source files
     include("types.jl")

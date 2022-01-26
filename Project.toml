@@ -4,7 +4,7 @@ keywords = ["multivariate statistics", "dimensionality reduction"]
 license = "MIT"
 desc = "A Julia package for multivariate statistics and data analysis"
 repository = "https://github.com/JuliaStats/MultivariateStats.jl.git"
-version = "0.8.0"
+version = "0.9.0"
 
 [deps]
 Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
@@ -24,3 +24,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "StableRNGs"]
+
