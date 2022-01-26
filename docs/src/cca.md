@@ -15,15 +15,16 @@ Let `M` be an instance of [`CCA`](@ref), `dx` be the dimension of `X`,
 `dy` the dimension of `Y`, and `p` the output dimension (*i.e* the dimension of the common space).
 
 ```@docs
-fit(::Type{CCA}, ::AbstractMatrix{T}; kwargs) where {T<:Real}
+fit(::Type{CCA}, ::AbstractMatrix{T}, ::AbstractMatrix{T}) where {T<:Real}
 size(::CCA)
 mean(::CCA, ::Symbol)
 projection(::CCA, ::Symbol)
 cor(::CCA)
-predict(::CCA, ::AbstractVecOrMat{T}, ::Symbol) where {T<:Real}
+predict(::CCA, ::AbstractVecOrMat{<:Real}, ::Symbol)
 ```
 
 Auxiliary functions:
+
 ```@docs
 ccacov
 ccasvd

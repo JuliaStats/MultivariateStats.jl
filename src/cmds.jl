@@ -188,7 +188,7 @@ function predict(M::MDS{T}, x::AbstractVector{<:Real}; distances=false) where {T
     b = (d  .- mean(d, dims=1) .- mD .+ mean(mD)) ./ -2
 
     # sqrt(λ)⁻¹U'b
-    λ = vcat(M.λ, zeros(T, outdim(M) - length(M.λ)))
+    λ = vcat(M.λ, zeros(T, size(M)[2] - length(M.λ)))
     return M.U' * b ./ sqrt.(λ)
 end
 
@@ -215,8 +215,9 @@ end
 ## interface functions
 
 """
+    fit(MDS, X; kwargs...)
 
-Compute an embedding of points by classical multidimensional scaling (MDS).
+Compute an embedding of `X` points by classical multidimensional scaling (MDS).
 There are two calling options, specified via the required keyword argument `distances`:
 
     mds = fit(MDS, X; distances=false, maxoutdim=size(X,1)-1)
@@ -300,7 +301,7 @@ Get the stress of the MDS mode `M`.
 function stress(M::MDS)
     # calculate distances if original data was stored
     DX = isnan(M.d) ? M.X : pairwise((x,y)->norm(x-y), eachcol(M.X), symmetric=true)
-    DY = pairwise((x,y)->norm(x-y), eachcol(transform(M)), symmetric=true)
+    DY = pairwise((x,y)->norm(x-y), eachcol(predict(M)), symmetric=true)
     n = size(DX,1)
     return sqrt(2*sum((DX - DY).^2)/sum(DX.^2));
 end

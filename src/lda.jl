@@ -152,6 +152,9 @@ end
 
 #### Multiclass LDA Stats
 
+"""
+Resulting statistics of the multi-class LDA evaluation.
+"""
 mutable struct MulticlassLDAStats{T<:Real, M<:AbstractMatrix{T}, N<:AbstractMatrix{T}}
     dim::Int              # sample dimensions
     nclasses::Int         # number of classes
@@ -222,13 +225,13 @@ mutable struct MulticlassLDA{T<:Real} <: RegressionModel
 end
 
 """
-    size(M)
+    size(M::MulticlassLDA)
 
 Get the input (*i.e* the dimension of the observation space) and output (*i.e* the dimension of the transformed features) dimensions of the model `M`.
 """
 size(M::MulticlassLDA) = size(M.proj)
 """
-    length(M)
+    length(M::MulticlassLDA)
 
 Get the sample dimensions.
 """
@@ -416,7 +419,7 @@ Get dimension of the LDA model.
 """
 length(M::SubspaceLDA) = size(M.projLDA, 2)
 """
-    predict(M, x)
+    predict(M::SubspaceLDA, x)
 
 Transform input sample(s) in `x` to the output space of LDA model `M`.
 Here, `x` can be either a sample vector or a matrix comprised of samples in columns.
@@ -428,7 +431,19 @@ predict(M::SubspaceLDA, x) = M.projLDA' * (M.projw' * x)
 Get the projection matrix.
 """
 projection(M::SubspaceLDA) = M.projw * M.projLDA
+
+"""
+    mean(M::SubspaceLDA)
+
+Returns the mean vector of the subspace LDA model `M`.
+"""
 mean(M::SubspaceLDA) = vec(sum(M.cmeans * Diagonal(M.cweights / sum(M.cweights)), dims=2))
+
+"""
+    eigvals(M::SubspaceLDA)
+
+Get the eigenvalues of the subspace LDA model `M`.
+"""
 eigvals(M::SubspaceLDA) = M.λ
 
 classmeans(M::SubspaceLDA) = M.cmeans

@@ -18,7 +18,7 @@ observations, and ``p`` be the output dimension (*i.e* the dimension of the prin
 subspace).
 
 ```@docs
-fit(::Type{FactorAnalysis}, ::AbstractVecOrMat{<:Real})
+fit(::Type{FactorAnalysis}, ::AbstractMatrix{T}) where {T<:Real}
 size(::FactorAnalysis)
 mean(::FactorAnalysis)
 var(::FactorAnalysis)

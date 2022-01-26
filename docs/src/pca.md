@@ -184,8 +184,8 @@ or use it to reconstruct (approximately) the observations from latent variables,
 Here, ``\mathbf{W}`` is the factor loadings or weight matrix.
 
 ```@docs
-predict
-reconstruct
+predict(::PPCA, ::AbstractVecOrMat{<:Real})
+reconstruct(::PPCA, ::AbstractVecOrMat{<:Real})
 ```
 
 Auxiliary functions:

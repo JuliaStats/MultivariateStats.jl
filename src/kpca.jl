@@ -29,8 +29,6 @@ function transform!(C::KernelCenter, K::AbstractMatrix{<:Real})
 end
 
 """
-Kernel Principal Component Analysis
-
 This type contains kernel PCA model parameters.
 """
 struct KernelPCA{T<:Real} <: NonlinearDimensionalityReduction

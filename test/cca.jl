@@ -147,7 +147,9 @@ using Statistics: mean, cov, cor
     predict(MM, YY, :y)
     
     # type stability
-    for func in (xmean, ymean, xprojection, yprojection, correlations)
+    for func in (M->mean(M, :x), M->mean(M, :y),
+                 M->projection(M, :x),
+                 M->projection(M, :y), cor)
         @test eltype(func(M)) == Float64
         @test eltype(func(MM)) == Float32
     end
