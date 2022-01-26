@@ -116,6 +116,7 @@ classmeans(::MulticlassLDA)
 classweights(::MulticlassLDA)
 withclass_scatter(::MulticlassLDA)
 betweenclass_scatter(::MulticlassLDA)
+projection(::MulticlassLDA)
 ```
 
 ## Subspace Linear Discriminant Analysis
@@ -153,6 +154,7 @@ Several methods are provided to access properties of the LDA model. Let `M` be a
 fit(::Type{SubspaceLDA}, ::DenseMatrix{T}, ::AbstractVector{Int}, ::Int; kwargs...) where T<:Real
 predict(::SubspaceLDA, ::AbstractVecOrMat{<:Real})
 mean(::SubspaceLDA)
+projection(::SubspaceLDA)
 size(::SubspaceLDA)
 length(::SubspaceLDA)
 eigvals(::SubspaceLDA)

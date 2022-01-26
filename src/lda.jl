@@ -276,11 +276,11 @@ betweenclass_scatter(M)
 betweenclass_scatter(M::MulticlassLDA) = betweenclass_scatter(M.stats)
 
 """
-    predict(M, x)
+    predict(M::MulticlassLDA, x)
 
 Transform input sample(s) in `x` to the output space of MC-LDA model `M`. Here, `x` can be either a sample vector or a matrix comprised of samples in columns.
 """
-predict(M::MulticlassLDA, x::AbstractVecOrMat{<:Real}) = M.proj'x
+predict(M::MulticlassLDA, x::AbstractVecOrMat{T}) where {T<:Real} = M.proj'x
 
 """
     fit(MulticlassLDA, nc, X, y; ...)
@@ -424,7 +424,7 @@ length(M::SubspaceLDA) = size(M.projLDA, 2)
 Transform input sample(s) in `x` to the output space of LDA model `M`.
 Here, `x` can be either a sample vector or a matrix comprised of samples in columns.
 """
-predict(M::SubspaceLDA, x) = M.projLDA' * (M.projw' * x)
+predict(M::SubspaceLDA, x::AbstractVecOrMat{T}) where {T<:Real} = M.projLDA' * (M.projw' * x)
 """
     projection(M)
 

@@ -81,7 +81,7 @@ Transform out-of-sample transformation of `x` into a kernel space of the model `
 
 Here, `x` can be either a vector of length `d` or a matrix where each column is an observation.
 """
-function predict(M::KernelPCA, x::AbstractVecOrMat{<:Real})
+function predict(M::KernelPCA, x::AbstractVecOrMat{T}) where {T<:Real}
     k = pairwise(M.ker, eachcol(M.X), eachcol(x))
     transform!(M.center, k)
     return projection(M)'*k
@@ -103,7 +103,7 @@ Approximately reconstruct observations, given in `y`, to the original space usin
 
 Here, `y` can be either a vector of length `p` or a matrix where each column gives the principal components for an observation.
 """
-function reconstruct(M::KernelPCA, y::AbstractVecOrMat{<:Real})
+function reconstruct(M::KernelPCA, y::AbstractVecOrMat{T}) where {T<:Real}
     if size(M.inv, 1) == 0
         throw(ArgumentError("Inverse transformation coefficients are not available, set `inverse` parameter when fitting data"))
     end

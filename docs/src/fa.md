@@ -46,8 +46,8 @@ Here, ``\mathbf{W}`` is the factor loadings or weight matrix,
 The package provides methods to do so:
 
 ```@docs
-predict(::FactorAnalysis, ::AbstractVecOrMat{<:Real})
-reconstruct(::FactorAnalysis, ::AbstractVecOrMat{<:Real})
+predict(::FactorAnalysis, ::AbstractVecOrMat{T}) where {T<:Real}
+reconstruct(::FactorAnalysis, ::AbstractVecOrMat{T}) where {T<:Real}
 ```
 
 Auxiliary functions:

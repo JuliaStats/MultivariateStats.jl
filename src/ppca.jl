@@ -65,7 +65,7 @@ cov(M::PPCA) = M.W'*M.W + M.σ²*I
 Transform observations `x` into latent variables. Here, `x` can be either a vector
 of length `d` or a matrix where each column is an observation.
 """
-function predict(M::PPCA, x::AbstractVecOrMat{<:Real})
+function predict(M::PPCA, x::AbstractVecOrMat{T}) where {T<:Real}
     xn = centralize(x, M.mean)
     n = size(M)[2]
     return inv(cov(M))*M.W'*xn
@@ -78,7 +78,7 @@ Approximately reconstruct observations from the latent variable given in `z`.
 Here, `z` can be either a vector of length `p` or a matrix where each column gives
 the latent variables for an observation.
 """
-function reconstruct(M::PPCA, z::AbstractVecOrMat{<:Real})
+function reconstruct(M::PPCA, z::AbstractVecOrMat{T}) where {T<:Real}
     W  = M.W
     WTW = W'W
     n = size(M)[2]
