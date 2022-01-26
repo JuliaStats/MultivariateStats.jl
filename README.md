@@ -8,26 +8,19 @@ A Julia package for multivariate statistics and data analysis (e.g. dimensionali
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliastats.org/MultivariateStats.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliastats.org/MultivariateStats.jl/dev)
 
--------
-
-#### Documentation
-
-- Stable : <http://multivariatestatsjl.readthedocs.org/en/stable/index.html>
-- Latest : <http://multivariatestatsjl.readthedocs.org/en/latest/index.html>
-
-
 ## Functionalities
 
 #### Available
 
 - Linear Least Square Regression
 - Ridge Regression
+- Isotonic Regression
 - Data Whitening
 - Principal Components Analysis (PCA)
 - Canonical Correlation Analysis (CCA)
 - Classical Multidimensional Scaling (MDS)
 - Linear Discriminant Analysis (LDA)
-- Multiclass LDA
+- Multi-class LDA
 - Independent Component Analysis (ICA), FastICA
 - Probabilistic PCA
 - Factor Analysis

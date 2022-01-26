@@ -52,10 +52,11 @@ Get the mean vector for the component `c` of the model `M`.
 The component parameter can be `:x` or `:y`.
 """
 function mean(M::CCA, c::Symbol)
+    xi, yi, o = size(M)
     if c == :x
-        fullmean(xindim(M), M.xmean)
+        fullmean(xi, M.xmean)
     elseif c == :y
-        fullmean(yindim(M), M.ymean)
+        fullmean(yi, M.ymean)
     else
         throw(ArgumentError("Unknown component $c"))
     end
@@ -113,7 +114,8 @@ end
 ## show
 
 function show(io::IO, M::CCA)
-    print(io, "CCA (xindim = $(xindim(M)), yindim = $(yindim(M)), outdim = $(outdim(M)))")
+    xi, yi, o = size(M)
+    print(io, "CCA (xindim = $xi, yindim = $yi, outdim = $o)")
 end
 
 

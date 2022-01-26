@@ -3,8 +3,6 @@
 [Linear Discriminant Analysis](http://en.wikipedia.org/wiki/Linear_discriminant_analysis) (LDA) are statistical analysis methods to find a linear combination of features for separating observations in two classes.
 - **Note:** Please refer to [`MulticlassLDA`](@ref) for methods that can discriminate between multiple classes.
 
-## Overview of LDA
-
 Suppose the samples in the positive and negative classes respectively with means: ``\boldsymbol{\mu}_p`` and ``\boldsymbol{\mu}_n``, and covariances ``\mathbf{C}_p`` and ``\mathbf{C}_n``. Then based on *Fisher's Linear Discriminant Criteria*, the optimal projection direction can be expressed as:
 
 ```math
@@ -12,7 +10,7 @@ Suppose the samples in the positive and negative classes respectively with means
 ```
 Here ``\alpha`` is an arbitrary non-negative coefficient.
 
-## Linear Discriminant Analysis
+## Two-class Linear Discriminant Analysis
 
 This package uses the [`LinearDiscriminant`](@ref) type to capture a linear discriminant functional:
 
@@ -103,16 +101,22 @@ The package defines a [`MulticlassLDA`](@ref) type to represent a multi-class LD
 
 ```@docs
 MulticlassLDA
+MulticlassLDAStats
 ```
 
 Several methods are provided to access properties of the LDA model. Let `M` be an instance of `MulticlassLDA`:
 
 ```@docs
 fit(::Type{MulticlassLDA}, ::Int, ::DenseMatrix{T}, ::AbstractVector{Int}; kwargs...) where T<:Real
-predict(::MulticlassLDA, ::AbstractVecOrMat{<:Real})
+predict(::MulticlassLDA, ::AbstractVecOrMat{T}) where {T<:Real}
 mean(::MulticlassLDA)
 size(::MulticlassLDA)
 length(::MulticlassLDA)
+classmeans(::MulticlassLDA)
+classweights(::MulticlassLDA)
+withclass_scatter(::MulticlassLDA)
+betweenclass_scatter(::MulticlassLDA)
+projection(::MulticlassLDA)
 ```
 
 ## Subspace Linear Discriminant Analysis
@@ -148,8 +152,9 @@ Several methods are provided to access properties of the LDA model. Let `M` be a
 
 ```@docs
 fit(::Type{SubspaceLDA}, ::DenseMatrix{T}, ::AbstractVector{Int}, ::Int; kwargs...) where T<:Real
-predict(::SubspaceLDA, ::AbstractVecOrMat{<:Real})
+predict(::SubspaceLDA, ::AbstractVecOrMat{T}) where {T<:Real}
 mean(::SubspaceLDA)
+projection(::SubspaceLDA)
 size(::SubspaceLDA)
 length(::SubspaceLDA)
 eigvals(::SubspaceLDA)

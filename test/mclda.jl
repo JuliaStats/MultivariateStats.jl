@@ -162,8 +162,7 @@ import Statistics: mean, cov
     for (X, dX, label) in ((X1, dX1, label1), (X2, dX2, label2))
         w = [length(findall(label.==1)), length(findall(label.==2)), length(findall(label.==3))]
         M = fit(SubspaceLDA, X, label)
-        @test indim(M) == 5
-        @test outdim(M) == 2
+        @test size(M) == (5,2)
         totcenter = vec(sum(centers.*w', dims=2)./sum(w))
         @test mean(M) ≈ totcenter
         @test classmeans(M) ≈ centers

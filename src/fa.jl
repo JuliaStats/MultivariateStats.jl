@@ -61,7 +61,7 @@ loadings(M::FactorAnalysis) = M.W
 Transform observations `x` into latent variables. Here, `x` can be either a vector
 of length `d` or a matrix where each column is an observation.
 """
-function predict(m::FactorAnalysis, x::AbstractVecOrMat{<:Real})
+function predict(m::FactorAnalysis, x::AbstractVecOrMat{T}) where {T<:Real}
     xn = centralize(x, mean(m))
     W = m.W
     WᵀΨ⁻¹ = W'*diagm(0 => 1 ./ m.Ψ)  # (q x d) * (d x d) = (q x d)
@@ -75,7 +75,7 @@ Approximately reconstruct observations from the latent variable given in `z`.
 Here, `z` can be either a vector of length ``p`` or a matrix where each column gives
 the latent variables for an observation.
 """
-function reconstruct(m::FactorAnalysis, z::AbstractVecOrMat{<:Real})
+function reconstruct(m::FactorAnalysis, z::AbstractVecOrMat{T}) where {T<:Real}
     W  = m.W
     # ΣW(W'W)⁻¹z+μ = ΣW(W'W)⁻¹W'Σ⁻¹(x-μ)+μ = Σ(WW⁻¹)((W')⁻¹W')Σ⁻¹(x-μ)+μ
     # = ΣΣ⁻¹(x-μ)+μ = (x-μ)+μ = x

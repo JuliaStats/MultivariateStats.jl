@@ -2,7 +2,9 @@
 
 ## Whitening
 
-A [whitening transformation](http://en.wikipedia.org/wiki/Whitening_transformation>) is a decorrelation transformation that transforms a set of random variables into a set of new random variables with identity covariance (uncorrelated with unit variances).
+A [whitening transformation](http://en.wikipedia.org/wiki/Whitening_transformation) is
+a decorrelation transformation that transforms a set of random variables into a set of
+new random variables with identity covariance (uncorrelated with unit variances).
 
 In particular, suppose a random vector has covariance ``\mathbf{C}``, then a whitening transform ``\mathbf{W}`` is one that satisfy:
 

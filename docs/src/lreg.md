@@ -163,5 +163,5 @@ isotonic
 
 ### References
 
-[^1] Best, M.J., Chakravarti, N. Active set algorithms for isotonic regression; A unifying framework. Mathematical Programming 47, 425–439 (1990).
+[^1]: Best, M.J., Chakravarti, N. Active set algorithms for isotonic regression; A unifying framework. Mathematical Programming 47, 425–439 (1990).
 

@@ -52,7 +52,7 @@ scatter!(virginica[1,:],virginica[2,:],virginica[3,:],marker=:circle,linewidth=0
 ```
 
 ## Classical Multidimensional Scaling
-This package defines a `MDS` type to represent a classical MDS model [^1],
+This package defines a `MDS` type to represent a classical MDS model[^1],
 and provides a set of methods to access the properties.
 
 ```@docs
@@ -65,7 +65,7 @@ the embedding dimension, and ``n`` is the number of the observations.
 
 ```@docs
 fit(::Type{MDS}, ::AbstractMatrix{T}; kwargs) where {T<:Real}
-predict(::MDS)
+predict(::MDS{T}) where {T<:Real}
 predict(::MDS, ::AbstractVector{<:Real})
 size(::MDS)
 projection(M::MDS)
@@ -83,7 +83,9 @@ dmat2gram
 dmat2gram!
 ```
 
-## References
+---
+
+### References
 
 [^1]: Ingwer Borg and Patrick J. F. Groenen, "Modern Multidimensional Scaling: Theory and Applications", Springer, pp. 201–268, 2005.
 

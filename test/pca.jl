@@ -170,7 +170,7 @@ import SparseArrays
     reconstruct(MM, Y)
 
     # type consistency
-    for func in (mean, projection, principalvars, tprincipalvar, tresidualvar, tvar, principalratio)
+    for func in (mean, projection, principalvars, tprincipalvar, tresidualvar, var, principalratio)
         @test eltype(func(M)) == Float64
         @test eltype(func(MM)) == Float32
     end

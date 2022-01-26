@@ -21,9 +21,10 @@ module MultivariateStats
     outdim,             # the output dimension of a model
     projection,         # the projection matrix
     reconstruct,        # reconstruct the input (approximately) given the output
-    transform,          # apply a model to transform a vector or a matrix
     eigvals,            # eignenvalues of the transformation
     eigvecs,            # eignenvectors of the transformation
+    loadings,           # model loadings
+    var,                # model variance
 
     # lreg
     llsq,               # Linear Least Square regression
@@ -49,8 +50,6 @@ module MultivariateStats
 
     tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
     tresidualvar,       # total residual variance
-    loadings,           # model loadings
-    var,                # model variance
 
     ## ppca
     PPCA,               # Type: the Probabilistic PCA model
@@ -119,24 +118,14 @@ module MultivariateStats
     include("fa.jl")
 
     ## deprecations
+    @deprecate indim(f) size(f)[1]
+    @deprecate outdim(f) size(f)[2]
+    @deprecate transform(f, x) predict(f, x) #ex=false
     @deprecate indim(f::Whitening) length(f::Whitening)
     @deprecate outdim(f::Whitening) length(f::Whitening)
-    @deprecate indim(f::MulticlassLDA) size(f::MulticlassLDA)[1]
-    @deprecate outdim(f::MulticlassLDA) size(f::MulticlassLDA)[2]
-    @deprecate indim(f::SubspaceLDA) size(f::SubspaceLDA)[1]
-    @deprecate outdim(f::SubspaceLDA) size(f::SubspaceLDA)[2]
-    @deprecate indim(f::PCA) size(f::PCA)[1]
-    @deprecate outdim(f::PCA) size(f::PCA)[2]
-    @deprecate tvar(f::PCA) var(f::PCA) # total variance
-    @deprecate transform(f::PCA, x) predict(f::PCA, x) #ex=false
+    @deprecate tvar(f::PCA) var(f::PCA)
     @deprecate classical_mds(D::AbstractMatrix, p::Int) predict(fit(MDS, D, maxoutdim=p, distances=true))
-    @deprecate indim(f::MDS) size(f::MDS)[1]
-    @deprecate outdim(f::MDS) size(f::MDS)[2]
     @deprecate transform(f::MDS) predict(f::MDS)
-    @deprecate transform(f::MDS, x) predict(f::MDS, x)
-    @deprecate indim(f::ICA) size(f::ICA)[1]
-    @deprecate outdim(f::ICA) size(f::ICA)[2]
-    @deprecate transform(f::ICA, x) predict(f::ICA, x)
     @deprecate xindim(M::CCA) size(M)[1]
     @deprecate yindim(M::CCA) size(M)[2]
     @deprecate outdim(M::CCA) size(M)[3]
@@ -147,10 +136,5 @@ module MultivariateStats
     @deprecate yprojection(M::CCA) projection(M, :y)
     @deprecate xtransform(M::CCA, x) predict(M, x, :x)
     @deprecate ytransform(M::CCA, y) predict(M, y, :y)
-    @deprecate indim(f::PPCA) size(f::PPCA)[1]
-    @deprecate outdim(f::PPCA) size(f::PPCA)[2]
-    @deprecate transform(f::PPCA, x) predict(f::PPCA, x)
-    # @deprecate transform(m, x; kwargs...) predict(m, x; kwargs...) #ex=false
-    # @deprecate transform(m; kwargs...) predict(m; kwargs...) #ex=false
 
 end # module

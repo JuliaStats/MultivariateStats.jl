@@ -209,15 +209,15 @@ Returns the resultant ICA model, an instance of type [`ICA`](@ref).
 ``\\mathbf{W}^T \\mathbf{C} \\mathbf{W} = \\mathbf{I}``,
 otherwise ``W`` is orthonormal, *i.e* ``\\mathbf{W}^T \\mathbf{W} = \\mathbf{I}``.
 """
-function fit(::Type{ICA}, X::AbstractMatrix{T},             # sample matrix, size (m, n)
-                          k::Int;                           # number of independent components
-                          alg::Symbol=:fastica,             # choice of algorithm
-                          fun::ICAGDeriv=Tanh(one(T)),      # approx neg-entropy functor
-                          do_whiten::Bool=true,             # whether to perform pre-whitening
-                          maxiter::Integer=100,             # maximum number of iterations
-                          tol::Real=1.0e-6,                 # convergence tolerance
-                          mean=nothing,                     # pre-computed mean
-                          winit::Matrix{T}=zeros(T,0,0)     # init guess of W, size (m, k)
+function fit(::Type{ICA}, X::AbstractMatrix{T},# sample matrix, size (m, n)
+             k::Int;                           # number of independent components
+             alg::Symbol=:fastica,             # choice of algorithm
+             fun::ICAGDeriv=Tanh(one(T)),      # approx neg-entropy functor
+             do_whiten::Bool=true,             # whether to perform pre-whitening
+             maxiter::Integer=100,             # maximum number of iterations
+             tol::Real=1.0e-6,                 # convergence tolerance
+             mean=nothing,                     # pre-computed mean
+             winit::Matrix{T}=zeros(T,0,0)     # init guess of W, size (m, k)
             ) where {T<:Real}
 
     # check input arguments

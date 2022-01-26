@@ -114,8 +114,8 @@ observations, and ``p`` be the output dimension (*i.e* the dimension of the prin
 ```@docs
 fit(::Type{KernelPCA}, ::AbstractMatrix{T}; kwargs...) where {T<:Real}
 predict(::KernelPCA)
-predict(::KernelPCA, ::AbstractVecOrMat{<:Real})
-reconstruct(::KernelPCA, ::AbstractVecOrMat{<:Real})
+predict(::KernelPCA, ::AbstractVecOrMat{T}) where {T<:Real}
+reconstruct(::KernelPCA, ::AbstractVecOrMat{T}) where {T<:Real}
 size(::KernelPCA)
 projection(::KernelPCA)
 eigvals(::KernelPCA)
@@ -164,6 +164,7 @@ fit
 size(::PPCA)
 mean(::PPCA)
 var(::PPCA)
+cov(::PPCA)
 projection(::PPCA)
 loadings(::PPCA)
 ```
@@ -184,8 +185,8 @@ or use it to reconstruct (approximately) the observations from latent variables,
 Here, ``\mathbf{W}`` is the factor loadings or weight matrix.
 
 ```@docs
-predict
-reconstruct
+predict(::PPCA, ::AbstractVecOrMat{T}) where {T<:Real}
+reconstruct(::PPCA, ::AbstractVecOrMat{T}) where {T<:Real}
 ```
 
 Auxiliary functions:

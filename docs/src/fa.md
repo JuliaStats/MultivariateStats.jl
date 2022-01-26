@@ -18,7 +18,7 @@ observations, and ``p`` be the output dimension (*i.e* the dimension of the prin
 subspace).
 
 ```@docs
-fit(::Type{FactorAnalysis}, ::AbstractVecOrMat{<:Real})
+fit(::Type{FactorAnalysis}, ::AbstractMatrix{T}) where {T<:Real}
 size(::FactorAnalysis)
 mean(::FactorAnalysis)
 var(::FactorAnalysis)
@@ -46,8 +46,8 @@ Here, ``\mathbf{W}`` is the factor loadings or weight matrix,
 The package provides methods to do so:
 
 ```@docs
-predict(::FactorAnalysis, ::AbstractVecOrMat{<:Real})
-reconstruct(::FactorAnalysis, ::AbstractVecOrMat{<:Real})
+predict(::FactorAnalysis, ::AbstractVecOrMat{T}) where {T<:Real}
+reconstruct(::FactorAnalysis, ::AbstractVecOrMat{T}) where {T<:Real}
 ```
 
 Auxiliary functions:

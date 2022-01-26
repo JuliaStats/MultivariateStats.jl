@@ -27,8 +27,7 @@ using Test
     ## classical MDS
     @test_throws UndefKeywordError fit(MDS, X0, maxoutdim=3)   # disambiguate distance matrix from data matrix
     M = fit(MDS, X0, maxoutdim=3, distances=false)
-    @test indim(M) == d
-    @test outdim(M) == 3
+    @test size(M) == (d,3)
     @test size(projection(M)) == (n,3)
     @test length(eigvals(M)) == 3
     @test stress(M) ≈ 0.0 atol = 1e-10
@@ -43,8 +42,8 @@ using Test
 
     # use only distance matrix
     M = fit(MDS, D0, maxoutdim=3, distances=true)
-    @test isnan(indim(M))
-    @test outdim(M) == 3
+    @test isnan(size(M)[1])
+    @test size(M)[2] == 3
     @test stress(M) ≈ 0.0 atol = 1e-10
 
     X = predict(M)
@@ -59,11 +58,11 @@ using Test
 
     #Test MDS embeddings in dimensions >= number of points
     M = fit(MDS, [0. 1.; 1. 0.], maxoutdim=2, distances=true)
-    @test outdim(M) == 2
+    @test size(M)[2] == 2
     @test predict(M) == [-0.5 0.5; 0 0]
 
     M = fit(MDS, [0. 1.; 1. 0.], maxoutdim=3, distances=true)
-    @test outdim(M) == 3
+    @test size(M)[2] == 3
     @test predict(M) == [-0.5 0.5; 0 0; 0 0]
 
 

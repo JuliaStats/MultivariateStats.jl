@@ -51,6 +51,13 @@ Returns the factor loadings matrix (of size ``(d, p)``) of the model `M`.
 """
 loadings(M::PPCA) = M.W
 
+"""
+    cov(M::PPCA)
+
+Returns the covariance of the model `M`.
+"""
+cov(M::PPCA) = M.W'*M.W + M.σ²*I
+
 ## use
 """
     predict(M::PPCA, x)
@@ -58,12 +65,10 @@ loadings(M::PPCA) = M.W
 Transform observations `x` into latent variables. Here, `x` can be either a vector
 of length `d` or a matrix where each column is an observation.
 """
-function predict(M::PPCA, x::AbstractVecOrMat{<:Real})
+function predict(M::PPCA, x::AbstractVecOrMat{T}) where {T<:Real}
     xn = centralize(x, M.mean)
-    W  = M.W
     n = size(M)[2]
-    C = W'W + M.σ² * I
-    return inv(C)*M.W'*xn
+    return inv(cov(M))*M.W'*xn
 end
 
 """
@@ -73,7 +78,7 @@ Approximately reconstruct observations from the latent variable given in `z`.
 Here, `z` can be either a vector of length `p` or a matrix where each column gives
 the latent variables for an observation.
 """
-function reconstruct(M::PPCA, z::AbstractVecOrMat{<:Real})
+function reconstruct(M::PPCA, z::AbstractVecOrMat{T}) where {T<:Real}
     W  = M.W
     WTW = W'W
     n = size(M)[2]
@@ -84,7 +89,8 @@ end
 ## show
 
 function Base.show(io::IO, M::PPCA)
-    print(io, "Probabilistic PCA(indim = $(indim(M)), outdim = $(outdim(M)), σ² = $(var(M)))")
+    i, o = size(M)
+    print(io, "Probabilistic PCA(indim = $i, outdim = $o, σ² = $(var(M)))")
 end
 
 ## core algorithms
