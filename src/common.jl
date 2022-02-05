@@ -120,3 +120,13 @@ function calcscattermat(Z::DenseMatrix)
     return calcscattermat(SimpleCovariance(), Z)
 end
 
+
+"""
+    L2distance(X)
+
+Calculate a symmetric Euclidean (L2) distance matrix.
+"""
+L2distance(X::AbstractMatrix{T}) where {T<:Real} = L2distance!(zeros(T,size(X,2),size(X,2)), X)
+L2distance!(D::AbstractMatrix, X::AbstractMatrix) =
+    pairwise!((x,y)->norm(x-y), D, eachcol(X), symmetric=true)
+
