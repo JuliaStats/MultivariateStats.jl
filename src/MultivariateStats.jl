@@ -73,6 +73,7 @@ module MultivariateStats
 
     ## cmds
     MDS,
+    MetricMDS,
     classical_mds,      # perform classical MDS over a given distance matrix
     stress,             # stress evaluation
 
@@ -116,6 +117,7 @@ module MultivariateStats
     include("kpca.jl")
     include("cca.jl")
     include("cmds.jl")
+    include("mmds.jl")
     include("lda.jl")
     include("ica.jl")
     include("fa.jl")
