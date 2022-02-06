@@ -142,4 +142,18 @@ using StableRNGs
     MM = fit(MetricMDS, D0, maxoutdim=3, distances=true, tol=1e-6)
     @test MultivariateStats.L2distance(predict(MM)) ≈ D0 atol=1e-2
 
+    # Ref 1, Ch 8, Tab 8.4
+    Δ = Symmetric(diagm(1=>[5,2,1], 2=>[3,2], 3=>[4.0]))
+    Z = [−.266 −.539; .451 .252; .016 −.238; −.200 .524]'
+    M = fit(MetricMDS, Δ, maxoutdim=2, initial=Z, distances=true, tol=1e-6)
+    @test stress(M) ≈ 0.017399 atol=1e-5
+
+    # Ref 1, Ch 9, Tab 9.3
+    Z = rand(rng, Float32, 2, 5)
+    Δ = Symmetric(diagm(1=>[1,2,9,3], 2=>[5,10,4], 3=>[7, 8], 4=>[6]))
+    M = fit(MetricMDS, Δ, maxoutdim=2, distances=true, initial=Z, metric=(x...)->(@. 2+log(x[1])), tol=1e-6)
+    @test stress(M) ≈ 0.1123 atol=1e-2
+    M = fit(MetricMDS, Δ, maxoutdim=2, distances=true, initial=Z, metric=isotonic, tol=1e-6)
+    @test stress(M) ≈ 0.234 atol=1e-2
+
 end

@@ -37,13 +37,13 @@ Get the stress of the MDS model `M`.
 """
 stress(M::MetricMDS) = M.σ
 
-function stress(D::AbstractMatrix{T}, Δ::AbstractMatrix{T},
-                W::AbstractMatrix{T} = ones(size(Δ));
+function stress(D::AbstractMatrix{T}, Δ::AbstractMatrix{<:Real},
+                W::AbstractMatrix{T} = ones(T, size(Δ));
                 η_δ::Real = NaN) where {T<:Real}
     n, m = size(D)
     @assert n == m "Matrix must be symmetric"
     @assert (n,m) == size(Δ) "Matrix size mismatch"
-    η_δ = isnan(η_δ) ? sum(Δ.^2)/2 : η_δ # unweighted sq. dissimilarities
+    η_δ = isnan(η_δ) ? sum(abs2, W.*Δ)/2 : η_δ
 
     η = ρ = zero(T)
     @inbounds for j in 1:n, i in (j+1):n
@@ -56,9 +56,6 @@ function stress(D::AbstractMatrix{T}, Δ::AbstractMatrix{T},
     return η_δ + η - 2ρ
 end
 
-isidentity(f::typeof(identity)) = true
-isidentity(f) = false
-e
 """
     fit(MetricMDS, X; kwargs...)
 
@@ -73,9 +70,9 @@ Let `(d, n) = size(X)` be respectively the input dimension and the number of obs
     - `true`: use `X` input as precomputed dissimilarity symmetric matrix (distances)
 - `maxoutdim`: Maximum output dimension (*default* `d-1`)
 - `metric` : a function for calculation of disparity values
-    - `identity`: use dissimilarity values as the disparities to perform the metric MDS (*default*)
+    - `nothing`: use dissimilarity values as the disparities to perform the metric MDS (*default*)
     - `isotonic`: converts dissimilarity values to ordinal disparities to perform non-metric MDS
-    - any univariate disparity transformation function
+    - any two parameter disparity transformation function, where the first parameter is a vector of proximities (i.e. dissimilarities) and the second parameter is a vector of distances, e.g. `(p,d)->b*p` for some `b` is a transformation function for *ratio* MDS.
 - `tol`: Convergence tolerance (*default* `1.0e-3`)
 - `maxiter`: Maximum number of iterations (*default* `300`)
 - `initial`: an initial reduced space point configuration
@@ -89,12 +86,12 @@ Let `(d, n) = size(X)` be respectively the input dimension and the number of obs
 """
 function fit(::Type{MetricMDS}, X::AbstractMatrix{T};
              maxoutdim::Int = size(X,1)-1,
-             metric::Function = identity,
+             metric::Union{Nothing,TF} = nothing,
              tol::Real = 1e-3,
              maxiter::Int = 300,
-             initial::Union{Nothing,AbstractMatrix{T}} = nothing,
-             weights::Union{Nothing,AbstractMatrix{T}} = nothing,
-             distances::Bool) where {T<:Real}
+             initial::Union{Nothing,AbstractMatrix{<:Real}} = nothing,
+             weights::Union{Nothing,AbstractMatrix{<:Real}} = nothing,
+             distances::Bool) where {T<:Real, TF}
 
     # get distance matrix and space dimension
     Δ, d = if !distances
@@ -103,38 +100,63 @@ function fit(::Type{MetricMDS}, X::AbstractMatrix{T};
         X, NaN
     end
     n = size(X,2)
-    ismetric = isidentity(metric)
+    ismetric = metric === nothing
+    T2 = promote_type(T, Float32)
 
-    W = weights === nothing ? ones(size(Δ)) : weights
-    η_δ = ismetric ? sum(abs2, W.*Δ)/2 : n*(n-1)/2
+    # initialize weights
+    W = weights === nothing ? ones(T2, size(Δ)) : weights
 
     # reduce space coordinates
-    Z = initial === nothing ? rand(T, maxoutdim, n) : copy(initial)
+    Z = initial === nothing ? rand(T2, maxoutdim, n) : copy(initial)
+
+    # temporary collections of matrix elements
+    D = zeros(T2, n, n)
     Y = copy(Z)
-    D = L2distance(Z)
+    Dhat = collect(D)
+    utidx = findall(UpperTriangular(Δ) .> 0)
+    vΔ = view(Δ, utidx)
+    vD = view(D, utidx)
+    vDhat = view(Dhat, utidx)
+    didx = diagind(D)
+    diagD = view(D, didx)
+
+    if !ismetric
+        η_δ = NaN
+    else
+        Dhat = Δ
+        η_δ = sum(abs2, W.*Δ)/2
+    end
 
     i = 1
     converged = false
     σ′= Inf
     chg = NaN
     while i <= maxiter
-
-        # Guttman transform
-        D[iszero.(D)] .= eps(T)
-        B = if weights === nothing
-            -Δ./D
-        else
-            -W.*Δ./D
-        end
-        B[diagind(B)] .= -sum(B, dims=2)
-        mul!(Y, Z, B)
-        @. Z = Y/n
-
         # calculate distances in reduced space
         L2distance!(D, Z)
 
+        # calculate disparities
+        if !ismetric
+            disparities = metric(vΔ, vD)
+            vDhat .= disparities
+            LinearAlgebra.copytri!(Dhat, 'U')
+            Dhat .*= sqrt(n*(n-1)/2/sum(abs2, Dhat))
+        end
+
         # calculate stress
-        σ = stress(D, Δ, W; η_δ=η_δ)
+        σ = stress(D, Dhat, W, η_δ=η_δ)
+
+        # Guttman transform
+        #D[iszero.(D)] .= eps(T2)
+        diagD .= eps(T2)
+        B = if weights === nothing
+            -Dhat./D
+        else
+            -W.*Dhat./D
+        end
+        B[didx] .= -sum(B, dims=2)
+        mul!(Y, Z, B)
+        @. Z = Y/n
 
         chg = abs(σ′ - σ)
         @debug "Stress" iter=i σ=σ Δσ=chg
