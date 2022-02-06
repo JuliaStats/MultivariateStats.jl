@@ -144,7 +144,7 @@ using StableRNGs
 
     # Ref 1, Ch 8, Tab 8.4
     Δ = Symmetric(diagm(1=>[5,2,1], 2=>[3,2], 3=>[4.0]))
-    Z = [−.266 −.539; .451 .252; .016 −.238; −.200 .524]'
+    Z = [-.266 -.539; .451 .252; .016 -.238; -.200 .524]'
     M = fit(MetricMDS, Δ, maxoutdim=2, initial=Z, distances=true, tol=1e-6)
     @test stress(M) ≈ 0.017399 atol=1e-5
 
