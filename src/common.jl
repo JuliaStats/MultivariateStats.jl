@@ -47,7 +47,7 @@ function symmetrize!(A::Matrix)
             @inbounds A[i,j] = A[j,i]
         end
         for i = j+1:n
-            @inbounds A[i,j] = middle(A[i,j], A[j,i])
+            @inbounds A[i,j] = (A[i,j] + A[j,i])/2
         end
     end
     return A
@@ -121,6 +121,7 @@ function calcscattermat(Z::DenseMatrix)
 end
 
 
+# distance
 """
     L2distance(X)
 
