@@ -1,5 +1,7 @@
 """
-Metric MDS
+(Non)Metric Multidimensional Scaling
+
+This class contains properties of MDS model.
 """
 struct MetricMDS{T<:Real} <: NonlinearDimensionalityReduction
     d::Real         # original dimension
@@ -147,14 +149,13 @@ function fit(::Type{MetricMDS}, X::AbstractMatrix{T};
         σ = stress(D, Dhat, W, η_δ=η_δ)
 
         # Guttman transform
-        #D[iszero.(D)] .= eps(T2)
         diagD .= eps(T2)
         B = if weights === nothing
             -Dhat./D
         else
             -W.*Dhat./D
         end
-        B[didx] .= -sum(B, dims=2)
+        B[didx] .= -sum(B, dims=2) |> vec
         mul!(Y, Z, B)
         @. Z = Y/n
 
