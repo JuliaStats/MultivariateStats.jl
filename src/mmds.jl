@@ -1,7 +1,40 @@
 """
 (Non)Metric Multidimensional Scaling
 
-This class contains properties of MDS model.
+Use this class to perform (non)metric multidimensional scaling.
+
+There are two calling options, specified via the required keyword argument `distances`:
+
+```julia
+mds = fit(MDS, X; distances=false, maxoutdim=size(X,1)-1)
+```
+
+where `X` is the data matrix. Distances between pairs of columns of `X` are computed using the Euclidean norm.
+This is equivalent to performing PCA on `X`.
+
+```julia
+mds = fit(MDS, D; distances=true, maxoutdim=size(D,1)-1)
+```
+
+where `D` is a symmetric matrix `D` of distances between points.
+
+In addition, the `metric` parameter specifies type of MDS, By default, it is assigned with `nothing` value
+which results in performing *metric MDS* with dissimilarities calculated as Euclidian distances.
+
+An arbitrary transformation function can be provided to `metric` parameter to
+perform metric MDS with transformed proximities. The function has to accept two parameters,
+a vector of proximities and a vector of distances, in order to calculate disparities
+required for stress calculation, e.g. *ratio MDS* using a ratio transformation
+
+```julia
+mds = fit(MDS, D; distances=true, metric=(p,d)->2 .* p)
+```
+
+For *order MDS*, use `isotonic` regression function in the `metric` parameter:
+
+```julia
+mds = fit(MDS, D; distances=true, metric=isotonic)
+```
 """
 struct MetricMDS{T<:Real} <: NonlinearDimensionalityReduction
     d::Real         # original dimension
@@ -88,12 +121,12 @@ Let `(d, n) = size(X)` be respectively the input dimension and the number of obs
 """
 function fit(::Type{MetricMDS}, X::AbstractMatrix{T};
              maxoutdim::Int = size(X,1)-1,
-             metric::Union{Nothing,TF} = nothing,
+             metric::Union{Nothing,Function} = nothing,
              tol::Real = 1e-3,
              maxiter::Int = 300,
              initial::Union{Nothing,AbstractMatrix{<:Real}} = nothing,
              weights::Union{Nothing,AbstractMatrix{<:Real}} = nothing,
-             distances::Bool) where {T<:Real, TF}
+             distances::Bool) where {T<:Real}
 
     # get distance matrix and space dimension
     Δ, d = if !distances

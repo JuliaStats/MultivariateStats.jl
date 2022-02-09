@@ -51,7 +51,9 @@ scatter!(versicolor[1,:],versicolor[2,:],versicolor[3,:],marker=:circle,linewidt
 scatter!(virginica[1,:],virginica[2,:],virginica[3,:],marker=:circle,linewidth=0)
 ```
 
+
 ## Classical Multidimensional Scaling
+
 This package defines a `MDS` type to represent a classical MDS model[^1],
 and provides a set of methods to access the properties.
 
@@ -81,6 +83,26 @@ gram2dmat
 gram2dmat!
 dmat2gram
 dmat2gram!
+```
+
+
+## Metric Multidimensional Scaling
+
+This package defines a `MetricMDS` type to represent a (non)metric MDS model[^1],
+and provides a set of methods to access the properties.
+
+```@docs
+MetricMDS
+```
+The metric MDS type comes with several methods where ``M`` be an instance of [`MetricMDS`](@ref),
+``d`` be the dimension of observations, and ``p`` be the output dimension, i.e.
+the embedding dimension, and ``n`` is the number of the observations.
+
+```@docs
+fit(::Type{MetricMDS}, ::AbstractMatrix{T}; kwargs) where {T<:Real}
+predict(::MetricMDS)
+size(::MetricMDS)
+stress(::MetricMDS)
 ```
 
 ---
