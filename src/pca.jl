@@ -105,7 +105,10 @@ const principalratio = r2
 
 Returns model loadings, i.e. the weights for each original variable when calculating the principal component.
 """
-loadings(M::PCA) = sqrt.(principalvars(M))' .* projection(M)
+# loadings(M::PCA) = sqrt.(principalvars(M))' .* projection(M)
+# IF method == :svd NEED CORRECTION
+lambda = principalvars(M) .* (method == :svd ? n / (n-1) : 1)
+loadings(M::PCA) = sqrt.(lambda))' .* projection(M)' 
 
 ## use
 
