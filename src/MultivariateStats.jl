@@ -121,17 +121,17 @@ module MultivariateStats
     include("fa.jl")
 
     ## deprecations
-    @deprecate indim(f) size(f)[1]
-    @deprecate outdim(f) size(f)[2]
-    @deprecate transform(f, x) predict(f, x) #ex=false
+    @deprecate indim(f) size(f,1)
+    @deprecate outdim(f) size(f,2)
+    @deprecate transform(f, x) predict(f, x)
     @deprecate indim(f::Whitening) length(f::Whitening)
     @deprecate outdim(f::Whitening) length(f::Whitening)
     @deprecate tvar(f::PCA) var(f::PCA)
     @deprecate classical_mds(D::AbstractMatrix, p::Int) predict(fit(MDS, D, maxoutdim=p, distances=true))
     @deprecate transform(f::MDS) predict(f::MDS)
-    @deprecate xindim(M::CCA) size(M)[1]
-    @deprecate yindim(M::CCA) size(M)[2]
-    @deprecate outdim(M::CCA) size(M)[3]
+    @deprecate xindim(M::CCA) size(M,1)
+    @deprecate yindim(M::CCA) size(M,2)
+    @deprecate outdim(M::CCA) size(M,3)
     @deprecate correlations(M::CCA) cor(M)
     @deprecate xmean(M::CCA) mean(M, :x)
     @deprecate ymean(M::CCA) mean(M, :y)
