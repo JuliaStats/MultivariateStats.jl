@@ -134,7 +134,9 @@ gives the principal components for an observation, and \$\\mathbf{P}\$ is the pr
 """
 reconstruct(M::PCA, y::AbstractVecOrMat{T}) where {T<:Real} = decentralize(M.proj * y, M.mean)
 
-## show & dump
+
+## show
+
 function show(io::IO, M::PCA)
     idim, odim = size(M)
     print(io, "PCA(indim = $idim, outdim = $odim, principalratio = $(r2(M)))")

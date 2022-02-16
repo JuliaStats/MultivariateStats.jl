@@ -52,7 +52,7 @@ using Test
 
     @test_throws AssertionError predict(M, X0[:, 1])
     @test_throws DimensionMismatch predict(M, rand(d+1); distances = true)
-    d = MultivariateStats.pairwise((x,y)->norm(x-y), X0, X0[:,2]) #|> vec
+    d = MultivariateStats.pairwise((x,y)->norm(x-y), eachcol(X0), eachcol(X0[:,2])) |> vec
     y = predict(M, d, distances=true)
     @test X[:, 2] ≈ y
 

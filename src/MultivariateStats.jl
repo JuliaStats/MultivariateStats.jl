@@ -1,12 +1,15 @@
 module MultivariateStats
+
     using LinearAlgebra
-    using StatsBase: SimpleCovariance, CovarianceEstimator, RegressionModel,
-                     AbstractDataTransform, pairwise!
+    using SparseArrays
+    using Statistics: middle
+    using StatsAPI: RegressionModel
+    using StatsBase: SimpleCovariance, CovarianceEstimator, AbstractDataTransform,
+                     ConvergenceException, pairwise, CoefTable
+
     import Statistics: mean, var, cov, covm, cor
-    import Base: length, size, show, dump
-    import StatsBase: fit, predict, predict!, ConvergenceException, coef, weights,
-                      dof, pairwise, r2, CoefTable
-    import SparseArrays
+    import Base: length, size, show
+    import StatsAPI: fit, predict, coef, weights, dof, r2
     import LinearAlgebra: eigvals, eigvecs
 
     export

@@ -175,7 +175,7 @@ function predict(M::MDS, x::AbstractVector{T}; distances=false) where {T<:Real}
         else
             size(x, 1) != size(M.X, 1) && throw(
                 DimensionMismatch("Points and original data must have same dimensionality."))
-            pairwise((x,y)->norm(x-y), M.X, x)
+            pairwise((x,y)->norm(x-y), eachcol(M.X), eachcol(x))
         end
     end
 
