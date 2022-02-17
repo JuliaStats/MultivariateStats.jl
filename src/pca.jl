@@ -159,7 +159,7 @@ function show(io::IO, ::MIME"text/plain", M::PCA)
     prpv = λ ./ sum(λ)
     names = ["SS Loadings (Eigenvalues)",
              "Variance explained", "Cumulative variance",
-             "Proportion explained","Cumulative proportion"]
+             "Proportion explained", "Cumulative proportion"]
     cft = CoefTable(vcat(λ', prp', cumsum(prp)',  prpv', cumsum(prpv)'),
                     string.("PC", 1:odim), names)
     print(io, cft)
