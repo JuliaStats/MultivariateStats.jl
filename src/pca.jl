@@ -129,37 +129,29 @@ function show(io::IO, M::PCA)
 end
 
 function show(io::IO, ::MIME"text/plain", M::PCA)
-    print(io, "PCA(indim = $(indim(M)), outdim = $(outdim(M)), principalratio = $(principalratio(M)))")
-    ldgs = projection(M) * diagm(0 => sqrt.(M.prinvars))
+    idim, odim = size(M)
+    print(io, "PCA(indim = $idim, outdim = $odim, principalratio = $(r2(M)))")
+    ldgs = loadings(M)
     rot = diag(ldgs' * ldgs)
     ldgs = ldgs[:, sortperm(rot, rev=true)]
     ldgs_signs = sign.(sum(ldgs, dims=1))
     replace!(ldgs_signs, 0=>1)
     ldgs = ldgs * diagm(0 => ldgs_signs[:])
-    print(io, "\n\nPattern matrix\n")
-    show(io, ldgs)
-    print(io, "\n")
+    print(io, "\n\nPattern matrix:\n")
+    cft = CoefTable(ldgs, string.("PC", 1:odim), string.("", 1:idim))
+    print(io, cft)
+    print(io, "\n\n")
     print(io, "Importance of components:\n")
-    print(io, CoefTable(vcat(principalvars(M)', (principalvars(M) ./ tvar(M))', (cumsum(principalvars(M) ./tvar(M)))'),
-                        string.("PC", 1:length(principalvars(M))),                      # components in order
-                        ["Loadings", "Proportion explained", "Cumulative proportion"])) # row names
-    return nothing
+    λ = eigvals(M)
+    prp = λ ./ var(M)
+    prpv = λ ./ sum(λ)
+    names = ["SS Loadings (Eigenvalues)",
+             "Variance explained", "Cumulative variance",
+             "Proportion explained","Cumulative proportion"]
+    cft = CoefTable(vcat(λ', prp', cumsum(prp)',  prpv', cumsum(prpv)'),
+                    string.("PC", 1:odim), names)
+    print(io, cft)
 end
-
-function dump(io::IO, M::PCA)
-    show(io, M)
-    println(io)
-    print(io, "principal vars: ")
-    printvecln(io, M.prinvars)
-    println(io, "total var = $(tvar(M))")
-    println(io, "total principal var = $(tprincipalvar(M))")
-    println(io, "total residual var  = $(tresidualvar(M))")
-    println(io, "mean:")
-    printvecln(io, mean(M))
-    println(io, "projection:")
-    printarrln(io, projection(M))
-end
-
 
 #### PCA Training
 
