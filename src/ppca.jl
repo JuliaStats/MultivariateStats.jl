@@ -1,61 +1,127 @@
 # Probabilistic Principal Component Analysis
 
-"""Probabilistic PCA type"""
-struct PPCA{T<:Real}
+"""
+This type contains probabilistic PCA model parameters.
+"""
+struct PPCA{T<:Real} <: LatentVariableDimensionalityReduction
     mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
     W::Matrix{T}          # weight matrix: of size d x p
     σ²::T                 # residual variance
 end
 
 ## properties
+"""
+    size(M::PPCA)
 
-indim(M::PPCA) = size(M.W, 1)
-outdim(M::PPCA) = size(M.W, 2)
+Returns a tuple with values of the input dimension ``d``, *i.e* the dimension of
+the observation space, and the output dimension ``p``, *i.e* the dimension of
+the principal subspace.
+"""
+size(M::PPCA) = size(M.W)
 
-mean(M::PPCA) = fullmean(indim(M), M.mean)
+"""
+    mean(M::PPCA)
+
+Get the mean vector (of length ``d``).
+"""
+mean(M::PPCA) = fullmean(size(M)[1], M.mean)
+
+"""
+    projection(M::PPCA)
+
+Returns the projection matrix (of size ``(d, p)``). Each column of the projection
+matrix corresponds to a principal component.
+
+The principal components are arranged in descending order of the corresponding variances.
+
+"""
 projection(M::PPCA) = svd(M.W).U # recover principle components from the weight matrix
+
+"""
+    var(M::PPCA)
+
+Returns the total residual variance of the model `M`.
+"""
 var(M::PPCA) = M.σ²
+
+"""
+    loadings(M::PPCA)
+
+Returns the factor loadings matrix (of size ``(d, p)``) of the model `M`.
+"""
 loadings(M::PPCA) = M.W
 
-## use
+"""
+    cov(M::PPCA)
 
-function transform(m::PPCA, x::AbstractVecOrMat{<:Real})
-    xn = centralize(x, m.mean)
-    W  = m.W
-    n = outdim(m)
-    M = W'W + m.σ² * I
-    return inv(M)*m.W'*xn
+Returns the covariance of the model `M`.
+"""
+cov(M::PPCA) = M.W'*M.W + M.σ²*I
+
+## use
+"""
+    predict(M::PPCA, x)
+
+Transform observations `x` into latent variables. Here, `x` can be either a vector
+of length `d` or a matrix where each column is an observation.
+"""
+function predict(M::PPCA, x::AbstractVecOrMat{T}) where {T<:Real}
+    xn = centralize(x, M.mean)
+    n = size(M)[2]
+    return inv(cov(M))*M.W'*xn
 end
 
-function reconstruct(m::PPCA, z::AbstractVecOrMat{<:Real})
-    W  = m.W
+"""
+    reconstruct(M::PPCA, z)
+
+Approximately reconstruct observations from the latent variable given in `z`.
+Here, `z` can be either a vector of length `p` or a matrix where each column gives
+the latent variables for an observation.
+"""
+function reconstruct(M::PPCA, z::AbstractVecOrMat{T}) where {T<:Real}
+    W  = M.W
     WTW = W'W
-    n = outdim(m)
-    M  = WTW + var(m) * I
-    return W*inv(WTW)*M*z .+ mean(m)
+    n = size(M)[2]
+    C  = WTW + var(M) * I
+    return W*inv(WTW)*C*z .+ mean(M)
 end
 
 ## show
 
 function Base.show(io::IO, M::PPCA)
-    print(io, "Probabilistic PCA(indim = $(indim(M)), outdim = $(outdim(M)), σ² = $(var(M)))")
+    i, o = size(M)
+    print(io, "Probabilistic PCA(indim = $i, outdim = $o, σ² = $(var(M)))")
 end
 
 ## core algorithms
+"""
+    ppcaml(Z, mean; ...)
 
+Compute probabilistic PCA using on maximum likelihood formulation for a centralized
+sample matrix `Z`.
+
+*Parameters*:
+- `Z`: a centralized samples matrix
+- `mean`: The mean vector of the **original** samples, which can be a vector of
+length `d`, or an empty vector indicating a zero mean.
+
+Returns the resultant [`PPCA`](@ref) model.
+
+**Note:** This function accepts two keyword arguments: `maxoutdim` and `tol`.
+"""
 function ppcaml(Z::AbstractMatrix{T}, mean::Vector{T};
                 tol::Real=1.0e-6, # convergence tolerance
                 maxoutdim::Int=size(Z,1)-1) where {T<:Real}
 
     check_pcaparams(size(Z,1), mean, maxoutdim, 1.)
 
-    d = size(Z,1)
+    d, n = size(Z)
 
     # SVD decomposition
     Svd = svd(Z)
     λ = Svd.S
     ord = sortperm(λ; rev=true)
-    V = λ[ord]
+    V = abs2.(λ[ord]) ./ (n-1)
 
     # filter 0 eigenvalues and adjust number of latent dimensions
     idxs = findall(V .< tol)
@@ -74,6 +140,21 @@ function ppcaml(Z::AbstractMatrix{T}, mean::Vector{T};
     return PPCA(mean, W, σ²)
 end
 
+"""
+    ppcaem(S, mean, n; ...)
+
+Compute probabilistic PCA based on expectation-maximization algorithm for a given sample covariance matrix `S`.
+
+*Parameters*:
+- `S`: The sample covariance matrix.
+- `mean`: The mean vector of original samples, which can be a vector of length `d`,
+or an empty vector indicating a zero mean.
+- `n`: The number of observations.
+
+Returns the resultant [`PPCA`](@ref) model.
+
+**Note:** This function accepts three keyword arguments: `maxoutdim`, `tol`, and `maxiter`.
+"""
 function ppcaem(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
                 maxoutdim::Int=size(S,1)-1,
                 tol::Real=1.0e-6,   # convergence tolerance
@@ -121,6 +202,25 @@ function ppcaem(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
     return PPCA(mean, W, σ²)
 end
 
+
+"""
+    bayespca(S, mean, n; ...)
+
+Compute probabilistic PCA using a Bayesian algorithm for a given sample covariance matrix `S`.
+
+*Parameters*:
+- `S`: The sample covariance matrix.
+- `mean`: The mean vector of original samples, which can be a vector of length `d`,
+or an empty vector indicating a zero mean.
+- `n`: The number of observations.
+
+Returns the resultant [`PPCA`](@ref) model.
+
+**Notes:**
+- This function accepts three keyword arguments: `maxoutdim`, `tol`, and `maxiter`.
+- Function uses the `maxoutdim` parameter as an upper boundary when it automatically
+determines the latent space dimensionality.
+"""
 function bayespca(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
                  maxoutdim::Int=size(S,1)-1,
                  tol::Real=1.0e-6,   # convergence tolerance
@@ -177,7 +277,32 @@ function bayespca(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
 end
 
 ## interface functions
+"""
 
+    fit(PPCA, X; ...)
+
+Perform probabilistic PCA over the data given in a matrix `X`.
+Each column of `X` is an observation. This method returns an instance of [`PPCA`](@ref).
+
+**Keyword arguments:**
+
+Let `(d, n) = size(X)` be respectively the input dimension and the number of observations:
+
+- `method`: The choice of methods:
+    - `:ml`: use maximum likelihood version of probabilistic PCA (*default*)
+    - `:em`: use EM version of probabilistic PCA
+    - `:bayes`: use Bayesian PCA
+- `maxoutdim`: Maximum output dimension (*default* `d-1`)
+- `mean`: The mean vector, which can be either of:
+    - `0`: the input data has already been centralized
+    - `nothing`: this function will compute the mean (*default*)
+    - a pre-computed mean vector
+- `tol`: Convergence tolerance (*default* `1.0e-6`)
+- `maxiter`: Maximum number of iterations (*default* `1000`)
+
+**Notes:** This function calls [`ppcaml`](@ref), [`ppcaem`](@ref) or
+[`bayespca`](@ref) internally, depending on the choice of method.
+"""
 function fit(::Type{PPCA}, X::AbstractMatrix{T};
              method::Symbol=:ml,
              maxoutdim::Int=size(X,1)-1,
@@ -211,3 +336,4 @@ function fit(::Type{PPCA}, X::AbstractMatrix{T};
 
     return M::PPCA
 end
+

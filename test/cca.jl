@@ -1,12 +1,12 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
-import Statistics: mean, cov
-import Random
+using StableRNGs
+using Statistics: mean, cov, cor
 
 @testset "CCA" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     dx = 5
     dy = 6
@@ -14,52 +14,54 @@ import Random
 
     # CCA with zero means
 
-    X = rand(dx, 100)
-    Y = rand(dy, 100)
+    X = rand(rng, dx, 100)
+    Y = rand(rng, dy, 100)
 
-    Px = qr(randn(dx, dx)).Q[:, 1:p]
-    Py = qr(randn(dy, dy)).Q[:, 1:p]
+    Px = qr(randn(rng, dx, dx)).Q[:, 1:p]
+    Py = qr(randn(rng, dy, dy)).Q[:, 1:p]
 
     M = CCA(Float64[], Float64[], Px, Py, [0.8, 0.6, 0.4])
 
-    @test xindim(M) == dx
-    @test yindim(M) == dy
-    @test xmean(M) == zeros(dx)
-    @test ymean(M) == zeros(dy)
-    @test xprojection(M) == Px
-    @test yprojection(M) == Py
-    @test correlations(M) == [0.8, 0.6, 0.4]
+    @test size(M)[1] == dx
+    @test size(M)[2] == dy
+    @test mean(M, :x) == zeros(dx)
+    @test mean(M, :y) == zeros(dy)
+    @test_throws ArgumentError mean(M, :z)
+    @test projection(M, :x) == Px
+    @test projection(M, :y) == Py
+    @test_throws ArgumentError projection(M, :z)
+    @test cor(M) == [0.8, 0.6, 0.4]
 
-    @test xtransform(M, X) ≈ Px'X
-    @test ytransform(M, Y) ≈ Py'Y
+    @test predict(M, X, :x) ≈ Px'X
+    @test predict(M, Y, :y) ≈ Py'Y
 
     ## CCA with nonzero means
 
-    ux = randn(dx)
-    uy = randn(dy)
+    ux = randn(rng, dx)
+    uy = randn(rng, dy)
 
     M = CCA(ux, uy, Px, Py, [0.8, 0.6, 0.4])
 
-    @test xindim(M) == dx
-    @test yindim(M) == dy
-    @test xmean(M) == ux
-    @test ymean(M) == uy
-    @test xprojection(M) == Px
-    @test yprojection(M) == Py
-    @test correlations(M) == [0.8, 0.6, 0.4]
+    @test size(M)[1] == dx
+    @test size(M)[2] == dy
+    @test mean(M, :x) == ux
+    @test mean(M, :y) == uy
+    @test projection(M, :x) == Px
+    @test projection(M, :y) == Py
+    @test cor(M) == [0.8, 0.6, 0.4]
 
-    @test xtransform(M, X) ≈ Px' * (X .- ux)
-    @test ytransform(M, Y) ≈ Py' * (Y .- uy)
+    @test predict(M, X, :x) ≈ Px' * (X .- ux)
+    @test predict(M, Y, :y) ≈ Py' * (Y .- uy)
 
 
     ## prepare data
 
     n = 1000
     dg = 10
-    G = randn(dg, n)
+    G = randn(rng, dg, n)
 
-    X = randn(dx, dg) * G + 0.2 * randn(dx, n)
-    Y = randn(dy, dg) * G + 0.2 * randn(dy, n)
+    X = randn(rng, dx, dg) * G + 0.2 * randn(rng, dx, n)
+    Y = randn(rng, dy, dg) * G + 0.2 * randn(rng, dy, n)
     xm = vec(mean(X, dims=2))
     ym = vec(mean(Y, dims=2))
     Zx = X .- xm
@@ -74,14 +76,14 @@ import Random
 
     # X ~ Y
     M = fit(CCA, X, Y; method=:cov, outdim=p)
-    Px = xprojection(M)
-    Py = yprojection(M)
-    rho = correlations(M)
-    @test xindim(M) == dx
-    @test yindim(M) == dy
-    @test outdim(M) == p
-    @test xmean(M) == xm
-    @test ymean(M) == ym
+    Px = projection(M, :x)
+    Py = projection(M, :y)
+    rho = cor(M)
+    @test size(M)[1] == dx
+    @test size(M)[2] == dy
+    @test size(M)[3] == p
+    @test mean(M, :x) == xm
+    @test mean(M, :y) == ym
     @test issorted(rho; rev=true)
 
     @test Px' * Cxx * Px ≈ Matrix(I, p, p)
@@ -93,14 +95,14 @@ import Random
 
     # Y ~ X
     M = fit(CCA, Y, X; method=:cov, outdim=p)
-    Py = xprojection(M)
-    Px = yprojection(M)
-    rho = correlations(M)
-    @test xindim(M) == dy
-    @test yindim(M) == dx
-    @test outdim(M) == p
-    @test xmean(M) == ym
-    @test ymean(M) == xm
+    Py = projection(M, :x)
+    Px = projection(M, :y)
+    rho = cor(M)
+    @test size(M)[1] == dy
+    @test size(M)[2] == dx
+    @test size(M)[3] == p
+    @test mean(M, :x) == ym
+    @test mean(M, :y) == xm
     @test issorted(rho; rev=true)
 
     @test Px' * Cxx * Px ≈ Matrix(I, p, p)
@@ -115,14 +117,14 @@ import Random
 
     # n > d
     M = fit(CCA, X, Y; method=:svd, outdim=p)
-    Px = xprojection(M)
-    Py = yprojection(M)
-    rho = correlations(M)
-    @test xindim(M) == dx
-    @test yindim(M) == dy
-    @test outdim(M) == p
-    @test xmean(M) == xm
-    @test ymean(M) == ym
+    Px = projection(M, :x)
+    Py = projection(M, :y)
+    rho = cor(M)
+    @test size(M)[1] == dx
+    @test size(M)[2] == dy
+    @test size(M)[3] == p
+    @test mean(M, :x) == xm
+    @test mean(M, :y) == ym
     @test issorted(rho; rev=true)
 
     @test Px' * Cxx * Px ≈ Matrix(I, p, p)
@@ -139,13 +141,15 @@ import Random
     MM = fit(CCA, view(XX, :, 1:400), view(YY, :, 1:400); method=:svd, outdim=p)
 
     # test that mixing types doesn't error
-    xtransform(M, XX)
-    ytransform(M, YY)
-    xtransform(MM, XX)
-    ytransform(MM, YY)
+    predict(M, XX, :x)
+    predict(M, YY, :y)
+    predict(MM, XX, :x)
+    predict(MM, YY, :y)
     
     # type stability
-    for func in (xmean, ymean, xprojection, yprojection, correlations)
+    for func in (M->mean(M, :x), M->mean(M, :y),
+                 M->projection(M, :x),
+                 M->projection(M, :y), cor)
         @test eltype(func(M)) == Float64
         @test eltype(func(MM)) == Float32
     end

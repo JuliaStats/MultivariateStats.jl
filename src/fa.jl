@@ -1,47 +1,110 @@
 # Factor Analysis
 
-"""Factor Analysis type"""
-struct FactorAnalysis{T<:Real}
-    mean::Vector{T}       # sample mean: of length d (mean can be empty, which indicates zero mean)
+"""
+This type contains factor analysis model parameters.
+"""
+struct FactorAnalysis{T<:Real} <: LatentVariableDimensionalityReduction
+    mean::Vector{T}       # sample mean: of length d
     W::Matrix{T}          # factor loadings matrix: of size d x p
     Ψ::Vector{T}          # noise covariance: diagonal of size d x d
 end
 
-indim(M::FactorAnalysis) = size(M.W, 1)
-outdim(M::FactorAnalysis) = size(M.W, 2)
+"""
+    size(M::PPCA)
 
-mean(M::FactorAnalysis) = fullmean(indim(M), M.mean)
-projection(M::FactorAnalysis) = svd(M.W).U # recover principle components from the weight matrix
+Returns a tuple with values of the input dimension ``d``, *i.e* the dimension of
+the observation space, and the output dimension ``p``, *i.e* the dimension of
+the principal subspace.
+"""
+size(M::FactorAnalysis) = size(M.W)
+
+"""
+    mean(M::PPCA)
+
+Get the mean vector (of length ``d``).
+"""
+mean(M::FactorAnalysis) = fullmean(size(M)[1], M.mean)
+
+"""
+    projection(M::FactorAnalysis)
+
+Recovers principle components from the weight matrix of the model `M`.
+"""
+projection(M::FactorAnalysis) = svd(M.W).U
+
+"""
+    cov(M::FactorAnalysis)
+
+Returns the covariance of the model `M`.
+"""
 cov(M::FactorAnalysis) = M.W*M.W' + Diagonal(M.Ψ)
+
+"""
+    var(M::FactorAnalysis)
+
+Returns the variance of the model `M`.
+"""
 var(M::FactorAnalysis) = M.Ψ
+
+"""
+    loadings(M::FactorAnalysis)
+
+Returns the factor loadings matrix of the model `M`.
+"""
 loadings(M::FactorAnalysis) = M.W
 
 ## use
 
-function transform(m::FactorAnalysis, x::AbstractVecOrMat{<:Real})
+"""
+    predict(M::FactorAnalysis, x)
+
+Transform observations `x` into latent variables. Here, `x` can be either a vector
+of length `d` or a matrix where each column is an observation.
+"""
+function predict(m::FactorAnalysis, x::AbstractVecOrMat{T}) where {T<:Real}
     xn = centralize(x, mean(m))
     W = m.W
     WᵀΨ⁻¹ = W'*diagm(0 => 1 ./ m.Ψ)  # (q x d) * (d x d) = (q x d)
     return inv(I+WᵀΨ⁻¹*W)*(WᵀΨ⁻¹*xn)  # (q x q) * (q x d) * (d x 1) = (q x 1)
 end
 
-function reconstruct(m::FactorAnalysis, z::AbstractVecOrMat{<:Real})
+"""
+    reconstruct(M::FactorAnalysis, z)
+
+Approximately reconstruct observations from the latent variable given in `z`.
+Here, `z` can be either a vector of length ``p`` or a matrix where each column gives
+the latent variables for an observation.
+"""
+function reconstruct(m::FactorAnalysis, z::AbstractVecOrMat{T}) where {T<:Real}
     W  = m.W
-    # ΣW(W'W)⁻¹z+μ = ΣW(W'W)⁻¹W'Σ⁻¹(x-μ)+μ = Σ(WW⁻¹)((W')⁻¹W')Σ⁻¹(x-μ)+μ = ΣΣ⁻¹(x-μ)+μ = (x-μ)+μ = x
+    # ΣW(W'W)⁻¹z+μ = ΣW(W'W)⁻¹W'Σ⁻¹(x-μ)+μ = Σ(WW⁻¹)((W')⁻¹W')Σ⁻¹(x-μ)+μ
+    # = ΣΣ⁻¹(x-μ)+μ = (x-μ)+μ = x
     return cov(m)*W*inv(W'W)*z .+ mean(m)
 end
 
 ## show
 
-function Base.show(io::IO, M::FactorAnalysis)
-    print(io, "Factor Analysis(indim = $(indim(M)), outdim = $(outdim(M)))")
+function show(io::IO, M::FactorAnalysis)
+    i,o = size(M)
+    print(io, "Factor Analysis(indim = $i, outdim = $o)")
 end
 
 ## core algorithms
 
-""" Expectation-maximization (EM) algorithms for maximum likelihood factor analysis.
+"""
+    faem(S, mean, n; ...)
 
-    Rubin, Donald B., and Dorothy T. Thayer. "EM algorithms for ML factor analysis." Psychometrika 47.1 (1982): 69-76.
+Performs factor analysis using an expectation-maximization algorithm for a given sample covariance matrix `S`[^2].
+
+**Parameters**
+- `S`: The sample covariance matrix.
+- `mean`: The mean vector of original samples, which can be a vector of length ``d``,
+or an empty vector indicating a zero mean.
+- `n`: The number of observations.
+
+Returns the resultant [`FactorAnalysis`](@ref) model.
+
+**Note:** This function accepts two keyword arguments: `maxoutdim`,`tol`, and `maxiter`.
 """
 function faem(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
              maxoutdim::Int=size(X,1)-1,
@@ -67,9 +130,9 @@ function faem(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
         # log likelihood
         Ψ⁻¹ = diagm(0 => 1 ./ Ψ)
         WᵀΨ⁻¹ = W'*Ψ⁻¹
-        detΣ = prod(Ψ)*det(I + WᵀΨ⁻¹*W)
+        logdetΣ = sum(log, Ψ) + logabsdet(I + WᵀΨ⁻¹*W)[1]
         Σ⁻¹ = Ψ⁻¹ - Ψ⁻¹*W*inv(I + WᵀΨ⁻¹*W)*WᵀΨ⁻¹
-        L = (-n/2)*(d*log(2π) + log(detΣ) + tr(Σ⁻¹*S))
+        L = (-n/2)*(d*log(2π) + logdetΣ + tr(Σ⁻¹*S))
         @debug "Likelihood" iter=c L=L ΔL=abs(L_old - L)
         if abs(L_old - L) < tol
             break
@@ -80,9 +143,20 @@ function faem(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
     return FactorAnalysis(mv, W, Ψ)
 end
 
-""" Fast conditional maximization (CM) algorithm for factor analysis.
+"""
+    facm(S, mean, n; ...)
 
-    Zhao, J-H., Philip LH Yu, and Qibao Jiang. "ML estimation for factor analysis: EM or non-EM?." Statistics and computing 18.2 (2008): 109-123.
+Performs factor analysis using a fast conditional maximization algorithm for a given sample covariance matrix `S`[^3].
+
+**Parameters**
+- `S`: The sample covariance matrix.
+- `mean`: The mean vector of original samples, which can be a vector of length ``d``,
+or an empty vector indicating a zero mean.
+- `n`: The number of observations.
+
+Returns the resultant [`FactorAnalysis`](@ref) model.
+
+**Note:** This function accepts two keyword arguments: `maxoutdim`,`tol`, `maxiter`, and `η`.
 """
 function facm(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
              maxoutdim::Int=size(X,1)-1,
@@ -111,7 +185,8 @@ function facm(S::AbstractMatrix{T}, mv::Vector{T}, n::Int;
         ord = sortperm(λ, rev=true)
         λ = λ[ord]
 
-        q′ = λ[q] > 0 ? q : findlast(λ .> 0)
+        q′ = λ[q] > 1 ? q : findlast(λ .> 1)
+        q′ === nothing && error("Eigenvalues less then 1")
 
         λq = 0.0
         @inbounds for i in 1:q′
@@ -154,6 +229,31 @@ end
 
 
 ## interface functions
+"""
+    fit(FactorAnalysis, X; ...)
+
+Perform factor analysis over the data given in a matrix `X`.
+Each column of `X` is an observation.
+This method returns an instance of [`FactorAnalysis`](@ref).
+
+**Keyword arguments:**
+
+Let `(d, n) = size(X)` be respectively the input dimension and the number of observations:
+
+- `method`: The choice of methods:
+    - `:em`: use EM version of factor analysis
+    - `:cm`: use CM version of factor analysis (*default*)
+- `maxoutdim`: Maximum output dimension (*default* `d-1`)
+- `mean`: The mean vector, which can be either of:
+    - `0`: the input data has already been centralized
+    - `nothing`: this function will compute the mean (*default*)
+    - a pre-computed mean vector
+- `tol`: Convergence tolerance (*default* `1.0e-6`)
+- `maxiter`: Maximum number of iterations (*default* `1000`)
+- `η`: Variance low bound (*default* `1.0e-6`)
+
+**Notes:** This function calls [`facm`](@ref) or [`faem`](@ref) internally, depending on the choice of method.
+"""
 function fit(::Type{FactorAnalysis}, X::AbstractMatrix{T};
              method::Symbol=:cm,
              maxoutdim::Int=size(X,1)-1,
@@ -177,3 +277,4 @@ function fit(::Type{FactorAnalysis}, X::AbstractMatrix{T};
 
     return M::FactorAnalysis
 end
+

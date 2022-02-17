@@ -1,65 +1,122 @@
 # Independent Component Analysis
 
-#### FastICA type
+"""
+This type contains ICA model parameters: mean and component matrix ``W``.
 
-struct ICA{T<:Real}
+**Note:** Each column of the component matrix ``W`` corresponds to an independent component.
+"""
+struct ICA{T<:Real} <: LinearDimensionalityReduction
     mean::Vector{T}   # mean vector, of length m (or empty to indicate zero mean)
     W::Matrix{T}      # component coefficient matrix, of size (m, k)
 end
+function show(io::IO, M::ICA)
+    indim, outdim = size(M)
+    print("ICA(indim=$indim, outdim=$outdim)")
+end
 
-indim(M::ICA) = size(M.W, 1)
-outdim(M::ICA) = size(M.W, 2)
-mean(M::ICA) = fullmean(indim(M), M.mean)
+"""
+    size(M::ICA)
 
-transform(M::ICA, x::AbstractVecOrMat{<:Real}) = transpose(M.W) * centralize(x, M.mean)
+Returns a tuple with the input dimension, *i.e* the number of observed mixtures, and
+the output dimension, *i.e* the number of independent components.
+"""
+size(M::ICA) = size(M.W)
+
+"""
+    mean(M::ICA)
+
+Returns the mean vector.
+"""
+mean(M::ICA) = fullmean(size(M.W,1), M.mean)
+
+"""
+    predict(M::ICA, x)
+
+Transform `x` to the output space to extract independent components,
+as ``\\mathbf{W}^T (\\mathbf{x} - \\boldsymbol{\\mu})``, given the model `M`.
+"""
+predict(M::ICA, x::AbstractVecOrMat{<:Real}) = transpose(M.W) * centralize(x, M.mean)
 
 
 #### core algorithm
 
-# the abstract type for all g functions:
-#
-# Let f be an instance of such type, then
-#
-#   evaluate(f, x) --> (v, d)
-#
-# It returns a function value v, and derivative d
-#
-abstract type ICAGDeriv{T<:Real} end
+"""
+The abstract type for all `g` (derivative) functions.
 
-struct Tanh{T} <: ICAGDeriv{T}
+Let `g` be an instance of such type, then `update!(g, U, E)` given
+
+- `U = w'x`
+
+returns updated in-place `U` and `E`, s.t.
+
+- `g(w'x) --> U` and `E{g'(w'x)} --> E`
+
+"""
+abstract type ICAGDeriv end
+
+"""
+Derivative for ``(1/a_1)\\log\\cosh a_1 u``
+"""
+struct Tanh{T} <: ICAGDeriv
     a::T
 end
+function update!(f::Tanh{T}, U::AbstractMatrix{T}, E::AbstractVector{T}) where {T}
+    n,k = size(U)
+    a = f.a
+    @inbounds for j in 1:k
+        _s = zero(T)
+        @fastmath for i in 1:n
+            t = tanh(a * U[i,j])
+            U[i,j] = t
+            _s += a * (1 - t^2)
+        end
+        E[j] = _s / n
+    end
+end
 
-evaluate(f::Tanh{T}, x::T) where T<:Real = (a = f.a; t = tanh(a * x); (t, a * (1 - t * t)))
+"""
+Derivative for ``-e^{\\frac{-u^2}{2}}``
+"""
+struct Gaus <: ICAGDeriv end
+function update!(f::Gaus, U::AbstractMatrix{T}, E::AbstractVector{T}) where {T}
+    n,k = size(U)
+    @inbounds for j in 1:k
+        _s = zero(T)
+        for i in 1:n
+            u = U[i,j]
+            u2 = u^2
+            e = exp(-u2/2)
+            U[i,j] = u * e
+            _s += (1 - u2) * e
+        end
+        E[j] = _s / n
+    end
+end
 
-struct Gaus{T} <: ICAGDeriv{T} end
-evaluate(f::Gaus{T}, x::T) where T<:Real = (x2 = x * x; e = exp(-x2/2); (x * e, (1 - x2) * e))
-
-## a function to get a g-fun
-
-icagfun(fname::Symbol, ::Type{T} = Float64) where T<:Real=
-    fname == :tanh ? Tanh{T}(1.0) :
-    fname == :gaus ? Gaus{T}() :
-    error("Unknown gfun $(fname)")
-
-icagfun(fname::Symbol, a::T) where T<:Real =
-    fname == :tanh ? Tanh(a) :
-    fname == :gaus ? error("The gfun $(fname) has no parameters") :
-    error("Unknown gfun $(fname)")
 
 # Fast ICA
-#
-# Reference:
-#
-#   Aapo Hyvarinen and Erkki Oja
-#   Independent Component Analysis: Algorithms and Applications.
-#   Neural Network 13(4-5), 2000.
-#
-function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (m, k)
-                  X::DenseMatrix{T},      # (whitened) observation sample matrix, size(m, n)
-                  fun::ICAGDeriv{T},      # approximate neg-entropy functor
-                  maxiter::Int,           # maximum number of iterations
-                  tol::Real) where T<:Real# convergence tolerance
+
+"""
+    fastica!(W, X, fun, maxiter, tol, verbose)
+
+Invoke the Fast ICA algorithm[^1].
+
+**Parameters:**
+- `W`: The initial un-mixing matrix, of size ``(m, k)``. The function updates this matrix inplace.
+- `X`: The data matrix, of size ``(m, n)``. This matrix is input only, and won't be modified.
+- `fun`: The approximate neg-entropy functor of type [`ICAGDeriv`](@ref).
+- `maxiter`: Maximum number of iterations.
+- `tol`: Tolerable change of `W` at convergence.
+
+Returns the updated `W`.
+
+**Note:** The number of components is inferred from `W` as `size(W, 2)`.
+"""
+function fastica!(W::DenseMatrix{T},         # initialized component matrix, size (m, k)
+                  X::DenseMatrix{T},         # (whitened) observation sample matrix, size(m, n)
+                  fun::ICAGDeriv,            # approximate neg-entropy functor
+                  maxiter::Int,              # maximum number of iterations
+                  tol::Real) where {T<:Real} # convergence tolerance
 
     # argument checking
     m = size(W, 1)
@@ -71,7 +128,7 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
     @debug "FastICA Algorithm" m=m n=n k=k
 
     # pre-allocated storage
-    Wp = Matrix{T}(undef, m, k)    # to store previous version of W
+    Wp = similar(W)                # to store previous version of W
     U  = Matrix{T}(undef, n, k)    # to store w'x & g(w'x)
     Y  = Matrix{T}(undef, m, k)    # to store E{x g(w'x)} for components
     E1 = Vector{T}(undef, k)       # store E{g'(w'x)} for components
@@ -83,7 +140,7 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
     end
 
     # main loop
-    chg = NaN
+    chg = T(NaN)
     t = 0
     converged = false
     while !converged && t < maxiter
@@ -94,34 +151,24 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
         mul!(U, transpose(X), W) # u <- w'x
 
         # compute g(w'x) --> U and E{g'(w'x)} --> E1
-        _s = 0.0
-        for j = 1:k
-            for i = 1:n
-                u, v = evaluate(fun, U[i,j])
-                U[i,j] = u
-                _s += v
-            end
-            E1[j] = _s / n
-        end
+        update!(fun, U, E1)
 
         # compute E{x g(w'x)} --> Y
-        rmul!(mul!(Y, X, U), 1.0 / n)
+        rmul!(mul!(Y, X, U), 1 / n)
 
-        # update w: E{x g(w'x)} - E{g'(w'x)} w := y - e1 * w
+        # update w: E{x g(w'x)} - E{g'(w'x)}w, i.e. w := y - e1 * w
         for j = 1:k
             w = view(W,:,j)
             y = view(Y,:,j)
             e1 = E1[j]
-            for i = 1:m
-                w[i] = y[i] - e1 * w[i]
-            end
+            @. w = y - e1 * w
         end
 
         # symmetric decorrelation: W <- W * (W'W)^{-1/2}
         copyto!(W, W * _invsqrtm!(W'W))
 
         # compare with Wp to evaluate a conversion change
-        chg = maximum(abs.(abs.(diag(W*Wp')) .- 1.0))
+        chg = maximum(abs.(abs.(diag(W*Wp')) .- 1))
         converged = (chg < tol)
 
         @debug "Iteration $t" change=chg tolerance=tol
@@ -131,16 +178,47 @@ function fastica!(W::DenseMatrix{T},      # initialized component matrix, size (
 end
 
 #### interface function
+"""
+    fit(ICA, X, k; ...)
 
-function fit(::Type{ICA}, X::AbstractMatrix{T},                # sample matrix, size (m, n)
-                          k::Int;                           # number of independent components
-                          alg::Symbol=:fastica,             # choice of algorithm
-                          fun::ICAGDeriv=icagfun(:tanh, T), # approx neg-entropy functor
-                          do_whiten::Bool=true,             # whether to perform pre-whitening
-                          maxiter::Integer=100,             # maximum number of iterations
-                          tol::Real=1.0e-6,                 # convergence tolerance
-                          mean=nothing,                     # pre-computed mean
-                          winit::Matrix{T}=zeros(T,0,0)) where T<:Real  # init guess of W, size (m, k)
+Perform ICA over the data set given in `X`.
+
+**Parameters:**
+-`X`: The data matrix, of size ``(m, n)``. Each row corresponds to a mixed signal,
+while each column corresponds to an observation (*e.g* all signal value at a particular time step).
+-`k`: The number of independent components to recover.
+
+**Keyword Arguments:**
+- `alg`: The choice of algorithm (*default* `:fastica`)
+- `fun`: The approx neg-entropy functor (*default* [`Tanh`](@ref))
+- `do_whiten`: Whether to perform pre-whitening (*default* `true`)
+- `maxiter`: Maximum number of iterations (*default* `100`)
+- `tol`: Tolerable change of ``W`` at convergence (*default* `1.0e-6`)
+- `mean`: The mean vector, which can be either of:
+    - `0`: the input data has already been centralized
+    - `nothing`: this function will compute the mean (*default*)
+    - a pre-computed mean vector
+- `winit`: Initial guess of ``W``, which should be either of:
+    - empty matrix: the function will perform random initialization (*default*)
+    - a matrix of size ``(k, k)`` (when `do_whiten`)
+    - a matrix of size ``(m, k)`` (when `!do_whiten`)
+
+Returns the resultant ICA model, an instance of type [`ICA`](@ref).
+
+**Note:** If `do_whiten` is `true`, the return `W` satisfies
+``\\mathbf{W}^T \\mathbf{C} \\mathbf{W} = \\mathbf{I}``,
+otherwise ``W`` is orthonormal, *i.e* ``\\mathbf{W}^T \\mathbf{W} = \\mathbf{I}``.
+"""
+function fit(::Type{ICA}, X::AbstractMatrix{T},# sample matrix, size (m, n)
+             k::Int;                           # number of independent components
+             alg::Symbol=:fastica,             # choice of algorithm
+             fun::ICAGDeriv=Tanh(one(T)),      # approx neg-entropy functor
+             do_whiten::Bool=true,             # whether to perform pre-whitening
+             maxiter::Integer=100,             # maximum number of iterations
+             tol::Real=1.0e-6,                 # convergence tolerance
+             mean=nothing,                     # pre-computed mean
+             winit::Matrix{T}=zeros(T,0,0)     # init guess of W, size (m, k)
+            ) where {T<:Real}
 
     # check input arguments
     m, n = size(X)
@@ -177,3 +255,4 @@ function fit(::Type{ICA}, X::AbstractMatrix{T},                # sample matrix, 
     end
     return ICA(mv, W)
 end
+

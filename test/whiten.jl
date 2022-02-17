@@ -1,19 +1,19 @@
 using MultivariateStats
 using LinearAlgebra, StatsBase, SparseArrays
 using Test
+using StableRNGs
 import Statistics: mean, cov
-import Random
 
 @testset "Whitening" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## data
 
     d = 3
     n = 5
 
-    X = rand(d, n)
+    X = rand(rng, d, n)
     mval = vec(mean(X, dims=2))
     C = cov(X, dims=2)
     C0 = copy(C)
@@ -51,7 +51,7 @@ import Random
 
     # Whitening from data
 
-    f = fit(Whitening, X)
+    f = fit(Whitening, X, dims=2)
     W = f.W
     @test isa(f, Whitening{Float64})
     @test mean(f) === f.mean
@@ -59,17 +59,17 @@ import Random
     @test size(f) == (d,d)
     @test istriu(W)
     @test W'C * W ≈ Matrix(I, d, d)
-    @test transform(f, X) ≈ W' * (X .- f.mean)
+    @test MultivariateStats.transform(f, X) ≈ W' * (X .- f.mean)
 
-    f = fit(Whitening, X; regcoef=rc)
+    f = fit(Whitening, X; regcoef=rc, dims=2)
     W = f.W
     @test W'Cr * W ≈ Matrix(I, d, d)
 
-    f = fit(Whitening, X; mean=mval)
+    f = fit(Whitening, X; mean=mval, dims=2)
     W = f.W
     @test W'C * W ≈ Matrix(I, d, d)
 
-    f = fit(Whitening, X; mean=0)
+    f = fit(Whitening, X; mean=0, dims=2)
     Cx = (X * X') / (n - 1)
     W = f.W
     @test W'Cx * W ≈ Matrix(I, d, d)
@@ -81,24 +81,24 @@ import Random
     @test R ≈ inv(sqrt(C))
 
     # mixing types
-    X = rand(Float64, 5, 10)
+    X = rand(rng, Float64, 5, 10)
     XX = convert.(Float32, X)
 
-    M = fit(Whitening, X)
-    MM = fit(Whitening, XX)
+    M = fit(Whitening, X, dims=2)
+    MM = fit(Whitening, XX, dims=2)
 
     # mixing types should not error
-    transform(M, XX)
-    transform(MM, X)
+    MultivariateStats.transform(M, XX)
+    MultivariateStats.transform(MM, X)
 
     # type consistency
     @test eltype(mean(M)) == Float64
     @test eltype(mean(MM)) == Float32
 
     # sparse arrays
-    SX = sprand(Float32, d, n, 0.75)
-    SM = fit(Whitening, SX; mean=sprand(Float32, 3, 0.75))
-    Y = transform(SM, SX)
+    SX = sprand(rng, Float32, d, n, 0.75)
+    SM = fit(Whitening, SX; mean=sprand(rng, Float32, 3, 0.75), dims=2)
+    Y = MultivariateStats.transform(SM, SX)
     @test eltype(Y) == Float32
 
     # different dimensions
@@ -106,13 +106,13 @@ import Random
     M1 = fit(Whitening, X'; dims=1)
     M2 = fit(Whitening, X; dims=2)
     @test M1.W == M2.W
-    @test_throws DimensionMismatch transform(M1, rand(6,4))
-    @test_throws DimensionMismatch transform(M2, rand(4,6))
-    Y1 = transform(M1,X')
-    Y2 = transform(M2,X)
+    @test_throws DimensionMismatch MultivariateStats.transform(M1, rand(rng, 6,4))
+    @test_throws DimensionMismatch MultivariateStats.transform(M2, rand(rng, 4,6))
+    Y1 = MultivariateStats.transform(M1,X')
+    Y2 = MultivariateStats.transform(M2,X)
     @test Y1' == Y2
-    @test_throws DimensionMismatch transform(M1, rand(7))
-    V1 = transform(M1,X[:,1])
-    V2 = transform(M2,X[:,1])
+    @test_throws DimensionMismatch MultivariateStats.transform(M1, rand(rng, 7))
+    V1 = MultivariateStats.transform(M1,X[:,1])
+    V2 = MultivariateStats.transform(M2,X[:,1])
     @test V1 == V2
 end

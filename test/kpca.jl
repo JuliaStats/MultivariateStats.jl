@@ -1,28 +1,28 @@
 using MultivariateStats
 using LinearAlgebra
 using Test
+using StableRNGs
 import SparseArrays
 import Statistics: mean, cov
-import Random
 
 
 @testset "Kernel PCA" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## data
     n = 10
     d = 5
-    X = randn(d, n)
+    X = randn(rng, d, n)
 
     # step-by-step kernel centralization
     for K in [
         reshape(1.:12., 3, 4),
         reshape(1.:9., 3, 3),
         reshape(1.:12., 4, 3),
-        rand(n,d),
-        rand(d,d),
-        rand(d,n) ]
+        rand(rng, n,d),
+        rand(rng, d,d),
+        rand(rng, d,n) ]
 
         x, y = size(K)
         I1 = ones(x,x)/x
@@ -30,7 +30,7 @@ import Random
         Z = K - I1*K - K*I2 + I1*K*I2
 
         KC = fit(MultivariateStats.KernelCenter, K)
-        @test all(isapprox.(Z, MultivariateStats.transform!(KC, copy(K))))
+        @test all(Z .≈ MultivariateStats.transform!(KC, copy(K)))
     end
 
     # kernel calculations
@@ -55,76 +55,73 @@ import Random
     @test all(isapprox.(MultivariateStats.transform!(KC, copy(K)), 0.0, atol=10e-7))
 
     ## check different parameters
-    X = randn(d, n)
+    X = randn(rng, d, n)
     M = fit(KernelPCA, X, maxoutdim=d)
     M2 = fit(PCA, X, method=:cov, pratio=1.0)
-    @test indim(M) == d
-    @test outdim(M) == d
-    @test abs.(transform(M)) ≈ abs.(transform(M2, X))
-    @test abs.(transform(M, X)) ≈ abs.(transform(M2, X))
-    @test abs.(transform(M, X[:,1])) ≈ abs.(transform(M2, X[:,1]))
+    @test size(M) == (d,d)
+    @test abs.(predict(M)) ≈ abs.(predict(M2, X))
+    @test abs.(predict(M, X)) ≈ abs.(predict(M2, X))
+    @test abs.(predict(M, X[:,1])) ≈ abs.(predict(M2, X[:,1]))
 
     M = fit(KernelPCA, X, maxoutdim=3, solver=:eigs)
     M2 = fit(PCA, X, method=:cov, maxoutdim=3)
-    @test indim(M) == d
-    @test outdim(M) == 3
-    @test abs.(transform(M, X)) ≈ abs.(transform(M2, X))
-    @test abs.(transform(M, X[:,1])) ≈ abs.(transform(M2, X[:,1]))
+    @test size(M)[1] == d
+    @test size(M)[2] == 3
+    @test abs.(predict(M, X)) ≈ abs.(predict(M2, X))
+    @test abs.(predict(M, X[:,1])) ≈ abs.(predict(M2, X[:,1]))
 
     # issue #44
-    Y = randn(d, 2*n)
-    @test size(transform(M, Y)) == size(transform(M2, Y))
+    Y = randn(rng, d, 2*n)
+    @test size(predict(M, Y)) == size(predict(M2, Y))
 
     # reconstruction
     @test_throws ArgumentError reconstruct(M, X)
     M = fit(KernelPCA, X, inverse=true)
-    @test all(isapprox.(reconstruct(M, transform(M)), X, atol=0.75))
+    @test all(isapprox.(reconstruct(M, predict(M)), X, atol=0.75))
 
     # use RBF kernel
     γ = 10.
     rbf=(x,y)->exp(-γ*norm(x-y)^2.0)
     M = fit(KernelPCA, X, kernel=rbf)
-    @test indim(M) == d
-    @test outdim(M) == d
+    @test size(M) == (d,d)
 
     # use precomputed kernel
     K = MultivariateStats.pairwise((x,y)->x'*y, eachcol(X), symmetric=true)
-    @test_throws AssertionError fit(KernelPCA, rand(1,10), kernel=nothing) # symmetric kernel
+    @test_throws AssertionError fit(KernelPCA, rand(rng, 1,10), kernel=nothing) # symmetric kernel
     M = fit(KernelPCA, K, maxoutdim = 5, kernel=nothing, inverse=true) # use precomputed kernel
     M2 = fit(PCA, X, method=:cov, pratio=1.0)
     @test_throws ArgumentError reconstruct(M, X) # no reconstruction for precomputed kernel
-    @test abs.(transform(M)) ≈ abs.(transform(M2, X))
+    @test abs.(predict(M)) ≈ abs.(predict(M2, X))
 
-    @test_throws TypeError fit(KernelPCA, rand(1,10), kernel=1)
+    @test_throws TypeError fit(KernelPCA, rand(rng, 1,10), kernel=1)
 
     # different types
-    X = randn(Float64, d, n)
+    X = randn(rng, Float64, d, n)
     XX = convert.(Float32, X)
 
     M = fit(KernelPCA, X ; inverse=true)
     MM = fit(KernelPCA, XX ; inverse=true)
 
-    Y = randn(Float64, outdim(M))
+    Y = randn(rng, Float64, size(M)[2])
     YY = convert.(Float32, Y)
 
-    @test indim(MM) == d
-    @test outdim(MM) == d
-    @test eltype(transform(MM, XX[:,1])) == Float32
+    @test size(MM) == (d,d)
+    @test eltype(predict(MM, XX[:,1])) == Float32
 
-    for func in (projection, principalvars)
+    for func in (projection, eigvals)
         @test eltype(func(M)) == Float64
         @test eltype(func(MM)) == Float32
     end
 
     # mixing types should not error
-    transform(M, XX)
-    transform(MM, X)
+    predict(M, XX)
+    predict(MM, X)
     reconstruct(M, YY)
     reconstruct(MM, Y)
 
     ## fit a sparse matrix
-    X = SparseArrays.sprandn(100d, n, 0.6)
+    X = SparseArrays.sprandn(rng, 100d, n, 0.6)
     M = fit(KernelPCA, X, maxoutdim=3, solver=:eigs)
-    @test indim(M) == 100d
-    @test outdim(M) == 3
+    @test size(M)[1] == 100d
+    @test size(M)[2] == 3
 end

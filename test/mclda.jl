@@ -2,8 +2,8 @@ using MultivariateStats
 using LinearAlgebra
 using Test
 using StatsBase
+using StableRNGs
 import Statistics: mean, cov
-import Random
 
 @testset "Multi-class LDA" begin
 
@@ -24,7 +24,7 @@ import Random
         end
     end
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## prepare data
     d = 5
@@ -37,10 +37,10 @@ import Random
     cmeans = zeros(d, nc)
 
     for k = 1:nc
-        R = qr(randn(d, d)).Q
+        R = qr(randn(rng, d, d)).Q
         nk = ns[k]
 
-        Xk = R * Diagonal(2 * rand(d) .+ 0.5) * randn(d, nk) .+ randn(d)
+        Xk = R * Diagonal(2 * rand(rng, d) .+ 0.5) * randn(rng, d, nk) .+ randn(rng, d)
         yk = fill(k, nk)
         uk = vec(mean(Xk, dims=2))
         Zk = Xk .- uk
@@ -143,7 +143,7 @@ import Random
     centers = [zeros(5) [10.0;zeros(4)] [0.0;10.0;zeros(3)]]
 
     # Case 1: 3 groups of 500
-    dX = randn(5,1500);
+    dX = randn(rng, 5,1500);
     for i = 0:500:1000
         dX[:,(1:500).+i] .= dX[:,(1:500).+i] .- mean(dX[:,(1:500).+i], dims=2)  # make the mean of each 0
     end
@@ -151,7 +151,7 @@ import Random
     X1 = [dX[:,1:500].+centers[:,1] dX[:,501:1000].+centers[:,2] dX[:,1001:1500].+centers[:,3]]
     label1 = [fill(1,500); fill(2,500); fill(3,500)]
     # Case 2: 3 groups, one with 1000, one with 100, and one with 10
-    dX = randn(5,1110);
+    dX = randn(rng, 5,1110);
     dX[:,   1:1000] .= dX[:,   1:1000] .- mean(dX[:,   1:1000], dims=2)
     dX[:,1001:1100] .= dX[:,1001:1100] .- mean(dX[:,1001:1100], dims=2)
     dX[:,1101:1110] .= dX[:,1101:1110] .- mean(dX[:,1101:1110], dims=2)
@@ -162,13 +162,12 @@ import Random
     for (X, dX, label) in ((X1, dX1, label1), (X2, dX2, label2))
         w = [length(findall(label.==1)), length(findall(label.==2)), length(findall(label.==3))]
         M = fit(SubspaceLDA, X, label)
-        @test indim(M) == 5
-        @test outdim(M) == 2
+        @test size(M) == (5,2)
         totcenter = vec(sum(centers.*w', dims=2)./sum(w))
         @test mean(M) ≈ totcenter
         @test classmeans(M) ≈ centers
         @test classweights(M) == w
-        x = rand(5)
+        x = rand(rng, 5)
         @test predict(M, x) ≈ projection(M)'*x
         dcenters = centers .- totcenter
         Hb = dcenters.*sqrt.(w)'
@@ -187,8 +186,8 @@ import Random
     end
 
     # High-dimensional case (undersampled => singularities)
-    X = randn(10^6, 9)
-    label = rand(1:3, 9); label[1:3] = 1:3
+    X = randn(rng, 10^6, 9)
+    label = rand(rng, 1:3, 9); label[1:3] = 1:3
     M = fit(SubspaceLDA, X, label)
     centers = M.cmeans
     for i = 1:3
@@ -216,7 +215,7 @@ import Random
     # Test normalized LDA
     function gen_ldadata_2(centers, n1, n2)
         d = size(centers, 1)
-        X = randn(d, n1+n2)
+        X = randn(rng, d, n1+n2)
         X[:,1:n1]       .-= vec(mean(X[:,1:n1], dims=2))
         X[:,n1+1:n1+n2] .-= vec(mean(X[:,n1+1:n1+n2], dims=2))
         dX = copy(X)

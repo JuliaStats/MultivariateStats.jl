@@ -8,7 +8,14 @@ makedocs(
     sitename = "MultivariateStats.jl",
     modules = [MultivariateStats],
     pages = ["Home"=>"index.md",
-             "whiten.md", "lda.md", "pca.md",
+             "whiten.md",
+             "lreg.md",
+             "lda.md",
+             "pca.md",
+             "ica.md",
+             "cca.md",
+             "fa.md",
+             "mds.md",
              "Development"=>"api.md"]
 )
 

@@ -1,11 +1,11 @@
 using MultivariateStats
 using Test
 using LinearAlgebra
-import Random
+using StableRNGs
 
-@testset "Ridge Regression" begin
+@testset "Regression" begin
 
-    Random.seed!(34568)
+    rng = StableRNG(34568)
 
     ## data
 
@@ -13,13 +13,13 @@ import Random
     n = 6
     n2 = 3
 
-    X = randn(m, n)
-    A = randn(n, n2)
+    X = randn(rng, m, n)
+    A = randn(rng, n, n2)
     Xt = X'
 
-    b = randn(1, n2)
+    b = randn(rng, 1, n2)
 
-    E = randn(m, n2) * 0.1
+    E = randn(rng, m, n2) * 0.1
     Y0 = X * A + E
     Y1 = X * A .+ b + E
 
@@ -112,7 +112,7 @@ import Random
 
     ## ridge (with diagonal r)
 
-    r = 0.05 .+ 0.1 .* rand(n)
+    r = 0.05 .+ 0.1 .* rand(rng, n)
 
     A = ridge(X, Y0, r; dims=1, bias=false)
     A_r = copy(A)
@@ -149,7 +149,7 @@ import Random
 
     ## ridge (with qudratic r matrix)
 
-    Q = qr(randn(n, n)).Q
+    Q = qr(randn(rng, n, n)).Q
     r = Q' * diagm(0=>r) * Q
 
     A = ridge(X, Y0, r; dims=1, bias=false)
@@ -183,5 +183,22 @@ import Random
 
     aa = ridge(Xt, y1, r; dims=2, bias=true)
     @test aa ≈ Aa[:,1]
+
+
+    ## isotonic
+    xx = [3.3, 3.3, 3.3, 6, 7.5, 7.5]
+    yy = [4, 5, 1, 6, 8, 7.0]
+    a = isotonic(xx, yy)
+    b = [[1,2,3],[4],[5,6]]
+    @test a ≈ xx atol=0.1
+
+    ## using various types
+    @testset for (T, TR) in [(Int,Float64), (Float32, Float32)]
+        X, y = rand(T, 10, 3), rand(T, 10)
+        a = llsq(X, y)
+        @test eltype(a) == TR
+        a = ridge(X, y, one(T))
+        @test eltype(a) == TR
+    end
 
 end
