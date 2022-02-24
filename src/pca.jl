@@ -112,7 +112,7 @@ loadings(M::PCA) = sqrt.(principalvars(M))' .* projection(M)
 """
     predict(M::PCA, x::AbstractVecOrMat{<:Real})
 
-Given a PCA model `M`, retur transform observations `x` into principal components space, as
+Given a PCA model `M`, transform observations `x` into principal components space, as
 
 \$\\mathbf{y} = \\mathbf{P}^T (\\mathbf{x} - \\boldsymbol{\\mu})\$
 
