@@ -40,29 +40,29 @@ module MultivariateStats
     invsqrtm,           # Compute C^{-1/2}, i.e. inv(sqrtm(C))
 
     ## pca
-    PCA,                       # Type: Principal Component Analysis model
+    PCA,                # Type: Principal Component Analysis model
 
-    pcacov,                    # PCA based on covariance
-    pcasvd,                    # PCA based on singular value decomposition of input data
-    principalratio,            # the ratio of variances preserved in the principal subspace
-    principalvar,              # the variance along a specific principal direction
-    principalvars,             # the variances along all principal directions
+    pcacov,             # PCA based on covariance
+    pcasvd,             # PCA based on singular value decomposition of input data
+    principalratio,     # the ratio of variances preserved in the principal subspace
+    principalvar,       # the variance along a specific principal direction
+    principalvars,      # the variances along all principal directions
 
     tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
     tresidualvar,       # total residual variance
 
     ## ppca
-    PPCA,                      # Type: the Probabilistic PCA model
+    PPCA,               # Type: the Probabilistic PCA model
 
     ppcaml,             # Maximum likelihood probabilistic PCA
     ppcaem,             # EM algorithm for probabilistic PCA
     bayespca,           # Bayesian PCA
 
     ## kpca
-    KernelPCA,                 # Type: the Kernel PCA model
+    KernelPCA,          # Type: the Kernel PCA model
 
     ## cca
-    CCA,                       # Type: Correlation Component Analysis model
+    CCA,                # Type: Correlation Component Analysis model
 
     ccacov,             # CCA based on covariances
     ccasvd,             # CCA based on singular value decomposition of input data
@@ -73,8 +73,8 @@ module MultivariateStats
     classical_mds,      # perform classical MDS over a given distance matrix
     stress,             # stress evaluation
 
-    gram2dmat, gram2dmat!,     # Gram matrix => Distance matrix
-    dmat2gram, dmat2gram!,     # Distance matrix => Gram matrix
+    gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix
+    dmat2gram, dmat2gram!,  # Distance matrix => Gram matrix
 
     ## lda
     LinearDiscriminant,     # Type: Linear Discriminant functional
@@ -93,28 +93,22 @@ module MultivariateStats
     mclda_solve,            # solve multi-class LDA projection given sStatisticalModel
 
     ## ica
-    ICA,                       # Type: the Fast ICA model
+    ICA,                    # Type: the Fast ICA model
 
     fastica!,               # core algorithm function for the Fast ICA
 
     ## fa
-    FactorAnalysis,            # Type: the Factor Analysis model
+    FactorAnalysis,         # Type: the Factor Analysis model
 
-    faem,                      # Maximum likelihood probabilistic PCA
-    facm,                      # EM algorithm for probabilistic PCA
+    faem,                   # EM algorithm for factor analysis
+    facm                    # CM algorithm for factor analysis
 
     ## facrot
     FactorRotationAlgorithm,   # Type: Factor rotation algorithm
     Orthomax,                  # Type: Orthomax factor rotation algorithm
-    Varimax,                   # Convenience interfaces to Orthomax factor rotation algorithms
-    Quartimax,
-    Equamax,
-    Parsimax,
 
     FactorRotation,            # Type: Return type for factor rotations
-    loadings,                  # rotated loading matrix
-    rotation,                  # rotation matrix applied to loadings
-
+    
     rotatefactors              # Alternative interface to factor rotations
 
     ## source files
