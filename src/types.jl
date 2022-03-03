@@ -1,6 +1,18 @@
 abstract type AbstractDimensionalityReduction <: RegressionModel end
 
 """
+    size(model::AbstractDimensionalityReduction, d::Int)
+
+Returns the dimension of the input data if `d == 1`, the dimension of the output data
+if `d == 2`, otherwise throws error.
+"""
+function size(model::AbstractDimensionalityReduction, d::Integer)
+    dims = size(model)
+    @assert length(dims) >= d "Cannot access dimensional information"
+    return dims[d]
+end
+
+"""
     projection(model::AbstractDimensionalityReduction)
 
 Return the projection matrix of the model.

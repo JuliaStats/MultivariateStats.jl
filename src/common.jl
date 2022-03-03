@@ -120,6 +120,3 @@ function calcscattermat(Z::DenseMatrix)
     return calcscattermat(SimpleCovariance(), Z)
 end
 
-# calculate pairwise kernel
-pairwise(kernel::Function, X::AbstractMatrix, x::AbstractVector; kwargs...) =
-    [kernel(x,y) for y in eachcol(X)]

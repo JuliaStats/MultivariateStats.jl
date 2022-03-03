@@ -1,12 +1,15 @@
 module MultivariateStats
+
     using LinearAlgebra
-    using StatsBase: SimpleCovariance, CovarianceEstimator, RegressionModel,
-                     AbstractDataTransform, pairwise!
+    using SparseArrays
+    using Statistics: middle
+    using StatsAPI: RegressionModel
+    using StatsBase: SimpleCovariance, CovarianceEstimator, AbstractDataTransform,
+                     ConvergenceException, pairwise, CoefTable
+
     import Statistics: mean, var, cov, covm, cor
-    import Base: length, size, show, dump
-    import StatsBase: fit, predict, predict!, ConvergenceException, coef, weights,
-                      dof, pairwise, r2, CoefTable
-    import SparseArrays
+    import Base: length, size, show
+    import StatsAPI: fit, predict, coef, weights, dof, r2
     import LinearAlgebra: eigvals, eigvecs
 
     export
@@ -118,17 +121,17 @@ module MultivariateStats
     include("fa.jl")
 
     ## deprecations
-    @deprecate indim(f) size(f)[1]
-    @deprecate outdim(f) size(f)[2]
-    @deprecate transform(f, x) predict(f, x) #ex=false
+    @deprecate indim(f) size(f,1)
+    @deprecate outdim(f) size(f,2)
+    @deprecate transform(f, x) predict(f, x)
     @deprecate indim(f::Whitening) length(f::Whitening)
     @deprecate outdim(f::Whitening) length(f::Whitening)
     @deprecate tvar(f::PCA) var(f::PCA)
     @deprecate classical_mds(D::AbstractMatrix, p::Int) predict(fit(MDS, D, maxoutdim=p, distances=true))
     @deprecate transform(f::MDS) predict(f::MDS)
-    @deprecate xindim(M::CCA) size(M)[1]
-    @deprecate yindim(M::CCA) size(M)[2]
-    @deprecate outdim(M::CCA) size(M)[3]
+    @deprecate xindim(M::CCA) size(M,1)
+    @deprecate yindim(M::CCA) size(M,2)
+    @deprecate outdim(M::CCA) size(M,3)
     @deprecate correlations(M::CCA) cor(M)
     @deprecate xmean(M::CCA) mean(M, :x)
     @deprecate ymean(M::CCA) mean(M, :y)

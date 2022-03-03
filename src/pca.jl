@@ -134,7 +134,9 @@ gives the principal components for an observation, and \$\\mathbf{P}\$ is the pr
 """
 reconstruct(M::PCA, y::AbstractVecOrMat{T}) where {T<:Real} = decentralize(M.proj * y, M.mean)
 
-## show & dump
+
+## show
+
 function show(io::IO, M::PCA)
     idim, odim = size(M)
     print(io, "PCA(indim = $idim, outdim = $odim, principalratio = $(r2(M)))")
@@ -240,7 +242,7 @@ function pcasvd(Z::AbstractMatrix{T}, mean::AbstractVector{T}, n::Real;
     v = Svd.S::Vector{T}
     U = Svd.U::Matrix{T}
     for i = 1:length(v)
-        @inbounds v[i] = abs2(v[i]) / n
+        @inbounds v[i] = abs2(v[i]) / (n-1)
     end
     ord = sortperm(v; rev=true)
     vsum = sum(v)

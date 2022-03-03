@@ -36,8 +36,7 @@ import Statistics: mean, cov
     # kernel calculations
     ker  = (x,y)->norm(x-y)
 
-    K = similar(X, n, n)
-    MultivariateStats.pairwise!(ker, K, eachcol(X))
+    K = MultivariateStats.pairwise(ker, eachcol(X), symmetric=true)
     @test size(K) == (n, n)
     @test K[1,1] == 0
     @test K[2,1] == norm(X[:,2] - X[:,1])
@@ -46,7 +45,7 @@ import Statistics: mean, cov
     Iₙ = ones(n,n)/n
     @test MultivariateStats.transform!(KC, copy(K)) ≈ K - Iₙ*K - K*Iₙ + Iₙ*K*Iₙ
 
-    K = MultivariateStats.pairwise(ker, X, X[:,1])[:,1:1]
+    K = MultivariateStats.pairwise(ker, eachcol(X), eachcol(X[:,1]))[:,1:1]
     @test size(K) == (n, 1)
     @test K[1,1] == 0
     @test K[2,1] == norm(X[:,2] - X[:,1])
