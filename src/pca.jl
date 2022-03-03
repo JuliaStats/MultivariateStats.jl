@@ -242,7 +242,7 @@ function pcasvd(Z::AbstractMatrix{T}, mean::AbstractVector{T}, n::Real;
     v = Svd.S::Vector{T}
     U = Svd.U::Matrix{T}
     for i = 1:length(v)
-        @inbounds v[i] = abs2(v[i]) / n
+        @inbounds v[i] = abs2(v[i]) / (n-1)
     end
     ord = sortperm(v; rev=true)
     vsum = sum(v)
