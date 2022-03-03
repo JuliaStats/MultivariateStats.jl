@@ -5,7 +5,7 @@ module MultivariateStats
     import Statistics: mean, var, cov, covm, cor
     import Base: length, size, show, dump
     import StatsBase: fit, predict, predict!, ConvergenceException, coef, weights,
-                      dof, pairwise, r2
+                      dof, pairwise, r2, CoefTable
     import SparseArrays
     import LinearAlgebra: eigvals, eigvecs
 
