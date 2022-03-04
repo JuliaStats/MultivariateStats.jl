@@ -19,9 +19,10 @@ A Julia package for multivariate statistics and data analysis (e.g. dimensionali
 - Principal Components Analysis (PCA)
 - Canonical Correlation Analysis (CCA)
 - Classical Multidimensional Scaling (MDS)
+- Metric Multidimensional Scaling (mMDS)
 - Linear Discriminant Analysis (LDA)
 - Multi-class LDA
-- Independent Component Analysis (ICA), FastICA
+- Independent Component Analysis (FastICA)
 - Probabilistic PCA
 - Factor Analysis
 - Kernel PCA

@@ -45,8 +45,8 @@ using StableRNGs
 
     # use only distance matrix
     M = fit(MDS, D0, maxoutdim=3, distances=true)
-    @test isnan(size(M)[1])
-    @test size(M)[2] == 3
+    @test isnan(size(M,1))
+    @test size(M,2) == 3
     @test stress(M) ≈ 0.0 atol = 1e-10
 
     X = predict(M)
@@ -55,8 +55,8 @@ using StableRNGs
 
     @test_throws AssertionError predict(M, X0[:, 1])
     @test_throws DimensionMismatch predict(M, zeros(d+1); distances = true)
-    d = MultivariateStats.pairwise((x,y)->norm(x-y), X0, X0[:,2])
-    y = predict(M, d, distances=true)
+    DV = MultivariateStats.pairwise((x,y)->norm(x.-y), eachcol(X0), eachcol(X0[:,2])) |> vec
+    y = predict(M, DV, distances=true)
     @test X[:, 2] ≈ y
 
     #Test MDS embeddings in dimensions >= number of points
@@ -157,3 +157,4 @@ using StableRNGs
     @test stress(M) ≈ 0.234 atol=1e-2
 
 end
+

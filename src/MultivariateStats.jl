@@ -5,7 +5,7 @@ module MultivariateStats
     using Statistics: middle
     using StatsAPI: RegressionModel
     using StatsBase: SimpleCovariance, CovarianceEstimator, AbstractDataTransform,
-                     ConvergenceException, pairwise, CoefTable
+                     ConvergenceException, pairwise, pairwise!, CoefTable
 
     import Statistics: mean, var, cov, covm, cor
     import Base: length, size, show
