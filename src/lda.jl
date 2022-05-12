@@ -325,7 +325,7 @@ the corresponding generalized eigenvalues.
 Note that [`MulticlassLDA`](@ref) does not currently support the normalized version using ``\\mathbf{S}_w^*`` and
 ``\\mathbf{S}_b^*`` (see [`SubspaceLDA`](@ref)).
 """
-function fit(::Type{MulticlassLDA}, nc::Int, X::DenseMatrix{T}, y::AbstractVector{Int};
+function fit(::Type{MulticlassLDA}, nc::Int, X::AbstractMatrix{T}, y::AbstractVector{Int};
              method::Symbol=:gevd,
              outdim::Int=min(size(X,1), nc-1),
              regcoef::T=T(1.0e-6),
