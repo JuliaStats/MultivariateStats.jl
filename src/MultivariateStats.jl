@@ -5,7 +5,7 @@ module MultivariateStats
     using Statistics: middle
     using StatsAPI: RegressionModel
     using StatsBase: SimpleCovariance, CovarianceEstimator, AbstractDataTransform,
-                     ConvergenceException, pairwise, CoefTable
+                     ConvergenceException, pairwise, pairwise!, CoefTable
 
     import Statistics: mean, var, cov, covm, cor
     import Base: length, size, show
@@ -73,6 +73,7 @@ module MultivariateStats
 
     ## cmds
     MDS,
+    MetricMDS,
     classical_mds,      # perform classical MDS over a given distance matrix
     stress,             # stress evaluation
 
@@ -116,6 +117,7 @@ module MultivariateStats
     include("kpca.jl")
     include("cca.jl")
     include("cmds.jl")
+    include("mmds.jl")
     include("lda.jl")
     include("ica.jl")
     include("fa.jl")

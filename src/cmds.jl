@@ -116,7 +116,7 @@ end
 
 ## properties
 """
-    size(M)
+    size(M::MDS)
 
 Returns tuple where the first value is the MDS model `M` input dimension,
 *i.e* the dimension of the observation space, and the second value is the output
@@ -125,7 +125,7 @@ dimension, *i.e* the dimension of the embedding.
 size(M::MDS) = (M.d, size(M.U,2))
 
 """
-    projection(M)
+    projection(M::MDS)
 
 Get the MDS model `M` eigenvectors matrix (of size ``(n, p)``) of the embedding space.
 The eigenvectors are arranged in descending order of the corresponding eigenvalues.
@@ -161,7 +161,7 @@ loadings(M::MDS) = sqrt.(M.λ)' .* M.U
 Calculate the out-of-sample transformation of the observation `x` for the MDS model `M`.
 Here, `x` is a vector of length `d`.
 """
-function predict(M::MDS, x::AbstractVector{T}; distances=false) where {T<:Real}
+function predict(M::MDS{T}, x::AbstractVector; distances=false) where {T<:Real}
     d = if isnan(M.d) # model has only distance matrix
         @assert distances "Cannot transform points if model was fitted with a distance matrix. Use point distances."
         size(x, 1) != size(M.X, 1) && throw(
@@ -231,11 +231,11 @@ where `D` is a symmetric matrix `D` of distances between points.
 """
 function fit(::Type{MDS}, X::AbstractMatrix{T};
              maxoutdim::Int = size(X,1)-1,
-             distances::Bool) where T<:Real
+             distances::Bool) where {T<:Real}
 
     # get distance matrix and space dimension
     D, d = if !distances
-        pairwise((x,y)->norm(x-y), eachcol(X), symmetric=true), size(X,1)
+        L2distance(X), size(X,1)
     else
         X, NaN
     end
@@ -276,7 +276,7 @@ function fit(::Type{MDS}, X::AbstractMatrix{T};
     #Check if the last considered eigenvalue is degenerate
     if m>0
         nevalsmore = sum(abs.(E.values[ord[m+1:end]] .- λ[m]) .< n*eps())
-        nevals = sum(abs.(E.values .- λ[m]) .< n*eps())
+        nevals = sum(abs.(E.values .- λ[m]) .< n*eps(T))
         if nevalsmore > 1
             @warn("The last eigenpair is degenerate with $(nevals-1) others; $nevalsmore were ignored. Answer is not unique")
         end
@@ -294,7 +294,7 @@ end
 
 
 """
-    stress(M)
+    stress(M::MDS)
 
 Get the stress of the MDS mode `M`.
 """

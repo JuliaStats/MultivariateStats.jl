@@ -2,14 +2,17 @@ using MultivariateStats
 using LinearAlgebra
 import Statistics: mean
 using Test
+using StableRNGs
 
 @testset "MDS" begin
 
+    rng = StableRNG(42)
+
     d = 3
     n = 10
-    X0 = randn(d, n)
+    X0 = randn(rng, d, n)
     G0 = X0'X0
-    D0 = MultivariateStats.pairwise((x,y)->norm(x-y), eachcol(X0), symmetric=true)
+    D0 = MultivariateStats.L2distance(X0)
 
     ## conversion between dmat and gram
 
@@ -34,26 +37,26 @@ using Test
 
     X = predict(M)
     @test size(X) == (3,n)
-    @test MultivariateStats.pairwise((x,y)->norm(x-y), eachcol(X0), symmetric=true) ≈ D0
+    @test MultivariateStats.L2distance(X) ≈ D0
 
-    @test_throws DimensionMismatch predict(M, rand(d+1))
+    @test_throws DimensionMismatch predict(M, zeros(d+1))
     y = predict(M, X0[:, 1])
     @test X[:, 1] ≈ y
 
     # use only distance matrix
     M = fit(MDS, D0, maxoutdim=3, distances=true)
-    @test isnan(size(M)[1])
-    @test size(M)[2] == 3
+    @test isnan(size(M,1))
+    @test size(M,2) == 3
     @test stress(M) ≈ 0.0 atol = 1e-10
 
     X = predict(M)
     @test size(X) == (3,n)
-    @test MultivariateStats.pairwise((x,y)->norm(x-y), eachcol(X0), symmetric=true) ≈ D0
+    @test MultivariateStats.L2distance(X) ≈ D0
 
     @test_throws AssertionError predict(M, X0[:, 1])
-    @test_throws DimensionMismatch predict(M, rand(d+1); distances = true)
-    d = MultivariateStats.pairwise((x,y)->norm(x-y), eachcol(X0), eachcol(X0[:,2])) |> vec
-    y = predict(M, d, distances=true)
+    @test_throws DimensionMismatch predict(M, zeros(d+1); distances = true)
+    DV = MultivariateStats.pairwise((x,y)->norm(x.-y), eachcol(X0), eachcol(X0[:,2])) |> vec
+    y = predict(M, DV, distances=true)
     @test X[:, 2] ≈ y
 
     #Test MDS embeddings in dimensions >= number of points
@@ -110,10 +113,10 @@ using Test
 
     # different input types
     d = 3
-    X = randn(Float64, d, 10)
+    X = randn(rng, Float64, d, 10)
     XX = convert.(Float32, X)
 
-    y = randn(Float64, d)
+    y = randn(rng, Float64, d)
     yy = convert.(Float32, y)
 
     M = fit(MDS, X, maxoutdim=3, distances=false)
@@ -128,4 +131,30 @@ using Test
         @test eltype(func(M)) == Float64
         @test eltype(func(MM)) == Float32
     end
+
+    ## metric MDS
+    D1 = MultivariateStats.L2distance(X)
+    @test stress(D0, D1) ≈ sum(abs2, (D0 .- D1))/2
+
+    MM = fit(MetricMDS, X0, maxoutdim=3, distances=false, tol=1e-6)
+    @test MultivariateStats.L2distance(predict(MM)) ≈ D0 atol=1e-2
+
+    MM = fit(MetricMDS, D0, maxoutdim=3, distances=true, tol=1e-6)
+    @test MultivariateStats.L2distance(predict(MM)) ≈ D0 atol=1e-2
+
+    # Ref 1, Ch 8, Tab 8.4
+    Δ = Symmetric(diagm(1=>[5,2,1], 2=>[3,2], 3=>[4.0]))
+    Z = [-.266 -.539; .451 .252; .016 -.238; -.200 .524]'
+    M = fit(MetricMDS, Δ, maxoutdim=2, initial=Z, distances=true, tol=1e-6)
+    @test stress(M) ≈ 0.017399 atol=1e-5
+
+    # Ref 1, Ch 9, Tab 9.3
+    Z = rand(rng, Float32, 2, 5)
+    Δ = Symmetric(diagm(1=>[1,2,9,3], 2=>[5,10,4], 3=>[7, 8], 4=>[6]))
+    M = fit(MetricMDS, Δ, maxoutdim=2, distances=true, initial=Z, metric=(x...)->(@. 2+log(x[1])), tol=1e-6)
+    @test stress(M) ≈ 0.1123 atol=1e-2
+    M = fit(MetricMDS, Δ, maxoutdim=2, distances=true, initial=Z, metric=isotonic, tol=1e-6)
+    @test stress(M) ≈ 0.234 atol=1e-2
+
 end
+
