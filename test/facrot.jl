@@ -63,8 +63,8 @@ using StableRNGs
     @test isapprox(FR.F, F, rtol = √eps(Float64))
     @test isapprox(FR.R, R, rtol = √eps(Float64))
 
-    isapprox(gpaortho(X, quartimax, 1000, 10, 1e-6)[1], F, rtol = 1e-6)
-    isapprox(gpaortho(X, quartimax, 1000, 10, 1e-6)[2], R, rtol = 1e-6)
+    isapprox(gpaortho(X, quartimax, 1000, 10, 1e-6)[1], F, rtol = √eps(Float64))
+    isapprox(gpaortho(X, quartimax, 1000, 10, 1e-6)[2], R, rtol = √eps(Float64))
 
     ## Equamax
     # Comparison with Matlab's `rotatefactors` called as
@@ -97,5 +97,27 @@ using StableRNGs
     # Equamax for n x p matrix means γ = p / 2
     FR = fit(FactorRotation, X, alg = Parsimax(size(X)...))
     @test isapprox(FR.F, F, rtol = √eps(Float64))
+
+    ## Quartimin rotation
+    # Comparison with R's `GPArotation::quartimin` function called as
+    # ```
+    # using RCall
+    # R"qm <- GPArotation::quartimin($X, eps = 1e-6, maxit = 10000)"
+    # R"F <- qm$loadings"
+    # R"R <- qm$Th"
+    # @rget F
+    # @rget R
+    # ```
+
+    F = [ 0.94295134  1.29282920
+         -2.32274063  0.24011390
+          1.01896033  1.41630052
+          0.86570192  0.28326547
+          0.39161552 -2.38397278]
+    R = [ 0.87548617  0.41144611
+         -0.48324317  0.91143409]
+
+    isapprox(gpaoblique(X, quartimin, 1000, 20, 1e-6)[1], F, rtol = √eps(Float64))
+    isapprox(gpaoblique(X, quartimin, 1000, 10, 1e-6)[2], R, rtol = √eps(Float64))
 
 end

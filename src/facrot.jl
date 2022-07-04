@@ -260,6 +260,71 @@ function gpaortho(F::AbstractMatrix, gradval, maxiter, lsiter, ϵ)
     (L, R)
 end
 
+function quartimin(L::AbstractMatrix)
+    _, p = size(L)
+    Q = L.^2 * (ones(eltype(L), p, p) - Matrix{eltype(L)}(I, p, p))
+    (L .* Q, sum(L.^2 .* Q) / 4)
+end
+
+## Oblique rotations computed by gradient projection algorithms
+# This algorithm computes oblique rotations using a gradient
+# project algorithm.
+## Reference
+# Bernaards, C.A. and Jennrich, R.I. (2005) Gradient Projection Algorithms
+# and Software for Arbitrary Rotation Criteria in Factor Analysis.
+# Educational and Psychological Measurement, 65, 676–696
+# doi 10.1177/0013164404272507
+function gpaoblique(F::AbstractMatrix, gradval, maxiter, lsiter, ϵ)
+    n, p = size(F)
+    if n < 2
+        return (F, Matrix{eltype(F)}(I, p, p))
+    end
+
+    # Setup
+    R = Matrix{eltype(F)}(I, p, p)
+    α = 1.0
+    # L = F * inv(R)'
+    L = (R \ F')'
+    # isapprox((R \ F')', F * inv(R)')
+
+    Gq, f = gradval(L)
+    # G = -(L' * Gq * inv(R))'
+    G = R' \ (-Gq' * L)
+    # isapprox(R' \ (-Gq' * L), -(L' * Gq * inv(R))')
+
+    Gqt, ft = gradval(L)
+    s = 0
+    for _ in 1:maxiter
+        Gp = G - R .* sum.(eachcol(R .* G))'
+        s = sqrt(sum(diag(Gp' * Gp)))
+        # if s < ϵ
+        #     break
+        # end
+        α *= 2.0
+        Rt = Matrix{eltype(F)}(I, p, p)
+        for _ in 1:lsiter
+            X = R - α * Gp
+            v = 1.0 ./ sqrt.(sum.(eachcol(X.^2)))
+            Rt = X .* v'
+            # L = F * inv(Rt)'
+            L = (Rt \ F')'
+            Gqt, ft = gradval(L)
+            if (ft < (f - 0.5 * s^2 * α))
+                break
+            end
+            α /= 2.0
+        end
+        R = Rt
+        f = ft
+        # G = -(L' * Gqt * inv(R))'
+        G = R' \ (-Gqt' * L)
+    end
+
+    (s < ϵ) || throw(ConvergenceException(maxiter, s, ϵ))
+
+    (L, R)
+end
+
 """
     fit(::Type{FactorRotation}, F::AbstractMatrix; ...) -> FactorRotation
 
