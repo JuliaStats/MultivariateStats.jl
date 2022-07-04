@@ -3,7 +3,7 @@ module MultivariateStats
     using StatsBase: SimpleCovariance, CovarianceEstimator, RegressionModel,
                      AbstractDataTransform, pairwise!
     import Statistics: mean, var, cov, covm, cor
-    import Base: length, size, show, dump
+    import Base: length, size, show, dump, eltype
     import StatsBase: fit, predict, predict!, ConvergenceException, coef, weights,
                       dof, pairwise, r2
     import SparseArrays
@@ -101,11 +101,16 @@ module MultivariateStats
     FactorAnalysis,         # Type: the Factor Analysis model
 
     faem,                   # EM algorithm for factor analysis
-    facm                    # CM algorithm for factor analysis
+    facm,                   # CM algorithm for factor analysis
 
     ## facrot
     FactorRotationAlgorithm,   # Type: Factor rotation algorithm
     Orthomax,                  # Type: Orthomax factor rotation algorithm
+    # Convenience types for factor rotation algorithms
+    Varimax,                   # Type
+    Quartimax,                 # Type
+    Equamax,                   # Type
+    Parsimax,                  # Type
 
     FactorRotation,            # Type: Return type for factor rotations
     

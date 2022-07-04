@@ -53,7 +53,7 @@ Remaining keyword parameters as for [`Orthomax`](@ref).
 function Varimax(;miniter::Integer = 20,
                   maxiter::Integer = 1000,
                   ϵ::Real = 1e-12)
-    Orthomax(γ = 1.0, miniter = miniter, maxiter = maxiter, ϵ = ϵ)
+    Orthomax(; γ = 1.0, miniter = miniter, maxiter = maxiter, ϵ = ϵ)
 end
 
 """
