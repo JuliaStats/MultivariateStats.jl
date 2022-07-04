@@ -193,6 +193,73 @@ function orthomax(F::AbstractMatrix, γ, miniter, maxiter, ϵ)
     (F * R, R)
 end
 
+# Compute value of the optimization criterion and gradient of the
+# underlying quality measure
+function varimax(L::AbstractMatrix)
+    Q = L.^2 .- mean.(eachcol(L.^2))'
+    (-L .* Q, -abs(sum(diag(Q' * Q))) / 4)
+end
+
+function quartimax(L::AbstractMatrix)
+    Q = L.^2
+    (-L .* Q, -sum(diag(Q' * Q)) / 4)
+end
+
+## Orthogonal rotations computed by gradient projection algorithms
+# This algorithm computes orthogonal rotations using a gradient
+# project algorithm.
+## Reference
+# Bernaards, C.A. and Jennrich, R.I. (2005) Gradient Projection Algorithms
+# and Software for Arbitrary Rotation Criteria in Factor Analysis.
+# Educational and Psychological Measurement, 65, 676–696
+# doi 10.1177/0013164404272507
+function gpaortho(F::AbstractMatrix, gradval, maxiter, lsiter, ϵ)
+    n, p = size(F)
+    if n < 2
+        return (F, Matrix{eltype(F)}(I, p, p))
+    end
+
+    # Setup
+    R = Matrix{eltype(F)}(I, p, p)
+    α = 1.0
+    L = F * R
+
+    Gq, f = gradval(L)
+    G = F' * Gq
+
+    Gqt, ft = gradval(L)
+    s = 0
+    for _ in 1:maxiter
+        M = R' * G
+        S = (M + M') / 2
+        Gp = G - R * S
+        s = sqrt(sum(diag(Gp' * Gp)))
+        if s < ϵ
+            break
+        end
+        α *= 2.0
+        Rt = Matrix{eltype(F)}(I, p, p)
+        for _ in 1:lsiter
+            X = R - α * Gp
+            UDV = svd(X)
+            Rt = UDV.U * UDV.Vt
+            L = F * Rt
+            Gqt, ft = gradval(L)
+            if (ft < (f - 0.5 * s^2 * α))
+                break
+            end
+            α /= 2.0
+        end
+        R = Rt
+        f = ft
+        G = F' * Gqt
+    end
+
+    (s < ϵ) || throw(ConvergenceException(maxiter, s, ϵ))
+
+    (L, R)
+end
+
 """
     fit(::Type{FactorRotation}, F::AbstractMatrix; ...) -> FactorRotation
 

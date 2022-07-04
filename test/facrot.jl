@@ -37,6 +37,9 @@ using StableRNGs
     @test isapprox(FR.F, F, rtol = √eps(Float64))
     @test isapprox(FR.R, R, rtol = √eps(Float64))
 
+    isapprox(gpaortho(X, varimax, 1000, 10, 1e-6)[1], F, rtol = 1e-6)
+    isapprox(gpaortho(X, varimax, 1000, 10, 1e-6)[2], R, rtol = 1e-6)
+
     ## Quartimax rotation
     # Comparison with R's `GPArotation::quartimax` function called as
     # ```
@@ -59,6 +62,9 @@ using StableRNGs
     FR = fit(FactorRotation, X, alg = Quartimax())
     @test isapprox(FR.F, F, rtol = √eps(Float64))
     @test isapprox(FR.R, R, rtol = √eps(Float64))
+
+    isapprox(gpaortho(X, quartimax, 1000, 10, 1e-6)[1], F, rtol = 1e-6)
+    isapprox(gpaortho(X, quartimax, 1000, 10, 1e-6)[2], R, rtol = 1e-6)
 
     ## Equamax
     # Comparison with Matlab's `rotatefactors` called as

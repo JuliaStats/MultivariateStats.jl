@@ -8,7 +8,7 @@ module MultivariateStats
                      ConvergenceException, pairwise, pairwise!, CoefTable
 
     import Statistics: mean, var, cov, covm, cor
-    import Base: length, size, show
+    import Base: length, size, show, eltype
     import StatsAPI: fit, predict, coef, weights, dof, r2
     import LinearAlgebra: eigvals, eigvecs
 
