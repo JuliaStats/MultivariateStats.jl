@@ -24,6 +24,9 @@ import SparseArrays
     M = PCA(Float64[], P, pvars, 15.0)
 
     @test size(M) == (5, 3)
+    @test size(M,1) == 5
+    @test size(M,2) == 3
+    @test_throws AssertionError size(M, 3)
     @test mean(M) == zeros(5)
     @test projection(M) == P
     @test principalvars(M) == pvars

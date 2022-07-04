@@ -47,7 +47,7 @@ function symmetrize!(A::Matrix)
             @inbounds A[i,j] = A[j,i]
         end
         for i = j+1:n
-            @inbounds A[i,j] = middle(A[i,j], A[j,i])
+            @inbounds A[i,j] = (A[i,j] + A[j,i])/2
         end
     end
     return A
@@ -120,6 +120,14 @@ function calcscattermat(Z::DenseMatrix)
     return calcscattermat(SimpleCovariance(), Z)
 end
 
-# calculate pairwise kernel
-pairwise(kernel::Function, X::AbstractMatrix, x::AbstractVector; kwargs...) =
-    [kernel(x,y) for y in eachcol(X)]
+
+# distance
+"""
+    L2distance(X)
+
+Calculate a symmetric Euclidean (L2) distance matrix.
+"""
+L2distance(X::AbstractMatrix{T}) where {T<:Real} = L2distance!(zeros(T,size(X,2),size(X,2)), X)
+L2distance!(D::AbstractMatrix, X::AbstractMatrix) =
+    pairwise!((x,y)->norm(x-y), D, eachcol(X), symmetric=true)
+

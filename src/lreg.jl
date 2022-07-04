@@ -164,7 +164,7 @@ weights vector.
 
 The function returns a prediction vector of the same size as the regressor vector `x`.
 """
-function isotonic(x::AbstractVector{T}, y::AbstractVector{T},
+function isotonic(x::AbstractVector{<:Real}, y::AbstractVector{T},
                   w::AbstractVector{T} = ones(T, length(y))) where {T<:Real}
     n = length(x)
     n == length(y) || throw(DimensionMismatch("Dimensions of x and y mismatch."))

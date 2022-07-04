@@ -3,7 +3,7 @@ using LinearAlgebra
 using Test
 using StatsBase
 using StableRNGs
-import Statistics: mean, cov
+using Statistics: mean, cov
 
 @testset "Multi-class LDA" begin
 
@@ -135,6 +135,10 @@ import Statistics: mean, cov
         @test predict(M, X) ≈ M.proj'X
     end
 
+    # Issue #192
+    XX = collect(X')
+    M = fit(MulticlassLDA, nc, XX', y)
+    @test size(M) == (d, nc - 1)
 
     ## High-dimensional LDA (subspace LDA)
 
