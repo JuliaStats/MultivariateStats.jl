@@ -8,7 +8,7 @@ module MultivariateStats
                      ConvergenceException, pairwise, pairwise!, CoefTable
 
     import Statistics: mean, var, cov, covm, cor
-    import Base: length, size, show, eltype
+    import Base: length, size, show
     import StatsAPI: fit, predict, coef, weights, dof, r2
     import LinearAlgebra: eigvals, eigvecs
 
@@ -108,17 +108,17 @@ module MultivariateStats
     facm,                   # CM algorithm for factor analysis
 
     ## facrot
-    FactorRotationAlgorithm,   # Type: Factor rotation algorithm
-    Orthomax,                  # Type: Orthomax factor rotation algorithm
-    # Convenience types for factor rotation algorithms
-    Varimax,                   # Type
-    Quartimax,                 # Type
-    Equamax,                   # Type
-    Parsimax,                  # Type
+    FactorRotationMethod,    # Type: a factor rotation method
+    Orthogonal,              # Type: Orthogonal factor rotation method
+    Oblique,                 # Type: Oblique factor rotation method
 
-    FactorRotation,            # Type: Return type for factor rotations
-    
-    rotatefactors              # Alternative interface to factor rotations
+    FactorRotationCriterion, # Type: a factor rotation criterion
+    CrawfordFerguson,        # Type: Crawford-Fergusion rotation criterion
+    Varimax,                 # Type: Varimax rotation criterion
+    Quartimax,               # Type: Quartimax rotation criterion
+    MinimumEntropy,          # Type: MinimumEntropy rotation criterion
+
+    rotate                   # Rotate factors
 
     ## source files
     include("types.jl")

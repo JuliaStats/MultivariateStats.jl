@@ -40,6 +40,10 @@ using StableRNGs
     isapprox(gpaortho(X, varimax, 1000, 10, 1e-6)[1], F, rtol = 1e-6)
     isapprox(gpaortho(X, varimax, 1000, 10, 1e-6)[2], R, rtol = 1e-6)
 
+    FR = rotate(X, CrawfordFerguson{Orthogonal}(κ = 1.0 / 5.0))
+    isapprox(FR[1], F, rtol = 1e-6)
+    isapprox(FR[2], F, rtol = 1e-6)
+
     ## Quartimax rotation
     # Comparison with R's `GPArotation::quartimax` function called as
     # ```
@@ -85,9 +89,11 @@ using StableRNGs
     ## Parsimax
 
     # Comparison with Matlab's `rotatefactors` called as
+    # ```
     # using MATLAB
     # F = mat"rotatefactors($X, 'Method', 'parsimax', 'Normalize', 'off')"
-
+    # ```
+    
     F = [ 0.90503611  1.24332782;
          -2.32641022  0.36067319;
           0.97744298  1.36280122;
@@ -117,7 +123,7 @@ using StableRNGs
     R = [ 0.87548617  0.41144611
          -0.48324317  0.91143409]
 
-    isapprox(gpaoblique(X, quartimin, 1000, 20, 1e-6)[1], F, rtol = √eps(Float64))
+    isapprox(gpaoblique(X, quartimin, 1000, 50, 1e-6)[1], F, rtol = √eps(Float64))
     isapprox(gpaoblique(X, quartimin, 1000, 10, 1e-6)[2], R, rtol = √eps(Float64))
 
 end
