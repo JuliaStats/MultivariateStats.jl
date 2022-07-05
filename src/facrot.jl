@@ -47,7 +47,7 @@ analogous `d x d` matrix, and `κ` is a non-negative shape parameter.
   some classical special cases are
   - `κ = 0` is quartimax rotation
   - `κ = 1 / d` is varimax rotation
-  - `κ = p / (2 * d)` is equimax rotation
+  - `κ = p / (2 * d)` is equamax rotation
   - `κ = (p - 1) / (d + p - 2)` is parsimax rotation
   - `κ = 1` is factor parsimony rotation
 
@@ -217,7 +217,7 @@ function ∇Qf(L::AbstractMatrix, C::Oblimin)
     if C.γ != zero(eltype(C.γ))
         Q = (Matrix{eltype(L)}(I, d, d) - C.γ / d * ones(eltype(L), d, d)) * Q
     end
-    return (L * Q, sum(L.^2 .* Q) / 4.0)
+    return (L .* Q, sum(L.^2 .* Q) / 4.0)
 end
 
 """
@@ -342,7 +342,7 @@ function gparotate(F::AbstractMatrix,
         L .*= w
     end
 
-    (L, T)
+    (Matrix(L), Matrix(T))
 end
 
 """
@@ -380,8 +380,8 @@ function gparotate(F::AbstractMatrix,
                    maxiter::Integer = 1000,
                    lsiter::Integer = 10,
                    ϵ::Float64 = 1.0e-6)
-    n, p = size(F)
-    if n < 2
+    d, p = size(F)
+    if d < 2
         return (F, Matrix{eltype(F)}(I, p, p))
     end
 
@@ -404,30 +404,36 @@ function gparotate(F::AbstractMatrix,
     ∇Q, f = ∇Qf(L, C)
     ∇f = T' \ (-∇Q' * L)
 
-    ∇Qt, ft = ∇Qf(L, C)
     s = 0
     for _ in 1:maxiter
         ∇fp = ∇f - T .* sum.(eachcol(T .* ∇f))'
         s = norm(∇fp)
+
+        # Check for convergence
         if s < ϵ
             break
         end
+
         α *= 2.0
-        Rt = Matrix{eltype(F)}(I, p, p)
+        # Create temporaries here so they are not local to the loop
+        Tt = zeros(eltype(F), p, p)
+        ∇Qt, ft = ∇Q, f
         for _ in 1:lsiter
-            X = R - α * ∇fp
+            # Line search to project the gradient step back onto
+            # the oblique manifold
+            X = T - α * ∇fp
             v = 1.0 ./ norm.(eachcol(X))
-            Rt = X .* v'
-            L = (Rt \ F')'
+            Tt = X .* v'
+            L = (Tt \ F')'
             ∇Qt, ft = ∇Qf(L, C)
             if (ft < (f - 0.5 * s^2 * α))
                 break
             end
             α /= 2.0
         end
-        R = Rt
+        T = Tt
         f = ft
-        ∇f = R' \ (-∇Qt' * L)
+        ∇f = T' \ (-∇Qt' * L)
     end
 
     (s < ϵ) || throw(ConvergenceException(maxiter, s, ϵ))
@@ -436,16 +442,29 @@ function gparotate(F::AbstractMatrix,
         L .*= w
     end
 
-    (L, R)
+    (Matrix(L), Matrix(T))
 end
 
 """
-    rotate(F, C::FactorRotationCriterion{T <: FactorRotationMethod}; ...)
+    FactorRotation{T <: Real}
 
-Rotate the factors in matrix `F` using the criterion `C`.
+This type 
+"""
+struct FactorRotation{T <: Real}
+    L::Matrix{T}
+    R::Matrix{T}
+end
+
+loadings(M::FactorRotation) = M.L
+rotation(M::FactorRotation) = M.R
+
+"""
+    rotate(L, C::FactorRotationCriterion{T <: FactorRotationMethod}; ...)
+
+Rotate the loadings in matrix `L` using the criterion `C`.
 
 **Parameters**
-- `F` is the matrix of loadings to be rotated
+- `L` is the matrix of loadings to be rotated
 - `C` is a factor rotation criterion
 - If `normalizerows` is true, then the rows of `F` are normalized to
   length 1 before rotation and the rows of the rotated loadings are
@@ -457,14 +476,52 @@ Rotate the factors in matrix `F` using the criterion `C`.
   line search
 - `ϵ` is the convergence tolerance
 """
-function rotate(F::AbstractMatrix,
+function rotate(L::AbstractMatrix,
                 C::FactorRotationCriterion{T};
                 normalizerows::Bool = false,
                 randominit::Bool = false,
                 maxiter::Integer = 1000,
                 lsiter::Integer = 10,
                 ϵ::Float64 = 1.0e-6) where {T <: FactorRotationMethod}
-    L, R = gparotate(F, C; normalizerows, randominit, maxiter, lsiter, ϵ)
+    return FactorRotation(
+        gparotate(L, C; normalizerows, randominit, maxiter, lsiter, ϵ)...
+    )
+end
 
-    return (L, R)
+"""
+    rotate(M::FactorAnalysis, C::FactorRotationCriterion{T <: FactorRotationMethod}; ...)
+
+Rotate the loadings of the Factor Analysis model `M` using the criterion `C`.
+Modifies the loading matrix in `M`. Parameters as in [`rotate`](@ref).
+"""
+function rotate!(M::FactorAnalysis,
+                 C::FactorRotationCriterion{T};
+                 normalizerows::Bool = false,
+                 randominit::Bool = false,
+                 maxiter::Integer = 1000,
+                 lsiter::Integer = 10,
+                 ϵ::Float64 = 1.0e-6) where {T <: FactorRotationMethod}
+    FR = rotate(loadings(M), C; normalizerows, randominit, maxiter, lsiter, ϵ)
+    M.W .= loadings(FR)
+    
+    return M
+end
+
+"""
+    rotate(M::PCA, C::FactorRotationCriterion{T <: FactorRotationMethod}; ...)
+
+Rotate the components of the PCA model `M` using the criterion `C`.
+Modifies the projection matrix in `M`. Parameters as in [`rotate`](@ref).
+"""
+function rotate!(M::PCA,
+                 C::FactorRotationCriterion{T};
+                 normalizerows::Bool = false,
+                 randominit::Bool = false,
+                 maxiter::Integer = 1000,
+                 lsiter::Integer = 10,
+                 ϵ::Float64 = 1.0e-6) where {T <: FactorRotationMethod}
+    FR = rotate(projection(M), C; normalizerows, randominit, maxiter, lsiter, ϵ)
+    M.proj .= loadings(FR)
+    
+    return M
 end

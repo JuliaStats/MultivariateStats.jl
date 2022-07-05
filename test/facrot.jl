@@ -6,7 +6,9 @@ using StableRNGs
 
     rng = StableRNG(37273)
 
-    X = randn(rng, 5, 2)
+    d = 5
+    p = 2
+    X = randn(rng, d, p)
 
     ## Varimax rotation
     # Ground-truth was extracted by specifying the following
@@ -33,16 +35,18 @@ using StableRNGs
     R = [ 0.89940646  0.43711327;
          -0.43711327  0.89940646]
 
-    FR = fit(FactorRotation, X, alg = Varimax())
-    @test isapprox(FR.F, F, rtol = √eps(Float64))
-    @test isapprox(FR.R, R, rtol = √eps(Float64))
+    FR = rotate(X, Varimax())
+    @test isapprox(FR[1], F, rtol = 1e-6)
+    @test isapprox(FR[2], R, rtol = 1e-6)
 
-    isapprox(gpaortho(X, varimax, 1000, 10, 1e-6)[1], F, rtol = 1e-6)
-    isapprox(gpaortho(X, varimax, 1000, 10, 1e-6)[2], R, rtol = 1e-6)
-
+    # Different equivalent ways of computing varimax
     FR = rotate(X, CrawfordFerguson{Orthogonal}(κ = 1.0 / 5.0))
-    isapprox(FR[1], F, rtol = 1e-6)
-    isapprox(FR[2], F, rtol = 1e-6)
+    @test isapprox(FR[1], F, rtol = 1e-6)
+    @test isapprox(FR[2], F, rtol = 1e-6)
+
+    FR = rotate(X, Oblimin{Orthogonal}(γ = 1.0))
+    @test isapprox(FR[1], F, rtol = 1e-6)
+    @test isapprox(FR[2], F, rtol = 1e-6)
 
     ## Quartimax rotation
     # Comparison with R's `GPArotation::quartimax` function called as
@@ -63,12 +67,9 @@ using StableRNGs
     R = [ 0.89748635  0.44104222;
          -0.44104222  0.89748635]
 
-    FR = fit(FactorRotation, X, alg = Quartimax())
-    @test isapprox(FR.F, F, rtol = √eps(Float64))
-    @test isapprox(FR.R, R, rtol = √eps(Float64))
-
-    isapprox(gpaortho(X, quartimax, 1000, 10, 1e-6)[1], F, rtol = √eps(Float64))
-    isapprox(gpaortho(X, quartimax, 1000, 10, 1e-6)[2], R, rtol = √eps(Float64))
+    FR = rotate(X, Quartimax())
+    @test isapprox(loadings(FR), F, rtol = √eps(Float64))
+    @test isapprox(rotation(FR), R, rtol = √eps(Float64))
 
     ## Equamax
     # Comparison with Matlab's `rotatefactors` called as
@@ -81,9 +82,9 @@ using StableRNGs
           0.85650467  0.23818242;
           0.45865486 -2.40335769]
 
-    # Equamax for n x p matrix means γ = p / 2
-    FR = fit(FactorRotation, X, alg = Equamax(size(X, 2)))
-    @test isapprox(FR.F, F, rtol = √eps(Float64))
+    # Equamax for d x p matrix means orthogonal Crawford-Ferguson with κ = p / (2 * d)
+    FR = rotate(X, CrawfordFerguson{Orthogonal}(κ = p / (2 * d)))
+    @test isapprox(loadings(FR), F, rtol = √eps(Float64))
 
 
     ## Parsimax
@@ -100,9 +101,9 @@ using StableRNGs
           0.85650467  0.23818242;
           0.45865486 -2.40335769]
 
-    # Equamax for n x p matrix means γ = p / 2
-    FR = fit(FactorRotation, X, alg = Parsimax(size(X)...))
-    @test isapprox(FR.F, F, rtol = √eps(Float64))
+    # Parsimax for d x p matrix means orthogonal Crawford-Ferguson with κ = (p - 1) / (d + p - 2)
+    FR = rotate(X, CrawfordFerguson{Orthogonal}(κ = (p - 1) / (d + p - 2)))
+    @test isapprox(loadings(FR), F, rtol = √eps(Float64))
 
     ## Quartimin rotation
     # Comparison with R's `GPArotation::quartimin` function called as
@@ -123,7 +124,21 @@ using StableRNGs
     R = [ 0.87548617  0.41144611
          -0.48324317  0.91143409]
 
-    isapprox(gpaoblique(X, quartimin, 1000, 50, 1e-6)[1], F, rtol = √eps(Float64))
-    isapprox(gpaoblique(X, quartimin, 1000, 10, 1e-6)[2], R, rtol = √eps(Float64))
+    FR = rotate(X, Quartimin())
+    @test isapprox(loadings(FR), F, rtol = √eps(Float64))
+    @test isapprox(rotation(FR), R, rtol = √eps(Float64))
 
+    # Test application to factor analysis and PCA models
+
+    X = randn(10, 5)
+
+    M = fit(FactorAnalysis, X)
+    loadings(M)
+    rotate!(M, Varimax())
+    loadings(M)
+
+    M = fit(PCA, X)
+    projection(M)
+    rotate!(M, Varimax())
+    projection(M)
 end

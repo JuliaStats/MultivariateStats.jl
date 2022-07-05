@@ -113,12 +113,18 @@ module MultivariateStats
     Oblique,                 # Type: Oblique factor rotation method
 
     FactorRotationCriterion, # Type: a factor rotation criterion
-    CrawfordFerguson,        # Type: Crawford-Fergusion rotation criterion
+    CrawfordFerguson,        # Type: Crawford-Fergusion rotation criteria
     Varimax,                 # Type: Varimax rotation criterion
     Quartimax,               # Type: Quartimax rotation criterion
     MinimumEntropy,          # Type: MinimumEntropy rotation criterion
+    Oblimin,                 # Type: Oblimin rotation criteria
+    Quartimin,               # Type: Quartimin rotation criterion
 
-    rotate                   # Rotate factors
+    FactorRotation,          # Type: Result of a general factor rotation
+    rotation,                # Extract rotation matrix
+
+    rotate,                  # Rotate factors
+    rotate!                  # Rotate in-place
 
     ## source files
     include("types.jl")
