@@ -36,17 +36,17 @@ using StableRNGs
          -0.43711327  0.89940646]
 
     FR = rotate(X, Varimax())
-    @test isapprox(FR[1], F, rtol = 1e-6)
-    @test isapprox(FR[2], R, rtol = 1e-6)
+    @test isapprox(loadings(FR), F, rtol = 1e-6)
+    @test isapprox(rotation(FR), R, rtol = 1e-6)
 
     # Different equivalent ways of computing varimax
     FR = rotate(X, CrawfordFerguson{Orthogonal}(κ = 1.0 / 5.0))
-    @test isapprox(FR[1], F, rtol = 1e-6)
-    @test isapprox(FR[2], F, rtol = 1e-6)
+    @test isapprox(loadings(FR), F, rtol = 1e-6)
+    @test isapprox(rotation(FR), R, rtol = 1e-6)
 
     FR = rotate(X, Oblimin{Orthogonal}(γ = 1.0))
-    @test isapprox(FR[1], F, rtol = 1e-6)
-    @test isapprox(FR[2], F, rtol = 1e-6)
+    @test isapprox(loadings(FR), F, rtol = 1e-6)
+    @test isapprox(rotation(FR), R, rtol = 1e-6)
 
     ## Quartimax rotation
     # Comparison with R's `GPArotation::quartimax` function called as

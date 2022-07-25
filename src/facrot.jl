@@ -25,7 +25,7 @@ struct Oblique <: FactorRotationMethod end
 An abstract type for factor rotation criteria for a specific factor
 rotation type.
 """
-abstract type FactorRotationCriterion{T <: FactorRotationMethod} end
+abstract type FactorRotationCriterion{T<:FactorRotationMethod} end
 
 """
     CrawfordFerguson{T} <: FactorRotationCriterion{T}
@@ -36,20 +36,20 @@ of rotation can be set through the type parameter `T`.
 
 This criterion minimizes
 
-`Q(Λ) = (1 - κ) * tr((Λ.^2)' * Λ.^2 * N) / 4 + κ * tr((Λ.^2)' * M * Λ.^2) / 4`
+`Q(Λ) = (1 - k) * tr((Λ.^2)' * Λ.^2 * N) / 4 + k * tr((Λ.^2)' * M * Λ.^2) / 4`
 
 where `Λ` is a `d x p` rotated loading matrix, `N` is a `p x p`
 matrix with zeros on the diagonal and ones everywhere else, `M` is an
-analogous `d x d` matrix, and `κ` is a non-negative shape parameter.
+analogous `d x d` matrix, and `k` is a non-negative shape parameter.
 
 **Parameters**
-- `κ` is a non-negative shape parameter. In the orthogonal setting,
+- `kappa` is a non-negative shape parameter. In the orthogonal setting,
   some classical special cases are
-  - `κ = 0` is quartimax rotation
-  - `κ = 1 / d` is varimax rotation
-  - `κ = p / (2 * d)` is equamax rotation
-  - `κ = (p - 1) / (d + p - 2)` is parsimax rotation
-  - `κ = 1` is factor parsimony rotation
+  - `kappa = 0` is quartimax rotation
+  - `kappa = 1 / d` is varimax rotation
+  - `kappa = p / (2 * d)` is equamax rotation
+  - `kappa = (p - 1) / (d + p - 2)` is parsimax rotation
+  - `kappa = 1` is factor parsimony rotation
 
 **References**
 - Crawford, C.B. and Ferguson, G.A. (1970). A general rotation criterion and
@@ -60,13 +60,13 @@ analogous `d x d` matrix, and `κ` is a non-negative shape parameter.
   doi 10.1207/S15327906MBR3601_05
 """
 struct CrawfordFerguson{T} <: FactorRotationCriterion{T}
-    κ::Real
+    kappa::Real
 
-    CrawfordFerguson{T}(; κ::Union{Real, Integer} = 0.0) where {T <: FactorRotationMethod} = begin
-        κ ≥ zero(eltype(κ)) ||
-            throw(DomainError("CrawfordFerguson: κ needs to be non-negative"))
+    CrawfordFerguson{T}(; kappa::Union{Real,Integer}=0.0) where {T<:FactorRotationMethod} = begin
+        kappa ≥ zero(eltype(kappa)) ||
+        throw(DomainError("CrawfordFerguson: kappa needs to be non-negative"))
 
-        new(float(κ))
+        new(float(kappa))
     end
 end
 
@@ -74,11 +74,11 @@ function ∇Qf(L::AbstractMatrix, C::CrawfordFerguson)
     d, p = size(L)
     N = ones(eltype(L), p, p) - Matrix{eltype(L)}(I, p, p)
     M = ones(eltype(L), d, d) - Matrix{eltype(L)}(I, d, d)
-    L2 = L.^2
+    L2 = L .^ 2
 
     return (
-        (1 - C.κ) * L .* (L2 * N) + C.κ * L .* (M * L2),
-        (1 - C.κ) * sum(L2 .* (L2 * N)) / 4.0 + C.κ * sum(L2 .* (M * L2)) / 4.0
+        (1 - C.kappa) * L .* (L2 * N) + C.kappa * L .* (M * L2),
+        (1 - C.kappa) * sum(L2 .* (L2 * N)) / 4.0 + C.kappa * sum(L2 .* (M * L2)) / 4.0
     )
 end
 
@@ -102,7 +102,7 @@ where `Λ` is a `d x p` matrix of rotated loadings.
 struct Varimax <: FactorRotationCriterion{Orthogonal} end
 
 function ∇Qf(L::AbstractMatrix, ::Varimax)
-    Q = L.^2 .- mean.(eachcol(L.^2))'
+    Q = L .^ 2 .- mean.(eachcol(L .^ 2))'
     return (-L .* Q, -norm(Q)^2 / 4.0)
 end
 
@@ -129,7 +129,7 @@ where `Λ` is a `d x p` matrix of rotated loadings.
 struct Quartimax <: FactorRotationCriterion{Orthogonal} end
 
 function ∇Qf(L::AbstractMatrix, ::Quartimax)
-    Q = L.^2
+    Q = L .^ 2
     return (-L .* Q, -norm(Q)^2 / 4.0)
 end
 
@@ -155,7 +155,7 @@ No oblique version of this criterion exits.
 struct MinimumEntropy <: FactorRotationCriterion{Orthogonal} end
 
 function ∇Qf(L::AbstractMatrix, ::MinimumEntropy)
-    L2 = L.^2
+    L2 = L .^ 2
 
     return (
         -L .* log.(L2) - L,
@@ -172,28 +172,29 @@ of rotation can be set through the type parameter `T`.
 
 This criterion minimizes
 
-`Q(Λ) = -tr((Λ.^2)' * (I - γ / d * C) *  Λ.^2 * N) / 4.0`
+`Q(Λ) = -tr((Λ.^2)' * (I - gamma / d * C) *  Λ.^2 * N) / 4.0`
 
 where `Λ` is a `d x p` matrix of rotated loadings, `I` is the `d`-dimensional
-identity matrix, `C` is a `d x d` matrix with only ones, and `N` is a `p x p`
-matrix with zeros on the diagonal and ones everywhere else.
+identity matrix, `C` is a `d x d` matrix with only ones, `N` is a `p x p`
+matrix with zeros on the diagonal and ones everywhere else, and `gamma` is a
+shape parameter.
 
 **Parameters**
-- `γ` is a shape parameter. Negative values are allowed and might be useful
+- `gamma` is a shape parameter. Negative values are allowed and might be useful
   for oblique rotations.
     
   In the setting of oblique factor rotation, some special cases are
-  - `γ = 0` is the quartimin criterion
-  - `γ = 1/2` is the biquartimin criterion
-  - `γ = 1` is the covarimin criterion
+  - `gamma = 0` is the quartimin criterion
+  - `gamma = 1/2` is the biquartimin criterion
+  - `gamma = 1` is the covarimin criterion
   
   In the setting of orthogonal factor rotation, the oblimin family of factor
   rotations is equivalent to the orthomax family of factor rotation criteria
   and some special cases are
-  - `γ = 0` is the quartimax criterion
-  - `γ = 0.5` is the biquartimax criterion
-  - `γ = 1` is the varimax criterion
-  - `γ = d / 2.0` is the equamax criterion
+  - `gamma = 0` is the quartimax criterion
+  - `gamma = 0.5` is the biquartimax criterion
+  - `gamma = 1` is the varimax criterion
+  - `gamma = d / 2.0` is the equamax criterion
 
 **References**
 - Carroll, J.B. (1960). IBM 704 program for generalized analytic rotation
@@ -206,18 +207,18 @@ matrix with zeros on the diagonal and ones everywhere else.
 struct Oblimin{T} <: FactorRotationCriterion{T}
     γ::Real
 
-    Oblimin{T}(; γ::Union{Real, Integer} = 0.0) where {T <: FactorRotationMethod} = begin
+    Oblimin{T}(; γ::Union{Real,Integer}=0.0) where {T<:FactorRotationMethod} = begin
         new(float(γ))
     end
 end
 
 function ∇Qf(L::AbstractMatrix, C::Oblimin)
     d, p = size(L)
-    Q = L.^2 * (ones(eltype(L), p, p) - Matrix{eltype(L)}(I, p, p))
-    if C.γ != zero(eltype(C.γ))
-        Q = (Matrix{eltype(L)}(I, d, d) - C.γ / d * ones(eltype(L), d, d)) * Q
+    Q = L .^ 2 * (ones(eltype(L), p, p) - Matrix{eltype(L)}(I, p, p))
+    if C.gamma != zero(eltype(C.gamma))
+        Q = (Matrix{eltype(L)}(I, d, d) - C.gamma / d * ones(eltype(L), d, d)) * Q
     end
-    return (L .* Q, sum(L.^2 .* Q) / 4.0)
+    return (L .* Q, sum(L .^ 2 .* Q) / 4.0)
 end
 
 """
@@ -240,8 +241,8 @@ struct Quartimin <: FactorRotationCriterion{Oblique} end
 
 function ∇Qf(L::AbstractMatrix, ::Quartimin)
     _, p = size(L)
-    Q = L.^2 * (ones(eltype(L), p, p) - Matrix{eltype(L)}(I, p, p))
-    return (L .* Q, sum(L.^2 .* Q) / 4.0)
+    Q = L .^ 2 * (ones(eltype(L), p, p) - Matrix{eltype(L)}(I, p, p))
+    return (L .* Q, sum(L .^ 2 .* Q) / 4.0)
 end
 
 """
@@ -273,12 +274,12 @@ to perform the computation
   Psychometrika, 66, 289-306. doi 10.1007/BF02294840
 """
 function gparotate(F::AbstractMatrix,
-                   C::FactorRotationCriterion{Orthogonal};
-                   normalizerows = false,
-                   randominit = false,
-                   maxiter::Integer = 1000,
-                   lsiter::Integer = 10,
-                   ϵ::Float64 = 1.0e-6)
+    C::FactorRotationCriterion{Orthogonal};
+    normalizerows=false,
+    randominit=false,
+    maxiter::Integer=1000,
+    lsiter::Integer=10,
+    ϵ::Real=1.0e-6)
     d, p = size(F)
     if d < 2
         return (F, Matrix{eltype(F)}(I, p, p))
@@ -296,7 +297,7 @@ function gparotate(F::AbstractMatrix,
     else
         T = Matrix{eltype(F)}(I, p, p)
     end
-    α = 1.0
+    α = 1
     L = F * T
 
     ∇Q, f = ∇Qf(L, C)
@@ -307,14 +308,14 @@ function gparotate(F::AbstractMatrix,
         M = T' * ∇f
         S = (M + M') / 2
         ∇fp = ∇f - T * S
-        
+
         # Check for convergence
         s = norm(∇fp)
         if s < ϵ
             break
         end
 
-        α *= 2.0
+        α *= 2
         # Create temporaries here so they are not local to the loop
         Tt = zeros(eltype(T), p, p)
         ∇Qt, ft = ∇Q, f
@@ -326,10 +327,10 @@ function gparotate(F::AbstractMatrix,
             Tt = UDV.U * UDV.Vt
             L = F * Tt
             ∇Qt, ft = ∇Qf(L, C)
-            if (ft < (f - 0.5 * s^2 * α))
+            if (ft < (f - s^2 * α / 2))
                 break
             end
-            α /= 2.0
+            α /= 2
         end
         T = Tt
         f = ft
@@ -374,12 +375,12 @@ to perform the computation
   Psychometrika, 67, 7-19. doi 10.1007/BF02294706
 """
 function gparotate(F::AbstractMatrix,
-                   C::FactorRotationCriterion{Oblique};
-                   normalizerows = false,
-                   randominit = false,
-                   maxiter::Integer = 1000,
-                   lsiter::Integer = 10,
-                   ϵ::Float64 = 1.0e-6)
+    C::FactorRotationCriterion{Oblique};
+    normalizerows=false,
+    randominit=false,
+    maxiter::Integer=1000,
+    lsiter::Integer=10,
+    ϵ::Real=1.0e-6)
     d, p = size(F)
     if d < 2
         return (F, Matrix{eltype(F)}(I, p, p))
@@ -398,7 +399,7 @@ function gparotate(F::AbstractMatrix,
     else
         T = Matrix{eltype(F)}(I, p, p)
     end
-    α = 1.0
+    α = 1
     L = (T \ F')'
 
     ∇Q, f = ∇Qf(L, C)
@@ -414,7 +415,7 @@ function gparotate(F::AbstractMatrix,
             break
         end
 
-        α *= 2.0
+        α *= 2
         # Create temporaries here so they are not local to the loop
         Tt = zeros(eltype(F), p, p)
         ∇Qt, ft = ∇Q, f
@@ -422,14 +423,14 @@ function gparotate(F::AbstractMatrix,
             # Line search to project the gradient step back onto
             # the oblique manifold
             X = T - α * ∇fp
-            v = 1.0 ./ norm.(eachcol(X))
+            v = 1 ./ norm.(eachcol(X))
             Tt = X .* v'
             L = (Tt \ F')'
             ∇Qt, ft = ∇Qf(L, C)
-            if (ft < (f - 0.5 * s^2 * α))
+            if (ft < (f - s^2 * α / 2))
                 break
             end
-            α /= 2.0
+            α /= 2
         end
         T = Tt
         f = ft
@@ -448,14 +449,27 @@ end
 """
     FactorRotation{T <: Real}
 
-This type 
+This type contains the result of a factor rotation. The matrix `L` contains
+the rotated loadings and the matrix `R` contains the rotation matrix which
+was applied to the original loadings.
 """
-struct FactorRotation{T <: Real}
+struct FactorRotation{T<:Real}
     L::Matrix{T}
     R::Matrix{T}
 end
 
+"""
+    loadings(M::FactorRotation)
+
+Return rotated loading matrix.
+"""
 loadings(M::FactorRotation) = M.L
+
+"""
+    rotation(M::FactorRotation)
+
+Return rotation matrix used to obtain rotated loadings.
+"""
 rotation(M::FactorRotation) = M.R
 
 """
@@ -466,6 +480,8 @@ Rotate the loadings in matrix `L` using the criterion `C`.
 **Parameters**
 - `L` is the matrix of loadings to be rotated
 - `C` is a factor rotation criterion
+
+**Keyword parameters**
 - If `normalizerows` is true, then the rows of `F` are normalized to
   length 1 before rotation and the rows of the rotated loadings are
   scaled back.
@@ -474,17 +490,17 @@ Rotate the loadings in matrix `L` using the criterion `C`.
 - `maxiter` determines the maximum number of iterations
 - `lsiter` determines the maximum number of iterations spent on
   line search
-- `ϵ` is the convergence tolerance
+- `tol` is the convergence tolerance
 """
 function rotate(L::AbstractMatrix,
-                C::FactorRotationCriterion{T};
-                normalizerows::Bool = false,
-                randominit::Bool = false,
-                maxiter::Integer = 1000,
-                lsiter::Integer = 10,
-                ϵ::Float64 = 1.0e-6) where {T <: FactorRotationMethod}
+    C::FactorRotationCriterion{T};
+    normalizerows::Bool=false,
+    randominit::Bool=false,
+    maxiter::Integer=1000,
+    lsiter::Integer=10,
+    tol::Real=1.0e-6) where {T<:FactorRotationMethod}
     return FactorRotation(
-        gparotate(L, C; normalizerows, randominit, maxiter, lsiter, ϵ)...
+        gparotate(L, C; normalizerows, randominit, maxiter, lsiter, tol)...
     )
 end
 
@@ -495,15 +511,15 @@ Rotate the loadings of the Factor Analysis model `M` using the criterion `C`.
 Modifies the loading matrix in `M`. Parameters as in [`rotate`](@ref).
 """
 function rotate!(M::FactorAnalysis,
-                 C::FactorRotationCriterion{T};
-                 normalizerows::Bool = false,
-                 randominit::Bool = false,
-                 maxiter::Integer = 1000,
-                 lsiter::Integer = 10,
-                 ϵ::Float64 = 1.0e-6) where {T <: FactorRotationMethod}
-    FR = rotate(loadings(M), C; normalizerows, randominit, maxiter, lsiter, ϵ)
+    C::FactorRotationCriterion{T};
+    normalizerows::Bool=false,
+    randominit::Bool=false,
+    maxiter::Integer=1000,
+    lsiter::Integer=10,
+    tol::Real=1.0e-6) where {T<:FactorRotationMethod}
+    FR = rotate(loadings(M), C; normalizerows, randominit, maxiter, lsiter, tol)
     M.W .= loadings(FR)
-    
+
     return M
 end
 
@@ -514,14 +530,14 @@ Rotate the components of the PCA model `M` using the criterion `C`.
 Modifies the projection matrix in `M`. Parameters as in [`rotate`](@ref).
 """
 function rotate!(M::PCA,
-                 C::FactorRotationCriterion{T};
-                 normalizerows::Bool = false,
-                 randominit::Bool = false,
-                 maxiter::Integer = 1000,
-                 lsiter::Integer = 10,
-                 ϵ::Float64 = 1.0e-6) where {T <: FactorRotationMethod}
-    FR = rotate(projection(M), C; normalizerows, randominit, maxiter, lsiter, ϵ)
+    C::FactorRotationCriterion{T};
+    normalizerows::Bool=false,
+    randominit::Bool=false,
+    maxiter::Integer=1000,
+    lsiter::Integer=10,
+    tol::Real=1.0e-6) where {T<:FactorRotationMethod}
+    FR = rotate(projection(M), C; normalizerows, randominit, maxiter, lsiter, tol)
     M.proj .= loadings(FR)
-    
+
     return M
 end
