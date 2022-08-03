@@ -23,11 +23,14 @@ which results in performing *metric MDS* with dissimilarities calculated as Eucl
 
 An arbitrary transformation function can be provided to `metric` parameter to
 perform metric MDS with transformed proximities. The function has to accept two parameters,
-a vector of proximities and a vector of distances, in order to calculate disparities
-required for stress calculation, e.g. *ratio MDS* using a ratio transformation
+a vector of proximities and a vector of distances, corresponding to the proximities, to calculate
+disparities required for stress calculation. Internally, the proximity and distance vectors are
+obtained from compact triangular matrix representation of proximity and distance matrices.
+
+For *ratio MDS*, a following ratio transformation function can be used
 
 ```julia
-mds = fit(MDS, D; distances=true, metric=(p,d)->2 .* p)
+mds = fit(MDS, D; distances=true, metric=((p,d)->2 .* p))
 ```
 
 For *order MDS*, use `isotonic` regression function in the `metric` parameter:
