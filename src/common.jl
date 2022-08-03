@@ -131,3 +131,13 @@ L2distance(X::AbstractMatrix{T}) where {T<:Real} = L2distance!(zeros(T,size(X,2)
 L2distance!(D::AbstractMatrix, X::AbstractMatrix) =
     pairwise!((x,y)->norm(x-y), D, eachcol(X), symmetric=true)
 
+"""
+    toindices(labels::AbstractVector)
+
+Generate integer indices for the collection `labels`. Generated indices will be
+in `1:nc` range where `nc` is a number of classes in the `labels` collection.
+"""
+function toindices(labels::AbstractVector)
+    idxs = Dict(l=>i for (i,l) in enumerate(unique(labels)))
+    [idxs[l] for l in labels]
+end
