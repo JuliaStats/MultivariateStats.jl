@@ -75,7 +75,7 @@ using Statistics: mean, cov
 
     ## Stats
 
-    S = multiclass_lda_stats(nc, X, y)
+    S = multiclass_lda_stats(X, y)
 
     @test S.dim == d
     @test S.nclasses == nc
@@ -88,7 +88,7 @@ using Statistics: mean, cov
     @test betweenclass_scatter(S) ≈ Sb
 
     covestimator = SimpleCovariance(corrected=true)
-    Sce = multiclass_lda_stats(nc, X, y; covestimator_between=covestimator, covestimator_within=covestimator)
+    Sce = multiclass_lda_stats(X, y; covestimator_between=covestimator, covestimator_within=covestimator)
 
     Swcorr = Sw * sum(ns)/(sum(ns)-1)
     Sbcorr = Sb * nc/(nc-1)

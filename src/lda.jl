@@ -187,17 +187,18 @@ function MulticlassLDAStats(cweights::Vector{T},
     MulticlassLDAStats(d, nc, cweights, tw, mean, cmeans, Sw, Sb)
 end
 
-function multiclass_lda_stats(nc::Int, X::AbstractMatrix{T}, y::AbstractVector;
+function multiclass_lda_stats(X::AbstractMatrix{T}, y::AbstractVector;
                               covestimator_within::CovarianceEstimator=SimpleCovariance(),
                               covestimator_between::CovarianceEstimator=SimpleCovariance()) where T<:Real
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
+    nc = length(unique(y))
     n ≥ nc || throw(ArgumentError("The number of samples is less than the number of classes"))
     length(y) == n || throw(DimensionMismatch("Inconsistent array sizes."))
 
     # compute class-specific weights and means
-    cmeans, cweights, Z = center(X, y, nc)
+    cmeans, cweights, Z = center(X, y)
 
     Sw = calcscattermat(covestimator_within, Z)
 
@@ -327,13 +328,12 @@ Note that [`MulticlassLDA`](@ref) does not currently support the normalized vers
 """
 function fit(::Type{MulticlassLDA}, X::AbstractMatrix{T}, y::AbstractVector;
              method::Symbol=:gevd,
-             nc::Int=length(unique(y)),
-             outdim::Int=min(size(X,1), nc-1),
+             outdim::Int=min(size(X,1), length(unique(y))-1),
              regcoef::T=T(1.0e-6),
              covestimator_within::CovarianceEstimator=SimpleCovariance(),
              covestimator_between::CovarianceEstimator=SimpleCovariance()) where T<:Real
 
-    multiclass_lda(multiclass_lda_stats(nc, X, y;
+    multiclass_lda(multiclass_lda_stats(X, y;
                                         covestimator_within=covestimator_within,
                                         covestimator_between=covestimator_between);
                    method=method,
@@ -459,15 +459,15 @@ labels `y` using the equivalent of ``\\mathbf{S}_w^*`` and ``\\mathbf{S}_b^*```.
 Note: Subspace LDA also supports the normalized version of LDA via the `normalize` keyword.
 """
 function fit(::Type{SubspaceLDA}, X::AbstractMatrix{T},
-             y::AbstractVector,
-             nc=length(unique(y));
+             y::AbstractVector;
              normalize::Bool=false) where {T<:Real}
     d, n = size(X, 1), size(X, 2)
+    nc = length(unique(y))
     n ≥ nc || throw(ArgumentError("The number of samples is less than the number of classes"))
     length(y) == n || throw(DimensionMismatch("Inconsistent array sizes."))
     # Compute centroids, class weights, and deviation from centroids
     # Note Sb = Hb*Hb', Sw = Hw*Hw'
-    cmeans, cweights, Hw = center(X, y, nc)
+    cmeans, cweights, Hw = center(X, y)
     dmeans = cmeans .- (normalize ? mean(cmeans, dims=2) : cmeans * (cweights / T(n)))
     Hb = normalize ? dmeans : dmeans * Diagonal(convert(Vector{T}, sqrt.(cweights)))
     if normalize
@@ -508,10 +508,10 @@ function lda_gsvd(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::Abstra
     λ, G
 end
 
-function center(X::AbstractMatrix{T}, y::AbstractVector,
-                nc=length(unique(y))) where T<:Real
+function center(X::AbstractMatrix{T}, y::AbstractVector) where T<:Real
     d, n = size(X,1), size(X,2)
     idxs = toindices(y)
+    nc = maximum(idxs)
     # Calculate the class weights and means
     cmeans = zeros(T, d, nc)
     cweights = zeros(Int, nc)
