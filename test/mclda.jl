@@ -241,12 +241,24 @@ using Statistics: mean, cov
     end
 
     # Test various input data types
-    for (T, nrm) in Iterators.product((Float64, Float32), (false, true))
-        n2 = 100
+    n2 = 100
+    for (T, nrm, lbl) in Iterators.product(
+                            (Float64, Float32), (false, true), (0, 10, 'a')
+                         )
         X, dX, label = gen_ldadata_2(centers, n1, n2)
+        label = lbl.+label
         M = fit(SubspaceLDA, convert(Matrix{T}, X), label; normalize=nrm)
         proj = projection(M)
         @test eltype(proj) === T
+        tol = T === Float64 ? 1e-10 : 5e-4
+        Hb = centers .- mean(centers, dims=2)
+        if nrm
+            @test Hb*Hb'*proj ≈ (dX*dX'/(n1+n2))*proj*Diagonal(M.λ) atol=tol
+        else
+            Hb *= Diagonal(sqrt.(M.cweights))
+            Hw = X - centers[:, MultivariateStats.toindices(label)]
+            @test (M.projw'*Hb)*(Hb'*M.projw)*M.projLDA ≈ (M.projw'*Hw)*(Hw'*M.projw)*M.projLDA*Diagonal(M.λ) atol=tol
+        end
     end
 
 end
