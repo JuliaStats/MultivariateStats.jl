@@ -250,7 +250,7 @@ using Statistics: mean, cov
         M = fit(SubspaceLDA, convert(Matrix{T}, X), label; normalize=nrm)
         proj = projection(M)
         @test eltype(proj) === T
-        tol = T === Float64 ? 1e-10 : 5e-4
+        tol = T === Float64 ? 1e-10 : 5e-3
         Hb = centers .- mean(centers, dims=2)
         if nrm
             @test Hb*Hb'*proj ≈ (dX*dX'/(n1+n2))*proj*Diagonal(M.λ) atol=tol
