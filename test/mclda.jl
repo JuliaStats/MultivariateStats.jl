@@ -75,7 +75,7 @@ using Statistics: mean, cov
 
     ## Stats
 
-    S = multiclass_lda_stats(nc, X, y)
+    S = multiclass_lda_stats(X, y)
 
     @test S.dim == d
     @test S.nclasses == nc
@@ -88,7 +88,7 @@ using Statistics: mean, cov
     @test betweenclass_scatter(S) ≈ Sb
 
     covestimator = SimpleCovariance(corrected=true)
-    Sce = multiclass_lda_stats(nc, X, y; covestimator_between=covestimator, covestimator_within=covestimator)
+    Sce = multiclass_lda_stats(X, y; covestimator_between=covestimator, covestimator_within=covestimator)
 
     Swcorr = Sw * sum(ns)/(sum(ns)-1)
     Sbcorr = Sb * nc/(nc-1)
@@ -122,13 +122,13 @@ using Statistics: mean, cov
     ## MC-LDA
 
     for T in (Float32, Float64)
-        M = fit(MulticlassLDA, nc, convert(Matrix{T}, X), y; method=:gevd, regcoef=convert(T, lambda))
+        M = fit(MulticlassLDA, convert(Matrix{T}, X), y; method=:gevd, regcoef=convert(T, lambda))
         @test size(M) == (d, nc - 1)
         @test projection(M) ≈ P1
         @test M.pmeans ≈ M.proj'cmeans
         @test predict(M, X) ≈ M.proj'X
 
-        M = fit(MulticlassLDA, nc, convert(Matrix{T}, X), y; method=:whiten, regcoef=convert(T, lambda))
+        M = fit(MulticlassLDA, convert(Matrix{T}, X), y; method=:whiten, regcoef=convert(T, lambda))
         @test size(M) == (d, nc - 1)
         # @test projection(M) P2  # signs may change
         @test M.pmeans ≈ M.proj'cmeans
@@ -137,7 +137,7 @@ using Statistics: mean, cov
 
     # Issue #192
     XX = collect(X')
-    M = fit(MulticlassLDA, nc, XX', y)
+    M = fit(MulticlassLDA, XX', y)
     @test size(M) == (d, nc - 1)
 
     ## High-dimensional LDA (subspace LDA)
@@ -183,7 +183,7 @@ using Statistics: mean, cov
         @test proj'*Sw*proj ≈ Matrix(I,2,2)
 
         # also check that this is consistent with the conventional algorithm
-        Mld = fit(MulticlassLDA, 3, X, label)
+        Mld = fit(MulticlassLDA, X, label)
         for i = 1:2
             @test abs(dot(normalize(proj[:,i]), normalize(Mld.proj[:,i]))) ≈ 1
         end
@@ -213,7 +213,7 @@ using Statistics: mean, cov
     centers = M.cmeans
     dcenters = centers .- mean(X, dims=2)
     Hb = dcenters*Diagonal(sqrt.(M.cweights))
-    Hw = X - centers[:,label]
+    Hw = X - centers[:, MultivariateStats.toindices(label)]
     @test (M.projw'*Hb)*(Hb'*M.projw)*M.projLDA ≈ (M.projw'*Hw)*(Hw'*M.projw)*M.projLDA*Diagonal(M.λ)
 
     # Test normalized LDA
@@ -241,12 +241,24 @@ using Statistics: mean, cov
     end
 
     # Test various input data types
-    for (T, nrm) in Iterators.product((Float64, Float32), (false, true))
-        n2 = 100
+    n2 = 100
+    for (T, nrm, lbl) in Iterators.product(
+                            (Float64, Float32), (false, true), (0, 10, 'a')
+                         )
         X, dX, label = gen_ldadata_2(centers, n1, n2)
+        label = lbl.+label
         M = fit(SubspaceLDA, convert(Matrix{T}, X), label; normalize=nrm)
         proj = projection(M)
         @test eltype(proj) === T
+        tol = T === Float64 ? 1e-10 : 5e-3
+        Hb = centers .- mean(centers, dims=2)
+        if nrm
+            @test Hb*Hb'*proj ≈ (dX*dX'/(n1+n2))*proj*Diagonal(M.λ) atol=tol
+        else
+            Hb *= Diagonal(sqrt.(M.cweights))
+            Hw = X - centers[:, MultivariateStats.toindices(label)]
+            @test (M.projw'*Hb)*(Hb'*M.projw)*M.projLDA ≈ (M.projw'*Hw)*(Hw'*M.projw)*M.projLDA*Diagonal(M.λ) atol=tol
+        end
     end
 
 end

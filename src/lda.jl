@@ -187,17 +187,18 @@ function MulticlassLDAStats(cweights::Vector{T},
     MulticlassLDAStats(d, nc, cweights, tw, mean, cmeans, Sw, Sb)
 end
 
-function multiclass_lda_stats(nc::Int, X::AbstractMatrix{T}, y::AbstractVector{Int};
+function multiclass_lda_stats(X::AbstractMatrix{T}, y::AbstractVector;
                               covestimator_within::CovarianceEstimator=SimpleCovariance(),
                               covestimator_between::CovarianceEstimator=SimpleCovariance()) where T<:Real
     # check sizes
     d = size(X, 1)
     n = size(X, 2)
+    nc = length(unique(y))
     n ≥ nc || throw(ArgumentError("The number of samples is less than the number of classes"))
     length(y) == n || throw(DimensionMismatch("Inconsistent array sizes."))
 
     # compute class-specific weights and means
-    cmeans, cweights, Z = center(X, y, nc)
+    cmeans, cweights, Z = center(X, y)
 
     Sw = calcscattermat(covestimator_within, Z)
 
@@ -283,17 +284,17 @@ Transform input sample(s) in `x` to the output space of MC-LDA model `M`. Here, 
 predict(M::MulticlassLDA, x::AbstractVecOrMat{T}) where {T<:Real} = M.proj'x
 
 """
-    fit(MulticlassLDA, nc, X, y; ...)
+    fit(MulticlassLDA, X, y; ...)
 
-Perform multi-class LDA over a given data set `X` and collecttion of labels `y`.
+Perform multi-class LDA over a given data set `X` with corresponding labels `y`
+with `nc` number of classes.
 
 This function returns the resultant multi-class LDA model as an instance of [`MulticlassLDA`](@ref).
 
 *Parameters*
 
-- `nc`:  the number of classes
 - `X`:   the matrix of input samples, of size `(d, n)`. Each column in `X` is an observation.
-- `y`:   the vector of class labels, of length `n`. Each element of `y` must be an integer between `1` and `nc`.
+- `y`:   the vector of class labels, of length `n`.
 
 **Keyword arguments**
 
@@ -325,14 +326,14 @@ the corresponding generalized eigenvalues.
 Note that [`MulticlassLDA`](@ref) does not currently support the normalized version using ``\\mathbf{S}_w^*`` and
 ``\\mathbf{S}_b^*`` (see [`SubspaceLDA`](@ref)).
 """
-function fit(::Type{MulticlassLDA}, nc::Int, X::AbstractMatrix{T}, y::AbstractVector{Int};
+function fit(::Type{MulticlassLDA}, X::AbstractMatrix{T}, y::AbstractVector;
              method::Symbol=:gevd,
-             outdim::Int=min(size(X,1), nc-1),
+             outdim::Int=min(size(X,1), length(unique(y))-1),
              regcoef::T=T(1.0e-6),
              covestimator_within::CovarianceEstimator=SimpleCovariance(),
              covestimator_between::CovarianceEstimator=SimpleCovariance()) where T<:Real
 
-    multiclass_lda(multiclass_lda_stats(nc, X, y;
+    multiclass_lda(multiclass_lda_stats(X, y;
                                         covestimator_within=covestimator_within,
                                         covestimator_between=covestimator_between);
                    method=method,
@@ -448,26 +449,25 @@ eigvals(M::SubspaceLDA) = M.λ
 
 classmeans(M::SubspaceLDA) = M.cmeans
 classweights(M::SubspaceLDA) = M.cweights
-fit(::Type{F}, X::AbstractMatrix{T}, nc::Int, label::AbstractVector{Int}) where {T<:Real, F<:SubspaceLDA} =
-    fit(F, X, label, nc)
 
 """
-    fit(SubspaceLDA, X, labels; normalize=true)
+    fit(SubspaceLDA, X, y; normalize=true)
 
-Fit an subspace projection of LDA model using the equivalent of ``\\mathbf{S}_w^*`` and ``\\mathbf{S}_b^*```.
+Fit an subspace projection of LDA model over a given data set `X` with corresponding
+labels `y` using the equivalent of ``\\mathbf{S}_w^*`` and ``\\mathbf{S}_b^*```.
 
 Note: Subspace LDA also supports the normalized version of LDA via the `normalize` keyword.
 """
-function fit(::Type{F}, X::AbstractMatrix{T},
-             label::AbstractVector{Int},
-             nc=maximum(label);
-             normalize::Bool=false) where {T<:Real, F<:SubspaceLDA}
+function fit(::Type{SubspaceLDA}, X::AbstractMatrix{T},
+             y::AbstractVector;
+             normalize::Bool=false) where {T<:Real}
     d, n = size(X, 1), size(X, 2)
+    nc = length(unique(y))
     n ≥ nc || throw(ArgumentError("The number of samples is less than the number of classes"))
-    length(label) == n || throw(DimensionMismatch("Inconsistent array sizes."))
+    length(y) == n || throw(DimensionMismatch("Inconsistent array sizes."))
     # Compute centroids, class weights, and deviation from centroids
     # Note Sb = Hb*Hb', Sw = Hw*Hw'
-    cmeans, cweights, Hw = center(X, label, nc)
+    cmeans, cweights, Hw = center(X, y)
     dmeans = cmeans .- (normalize ? mean(cmeans, dims=2) : cmeans * (cweights / T(n)))
     Hb = normalize ? dmeans : dmeans * Diagonal(convert(Vector{T}, sqrt.(cweights)))
     if normalize
@@ -508,13 +508,15 @@ function lda_gsvd(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::Abstra
     λ, G
 end
 
-function center(X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(label)) where T<:Real
+function center(X::AbstractMatrix{T}, y::AbstractVector) where T<:Real
     d, n = size(X,1), size(X,2)
+    idxs = toindices(y)
+    nc = maximum(idxs)
     # Calculate the class weights and means
     cmeans = zeros(T, d, nc)
     cweights = zeros(Int, nc)
     for j = 1:n
-        k = label[j]
+        k = idxs[j]
         for i = 1:d
             cmeans[i,k] += X[i,j]
         end
@@ -530,7 +532,7 @@ function center(X::AbstractMatrix{T}, label::AbstractVector{Int}, nc=maximum(lab
     # Compute differences from the means
     dX = Matrix{T}(undef, d, n)
     for j = 1:n
-        k = label[j]
+        k = idxs[j]
         for i = 1:d
             dX[i,j] = X[i,j] - cmeans[i,k]
         end
