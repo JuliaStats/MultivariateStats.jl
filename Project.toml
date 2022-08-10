@@ -16,7 +16,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 Arpack = "0.3, 0.4, 0.5"
-StatsAPI = "1.2
+StatsAPI = "1.2"
 StatsBase = "~0.33"
 julia = "1.1"
 
