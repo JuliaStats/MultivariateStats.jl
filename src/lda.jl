@@ -463,7 +463,7 @@ function fit(::Type{SubspaceLDA}, X::AbstractMatrix{T},
              normalize::Bool=false) where {T<:Real}
     d, n = size(X, 1), size(X, 2)
     nc = length(unique(y))
-    n ≥ nc || throw(ArgumentError("The number of samples is less than the number of classes"))
+    n > nc || throw(ArgumentError("The number of samples is less than or equals the number of classes"))
     length(y) == n || throw(DimensionMismatch("Inconsistent array sizes."))
     # Compute centroids, class weights, and deviation from centroids
     # Note Sb = Hb*Hb', Sw = Hw*Hw'
@@ -477,6 +477,7 @@ function fit(::Type{SubspaceLDA}, X::AbstractMatrix{T},
     # (essentially, PCA before LDA)
     Uw, Σw, _ = svd(Hw, full=false)
     keep = Σw .> sqrt(eps(T)) * maximum(Σw)
+    count(keep) > 0 || throw(NullMatrixException("within-class covariance matrix is null"))
     projw = Uw[:,keep]
     pHb = projw' * Hb
     pHw = projw' * Hw
@@ -484,19 +485,31 @@ function fit(::Type{SubspaceLDA}, X::AbstractMatrix{T},
     SubspaceLDA(projw, G, λ, cmeans, cweights)
 end
 
+struct NullMatrixException <: Exception
+    msg::String
+end
+
 # Reference: Howland & Park (2006), "Generalizing discriminant analysis
 # using the generalized singular value decomposition", IEEE
 # Trans. Patt. Anal. & Mach. Int., 26: 995-1006.
 function lda_gsvd(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::AbstractVector{Int}) where T<:Real
     nc = length(cweights)
-    K = vcat(Hb', Hw')
-    P, R, Q = svd(K, full=false)
-    keep = R .> sqrt(eps(T))*maximum(R)
-    R = R[keep]
-    Pk = P[1:nc, keep]
-    U, ΣA, W = svd(Pk)
+    K = vcat(Hb', Hw') # `(n + nc) x m` matrix
+    m = size(K, 2)
+    P, R, Q = svd(K, full=false) # `Q` is `m x m` 
+    tol = sqrt(eps(T))*maximum(R)
+    t = count(x -> x > tol, R)
+    R = R[1:t]
+    Pk = P[1:nc, 1:t]
+    U, ΣA, W = svd(Pk) # `W` is `t x t`
     ncnz = sum(cweights .> 0)
-    G = Q[:,keep]*(Diagonal(1 ./ R) * W[:,1:ncnz-1])
+    # For the following codeblock `G` is `m x min(m, ncnz-1)`
+    if t > ncnz-1
+        G = Q[:,1:t]*(Diagonal(1 ./ R) * W[:,1:ncnz-1])
+    else
+        l = m <= ncnz - 1 ? m : ncnz - 1
+        G = [Q[:,1:t]*(Diagonal(1 ./ R) * W) Q[:, t+1:l]]
+    end
     # Normalize
     Gw = G' * Hw
     nrm = Gw * Gw'
