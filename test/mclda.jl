@@ -232,7 +232,7 @@ using Statistics: mean, cov
     labels2 = [1,2,3,4, 5]
     @test_throws ArgumentError fit(SubspaceLDA, X2, labels2)
     labels3 = [1,2,3,2, 4]
-    @test_throws MultivariateStats.NullMatrixException fit(SubspaceLDA, X2, labels3)
+    @test_throws ErrorException fit(SubspaceLDA, X2, labels3)
     labels4 = [1, 2, 3]
     @test_throws DimensionMismatch fit(SubspaceLDA, X2, labels4)
 

@@ -477,16 +477,12 @@ function fit(::Type{SubspaceLDA}, X::AbstractMatrix{T},
     # (essentially, PCA before LDA)
     Uw, Σw, _ = svd(Hw, full=false)
     keep = Σw .> sqrt(eps(T)) * maximum(Σw)
-    count(keep) > 0 || throw(NullMatrixException("within-class covariance matrix is null"))
+    count(keep) > 0 || throw(error("within-class covariance matrix is null"))
     projw = Uw[:,keep]
     pHb = projw' * Hb
     pHw = projw' * Hw
     λ, G = lda_gsvd(pHb, pHw, cweights)
     SubspaceLDA(projw, G, λ, cmeans, cweights)
-end
-
-struct NullMatrixException <: Exception
-    msg::String
 end
 
 # Reference: Howland & Park (2006), "Generalizing discriminant analysis
