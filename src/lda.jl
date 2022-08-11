@@ -513,7 +513,7 @@ function lda_gsvd(Hb::AbstractMatrix{T}, Hw::AbstractMatrix{T}, cweights::Abstra
     # Normalize
     Gw = G' * Hw
     nrm = Gw * Gw'
-    G = G ./ reshape(sqrt.(diag(nrm)), 1, ncnz-1)
+    G = G ./ reshape(sqrt.(diag(nrm)), 1, size(G, 2))
     # Also get the eigenvalues
     Gw = G' * Hw
     Gb = G' * Hb
