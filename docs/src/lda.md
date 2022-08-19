@@ -107,7 +107,7 @@ MulticlassLDAStats
 Several methods are provided to access properties of the LDA model. Let `M` be an instance of `MulticlassLDA`:
 
 ```@docs
-fit(::Type{MulticlassLDA}, ::Int, ::DenseMatrix{T}, ::AbstractVector{Int}; kwargs...) where T<:Real
+fit(::Type{MulticlassLDA}, ::DenseMatrix{T}, ::AbstractVector; kwargs...) where T<:Real
 predict(::MulticlassLDA, ::AbstractVecOrMat{T}) where {T<:Real}
 mean(::MulticlassLDA)
 size(::MulticlassLDA)
