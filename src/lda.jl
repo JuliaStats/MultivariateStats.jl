@@ -477,7 +477,7 @@ function fit(::Type{SubspaceLDA}, X::AbstractMatrix{T},
     # (essentially, PCA before LDA)
     Uw, Σw, _ = svd(Hw, full=false)
     keep = Σw .> sqrt(eps(T)) * maximum(Σw)
-    count(keep) > 0 || throw(error("within-class covariance matrix is null"))
+    count(keep) > 0 || error("within-class covariance matrix is null")
     projw = Uw[:,keep]
     pHb = projw' * Hb
     pHw = projw' * Hw
