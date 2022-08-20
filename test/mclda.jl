@@ -216,6 +216,26 @@ using Statistics: mean, cov
     Hw = X - centers[:, MultivariateStats.toindices(label)]
     @test (M.projw'*Hb)*(Hb'*M.projw)*M.projLDA ≈ (M.projw'*Hw)*(Hw'*M.projw)*M.projLDA*Diagonal(M.λ)
 
+    # Test for case when `rank(Sw) < nlabels - 1` see issue #200
+    labels1 = [1, 2, 3, 2, 4]
+    X1 = rand(5, 5)
+    M = fit(SubspaceLDA, X, label)
+    centers = M.cmeans
+    dcenters = centers .- mean(X, dims=2)
+    Hb = dcenters*Diagonal(sqrt.(M.cweights))
+    Hw = X - centers[:, MultivariateStats.toindices(label)]
+    @test (M.projw'*Hb)*(Hb'*M.projw)*M.projLDA ≈ (M.projw'*Hw)*(Hw'*M.projw)*M.projLDA*Diagonal(M.λ)
+
+    # test errors that are expected while fitting SubspaceLDA model
+    s = rand(2, 1)
+    X2 = [s 2s 3s 2s 5s]
+    labels2 = [1,2,3,4, 5]
+    @test_throws ArgumentError fit(SubspaceLDA, X2, labels2)
+    labels3 = [1,2,3,2, 4]
+    @test_throws ErrorException fit(SubspaceLDA, X2, labels3)
+    labels4 = [1, 2, 3]
+    @test_throws DimensionMismatch fit(SubspaceLDA, X2, labels4)
+
     # Test normalized LDA
     function gen_ldadata_2(centers, n1, n2)
         d = size(centers, 1)
