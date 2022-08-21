@@ -107,7 +107,7 @@ MulticlassLDAStats
 Several methods are provided to access properties of the LDA model. Let `M` be an instance of `MulticlassLDA`:
 
 ```@docs
-fit(::Type{MulticlassLDA}, ::DenseMatrix{T}, ::AbstractVector; kwargs...) where T<:Real
+fit(::Type{MulticlassLDA}, ::AbstractMatrix{T}, ::AbstractVector; kwargs...) where T<:Real
 predict(::MulticlassLDA, ::AbstractVecOrMat{T}) where {T<:Real}
 mean(::MulticlassLDA)
 size(::MulticlassLDA)
@@ -151,11 +151,56 @@ SubspaceLDA
 Several methods are provided to access properties of the LDA model. Let `M` be an instance of [`SubspaceLDA`](@ref):
 
 ```@docs
-fit(::Type{SubspaceLDA}, ::DenseMatrix{T}, ::AbstractVector{Int}, ::Int; kwargs...) where T<:Real
+fit(::Type{SubspaceLDA}, ::AbstractMatrix{T}, ::AbstractVector; kwargs...) where T<:Real
 predict(::SubspaceLDA, ::AbstractVecOrMat{T}) where {T<:Real}
 mean(::SubspaceLDA)
 projection(::SubspaceLDA)
 size(::SubspaceLDA)
 length(::SubspaceLDA)
 eigvals(::SubspaceLDA)
+```
+
+## Example
+
+```@setup MulticlassLDAex
+using Plots
+gr(fmt=:svg)
+```
+
+Let's compare LDA and PCA 2D projection of Iris dataset. Principal Component Analysis identifies the directions that explain the most variance in the data. 
+
+```@example MulticlassLDAex
+using MultivariateStats, RDatasets
+
+iris = dataset("datasets", "iris")
+
+X = Matrix(iris[1:2:end,1:4])'
+X_labels = Vector(iris[1:2:end,5])
+
+pca = fit(PCA, X; maxoutdim=2)
+Ypca = predict(pca, X)
+nothing # hide
+```
+
+In contrast,
+Linear Discriminant Analysis attempts to identify the attributes that account for the most variance between classes. Therefore, with LDA, you must use known class labels.
+
+```@example MulticlassLDAex
+lda = fit(MulticlassLDA, X, X_labels; outdim=2)
+Ylda = predict(lda, X)
+
+p = plot(layout=(1,2), size=(800,300))
+
+for s in ["setosa", "versicolor", "virginica"]
+
+    points = Ypca[:,X_labels.==s]
+    scatter!(p[1], points[1,:],points[2,:],marker=:circle,linewidth=0, 
+             label=s, legend=:bottomleft)
+    points = Ylda[:,X_labels.==s]
+    scatter!(p[2], points[1,:],points[2,:],marker=:circle,linewidth=0, 
+             label=s, legend=:bottomleft)
+
+end
+plot!(p[1], title="PCA")
+plot!(p[2], title="LDA")
 ```

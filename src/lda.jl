@@ -284,7 +284,7 @@ Transform input sample(s) in `x` to the output space of MC-LDA model `M`. Here, 
 predict(M::MulticlassLDA, x::AbstractVecOrMat{T}) where {T<:Real} = M.proj'x
 
 """
-    fit(Type{MulticlassLDA}, X, y; ...)
+    fit(MulticlassLDA, X, y; ...)
 
 Perform multi-class LDA over a given data set `X` with corresponding labels `y`
 with `nc` number of classes.
