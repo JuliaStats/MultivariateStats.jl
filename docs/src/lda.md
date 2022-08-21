@@ -194,11 +194,9 @@ p = plot(layout=(1,2), size=(800,300))
 for s in ["setosa", "versicolor", "virginica"]
 
     points = Ypca[:,X_labels.==s]
-    scatter!(p[1], points[1,:],points[2,:],marker=:circle,linewidth=0, 
-             label=s, legend=:bottomleft)
+    scatter!(p[1], points[1,:],points[2,:], label=s, legend=:bottomleft)
     points = Ylda[:,X_labels.==s]
-    scatter!(p[2], points[1,:],points[2,:],marker=:circle,linewidth=0, 
-             label=s, legend=:bottomleft)
+    scatter!(p[2], points[1,:],points[2,:], label=s, legend=:bottomleft)
 
 end
 plot!(p[1], title="PCA")
