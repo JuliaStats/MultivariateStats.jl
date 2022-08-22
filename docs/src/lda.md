@@ -10,6 +10,49 @@ Suppose the samples in the positive and negative classes respectively with means
 ```
 Here ``\alpha`` is an arbitrary non-negative coefficient.
 
+## Example
+
+```@setup MulticlassLDAex
+using Plots
+gr(fmt=:svg)
+```
+
+Let's compare LDA and PCA 2D projection of Iris dataset. Principal Component Analysis identifies the directions that explain the most variance in the data. 
+
+```@example MulticlassLDAex
+using MultivariateStats, RDatasets
+
+iris = dataset("datasets", "iris")
+
+X = Matrix(iris[1:2:end,1:4])'
+X_labels = Vector(iris[1:2:end,5])
+
+pca = fit(PCA, X; maxoutdim=2)
+Ypca = predict(pca, X)
+nothing # hide
+```
+
+In contrast,
+Linear Discriminant Analysis attempts to identify the attributes that account for the most variance between classes. Therefore, with LDA, you must use known class labels.
+
+```@example MulticlassLDAex
+lda = fit(MulticlassLDA, X, X_labels; outdim=2)
+Ylda = predict(lda, X)
+
+p = plot(layout=(1,2), size=(800,300))
+
+for s in ["setosa", "versicolor", "virginica"]
+
+    points = Ypca[:,X_labels.==s]
+    scatter!(p[1], points[1,:],points[2,:], label=s, legend=:bottomleft)
+    points = Ylda[:,X_labels.==s]
+    scatter!(p[2], points[1,:],points[2,:], label=s, legend=:bottomleft)
+
+end
+plot!(p[1], title="PCA")
+plot!(p[2], title="LDA")
+```
+
 ## Two-class Linear Discriminant Analysis
 
 This package uses the [`LinearDiscriminant`](@ref) type to capture a linear discriminant functional:
@@ -160,45 +203,3 @@ length(::SubspaceLDA)
 eigvals(::SubspaceLDA)
 ```
 
-## Example
-
-```@setup MulticlassLDAex
-using Plots
-gr(fmt=:svg)
-```
-
-Let's compare LDA and PCA 2D projection of Iris dataset. Principal Component Analysis identifies the directions that explain the most variance in the data. 
-
-```@example MulticlassLDAex
-using MultivariateStats, RDatasets
-
-iris = dataset("datasets", "iris")
-
-X = Matrix(iris[1:2:end,1:4])'
-X_labels = Vector(iris[1:2:end,5])
-
-pca = fit(PCA, X; maxoutdim=2)
-Ypca = predict(pca, X)
-nothing # hide
-```
-
-In contrast,
-Linear Discriminant Analysis attempts to identify the attributes that account for the most variance between classes. Therefore, with LDA, you must use known class labels.
-
-```@example MulticlassLDAex
-lda = fit(MulticlassLDA, X, X_labels; outdim=2)
-Ylda = predict(lda, X)
-
-p = plot(layout=(1,2), size=(800,300))
-
-for s in ["setosa", "versicolor", "virginica"]
-
-    points = Ypca[:,X_labels.==s]
-    scatter!(p[1], points[1,:],points[2,:], label=s, legend=:bottomleft)
-    points = Ylda[:,X_labels.==s]
-    scatter!(p[2], points[1,:],points[2,:], label=s, legend=:bottomleft)
-
-end
-plot!(p[1], title="PCA")
-plot!(p[2], title="LDA")
-```
