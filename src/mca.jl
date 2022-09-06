@@ -70,6 +70,12 @@ function fit!(ca::CA, d::Int)
     P, D, Q = svd(ca.SR)
     Dq = Diagonal(D)[:, 1:d]
 
+    # Check that there are no repeated non-zero eigenvalues.
+    d = diff(D[D .> 1e-10])
+    if maximum(d) >= -1e-10
+        @warn("The indicator matrix has repeated non-zero eigenvalues")
+    end
+
     Wr = Diagonal(sqrt.(ca.rm))
     Wc = Diagonal(sqrt.(ca.cm))
     ca.F = Wr \ P * Dq
