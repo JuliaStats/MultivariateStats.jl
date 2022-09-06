@@ -1,6 +1,7 @@
 # Correspondence Analysis and Multiple Correspondence Analysis
 
-using Printf, PyPlot
+# Needed for the plotting function below
+#using Printf, PyPlot
 
 #==
 References:
@@ -231,44 +232,44 @@ end
 
 # Plot the category scores for components numbered 'x' and 'y'.  Ordered factors
 # are connected with line segments.
-function variable_plot(mca::MCA; x = 1, y = 2, vnames = [], ordered = [], kwargs...)
+#function variable_plot(mca::MCA; x = 1, y = 2, vnames = [], ordered = [], kwargs...)
 
-    fig = PyPlot.figure()
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-    ax.grid(true)
+#    fig = PyPlot.figure()
+#    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+#    ax.grid(true)
 
     # Set up the colormap
-    cm = get(kwargs, :cmap, PyPlot.get_cmap("tab10"))
+#    cm = get(kwargs, :cmap, PyPlot.get_cmap("tab10"))
 
     # Set up the axis limits
-    mn = 1.2 * minimum(mca.C.G, dims = 1)
-    mx = 1.2 * maximum(mca.C.G, dims = 1)
-    xlim = get(kwargs, :xlim, [mn[x], mx[x]])
-    ylim = get(kwargs, :ylim, [mn[y], mx[y]])
-    ax.set_xlim(xlim...)
-    ax.set_ylim(ylim...)
+#    mn = 1.2 * minimum(mca.C.G, dims = 1)
+#    mx = 1.2 * maximum(mca.C.G, dims = 1)
+#    xlim = get(kwargs, :xlim, [mn[x], mx[x]])
+#    ylim = get(kwargs, :ylim, [mn[y], mx[y]])
+#    ax.set_xlim(xlim...)
+#    ax.set_ylim(ylim...)
 
-    for (j, g) in enumerate(mca.Gv)
+#    for (j, g) in enumerate(mca.Gv)
 
-        if mca.vnames[j] in ordered
-            PyPlot.plot(g[:, x], g[:, y], "-", color = cm(j))
-        end
+#        if mca.vnames[j] in ordered
+#            PyPlot.plot(g[:, x], g[:, y], "-", color = cm(j))
+#        end
 
-        dr = mca.dr[j]
-        vn = length(vnames) > 0 ? vnames[j] : ""
-        for (k, v) in dr
-            if vn != ""
-                lb = "$(vn)-$(v)"
-            else
-                lb = v
-            end
-            ax.text(g[k, x], g[k, y], lb, color = cm(j), ha = "center", va = "center")
-        end
-    end
+#        dr = mca.dr[j]
+#        vn = length(vnames) > 0 ? vnames[j] : ""
+#        for (k, v) in dr
+#            if vn != ""
+#                lb = "$(vn)-$(v)"
+#            else
+#                lb = v
+#            end
+#            ax.text(g[k, x], g[k, y], lb, color = cm(j), ha = "center", va = "center")
+#        end
+#    end
 
-    inr = inertia(mca)
-    PyPlot.xlabel(@sprintf("Dimension %d (%.2f%%)", x, 100 * inr[x, :Greenacre]))
-    PyPlot.ylabel(@sprintf("Dimension %d (%.2f%%)", y, 100 * inr[y, :Greenacre]))
+#    inr = inertia(mca)
+#    PyPlot.xlabel(@sprintf("Dimension %d (%.2f%%)", x, 100 * inr[x, :Greenacre]))
+#    PyPlot.ylabel(@sprintf("Dimension %d (%.2f%%)", y, 100 * inr[y, :Greenacre]))
 
-    return fig
-end
+#    return fig
+#end
