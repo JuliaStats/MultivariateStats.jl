@@ -16,7 +16,7 @@ https://maths.cnam.fr/IMG/pdf/ClassMCA_cle825cfc.pdf
 """
 Correspondence Analysis
 """
-struct CA{T<:Real} <: LinearDimensionalityReduction
+mutable struct CA{T<:Real} <: LinearDimensionalityReduction
 
     # The data matrix
     Z::Array{T}
@@ -41,7 +41,9 @@ struct CA{T<:Real} <: LinearDimensionalityReduction
     I::Vector{T}
 end
 
-function CA(X, d::Int)
+# Constructor
+
+function CA(X)
 
     # Convert to proportions
     X = X ./ sum(X)
@@ -58,14 +60,41 @@ function CA(X, d::Int)
     Wc = Diagonal(sqrt.(c))
     SR = Wr \ R / Wc
 
-    # Get the object factor scores (F) and variable factor scores (G).
-    P, D, Q = svd(SR)
-    Dq = Diagonal(D)[:, 1:d]
-    F = Wr \ P * Dq
-    G = Wc \ Q * Dq
-    I = D .^ 2
+    T = eltype(X)
+    return CA(X, R, r, c, SR, zeros(T, 0, 0), zeros(T, 0, 0), zeros(T, 0))
+end
 
-    return CA(X, R, r, c, SR, F, G, I)
+function fit!(ca::CA, d::Int)
+
+    # Get the object factor scores (F) and variable factor scores (G).
+    P, D, Q = svd(ca.SR)
+    Dq = Diagonal(D)[:, 1:d]
+
+    Wr = Diagonal(sqrt.(ca.rm))
+    Wc = Diagonal(sqrt.(ca.cm))
+    ca.F = Wr \ P * Dq
+    ca.G = Wc \ Q * Dq
+
+    # Get the eigenvalues
+    ca.I = D .^ 2
+end
+
+function fit(::Type{CA}; X::AbstractMatrix, d::Int = 5)
+    ca = CA(X)
+    fit!(ca, d)
+    return ca::CA
+end
+
+"""
+    ca
+
+Fit a correspondence analysis using the data array `X` whose rows are
+the objects and columns are the variables.  The first `d` components
+are retained.
+"""
+function ca(X, d)
+    c = fit(CA, X, d)
+    return c
 end
 
 objectscores(ca::CA) = ca.F
@@ -75,7 +104,7 @@ inertia(ca::CA) = ca.I
 """
 Multiple Correspondence Analysis
 """
-struct MCA{T<:Real} <: LinearDimensionalityReduction
+mutable struct MCA{T<:Real} <: LinearDimensionalityReduction
 
     # The underlying corresponence analysis
     C::CA{T}
@@ -92,6 +121,12 @@ struct MCA{T<:Real} <: LinearDimensionalityReduction
     # Split the variable scores into separate arrays for
     # each variable.
     Gv::Vector{Matrix{T}}
+
+    # Number of nominal variables
+    K::Int
+
+    # Total number of categories in all variables
+    J::Int
 
     # Eigenvalues
     unadjusted_eigs::Vector{Float64}
@@ -134,7 +169,9 @@ function get_eigs(I, K, J)
     return unadjusted, ben ./ sum(ben), ben ./ gt
 end
 
-function MCA(Z, d::Int; vnames = [])
+# constructor
+
+function MCA(Z; vnames = [])
 
     if length(vnames) == 0
         vnames = ["v$(j)" for j = 1:size(Z, 2)]
@@ -143,14 +180,50 @@ function MCA(Z, d::Int; vnames = [])
     # Get the indicator matrix
     X, rd, dr = make_indicators(Z)
 
-    C = CA(X, d)
+    # Create the underlying correspondence analysis value
+    C = CA(X)
+
+    # Number of nominal variables
+    K = size(Z, 2)
+
+    # Total number of categories in all variables
+    J = size(X, 2)
+
+    return MCA(C, vnames, rd, dr, Matrix{Float64}[], K, J, zeros(0), zeros(0), zeros(0))
+end
+
+"""
+    mca
+
+Fit a multiple correspondence analysis using the columns of `Z` as the
+variables.  The first `d` components are retained.  If `Z` is a
+dataframe then the column names are used as variable names, otherwise
+variable names may be provided as `vnames`.
+"""
+function mca(Z, d::Int; vnames = [])
+    m = MCA(Z; vnames)
+    fit!(m, d)
+    return m
+end
+
+function fit(::Type{MCA}, Z::AbstractMatrix, d::Int; vnames = [])
+    return mca(Z, d; vnames)
+end
+
+function fit!(mca::MCA, d::Int)
+
+    fit!(mca.C, d)
 
     # Split the variable scores into separate arrays for each variable.
-    Gv = xsplit(C.G, rd)
+    mca.Gv = xsplit(mca.C.G, mca.rd)
 
-    una, ben, gra = get_eigs(C.I, size(Z, 2), size(X, 2))
+    una, ben, gra = get_eigs(mca.C.I, mca.J, mca.K)
 
-    return MCA(C, vnames, rd, dr, Gv, una, ben, gra)
+    mca.unadjusted_eigs = una
+    mca.benzecri_eigs = ben
+    mca.greenacre_eigs = gra
+
+    return mca
 end
 
 # Create an indicator matrix corresponding to the distinct
@@ -238,10 +311,10 @@ end
 #    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
 #    ax.grid(true)
 
-    # Set up the colormap
+# Set up the colormap
 #    cm = get(kwargs, :cmap, PyPlot.get_cmap("tab10"))
 
-    # Set up the axis limits
+# Set up the axis limits
 #    mn = 1.2 * minimum(mca.C.G, dims = 1)
 #    mx = 1.2 * maximum(mca.C.G, dims = 1)
 #    xlim = get(kwargs, :xlim, [mn[x], mx[x]])
