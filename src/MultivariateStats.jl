@@ -105,7 +105,14 @@ module MultivariateStats
     FactorAnalysis,         # Type: the Factor Analysis model
 
     faem,                   # EM algorithm for factor analysis
-    facm                    # CM algorithm for factor analysis
+    facm,                   # CM algorithm for factor analysis
+
+    ## CA, MCA
+    CA,
+    MCA,
+    objectscores,
+    variablescores,
+    inertia
 
     ## source files
     include("types.jl")
@@ -121,6 +128,7 @@ module MultivariateStats
     include("lda.jl")
     include("ica.jl")
     include("fa.jl")
+    include("mca.jl")
 
     ## deprecations
     @deprecate indim(f) size(f,1)
