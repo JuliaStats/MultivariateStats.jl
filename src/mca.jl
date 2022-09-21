@@ -16,10 +16,10 @@ https://maths.cnam.fr/IMG/pdf/ClassMCA_cle825cfc.pdf
 """
 Correspondence Analysis
 """
-mutable struct CA{T<:Real} <: LinearDimensionalityReduction
+struct CA{T<:Real} <: LinearDimensionalityReduction
 
     # The data matrix
-    Z::Array{T}
+    X::Array{T}
 
     # The residuals
     R::Array{T}
@@ -41,33 +41,44 @@ mutable struct CA{T<:Real} <: LinearDimensionalityReduction
     I::Vector{T}
 end
 
-# Constructor
+"""
+    fit(CA, X; ...)
 
-function CA(X)
+Peform a Correspondence Analysis using the data in `X`.
+
+**Keyword Arguments**
+
+- `d` the number of dimensions to retain.
+
+**Notes:**
+
+- The matrix `X` should contain numerical data for which it makes
+  sense to use chi^2 distance to compare rows.  Most commonly this
+  is an indicator matrix in which each row contains a single 1 with
+  the remaining values all being 0.
+- See `MCA` for a more general analysis that takes a dataframe
+  with multiple nominal columns as input and performs a CA on
+  its indicator matrix.
+"""
+function fit(::Type{CA}, X::AbstractMatrix{T}; d::Int = 5) where{T}
 
     # Convert to proportions
     X = X ./ sum(X)
 
-    # Calculate row and column means
-    r = sum(X, dims = 2)[:]
-    c = sum(X, dims = 1)[:]
+    # Calculate row and column margins
+    rm = sum(X, dims = 2)[:]
+    cm = sum(X, dims = 1)[:]
 
     # Center the data matrix to create residuals
-    R = X - r * c'
+    R = X - rm * cm'
 
     # Standardize the data matrix to create standardized residuals
-    Wr = Diagonal(sqrt.(r))
-    Wc = Diagonal(sqrt.(c))
+    Wr = Diagonal(sqrt.(rm))
+    Wc = Diagonal(sqrt.(cm))
     SR = Wr \ R / Wc
 
-    T = eltype(X)
-    return CA(X, R, r, c, SR, zeros(T, 0, 0), zeros(T, 0, 0), zeros(T, 0))
-end
-
-function fit!(ca::CA, d::Int)
-
-    # Get the object factor scores (F) and variable factor scores (G).
-    P, D, Q = svd(ca.SR)
+    # Get the object scores (F) and variable scores (G).
+    P, D, Q = svd(SR)
     Dq = Diagonal(D)[:, 1:d]
 
     # Check that there are no repeated non-zero eigenvalues.
@@ -76,31 +87,15 @@ function fit!(ca::CA, d::Int)
         @warn("The indicator matrix has repeated non-zero eigenvalues")
     end
 
-    Wr = Diagonal(sqrt.(ca.rm))
-    Wc = Diagonal(sqrt.(ca.cm))
-    ca.F = Wr \ P * Dq
-    ca.G = Wc \ Q * Dq
+    Wr = Diagonal(sqrt.(rm))
+    Wc = Diagonal(sqrt.(cm))
+    F = Wr \ P * Dq
+    G = Wc \ Q * Dq
 
     # Get the eigenvalues
-    ca.I = D .^ 2
-end
+    I = D .^ 2
 
-function fit(::Type{CA}; X::AbstractMatrix, d::Int = 5)
-    ca = CA(X)
-    fit!(ca, d)
-    return ca::CA
-end
-
-"""
-    ca
-
-Fit a correspondence analysis using the data array `X` whose rows are
-the objects and columns are the variables.  The first `d` components
-are retained.
-"""
-function ca(X, d)
-    c = fit(CA, X, d)
-    return c
+    return CA(X, R, rm, cm, SR, F, G, I)
 end
 
 objectscores(ca::CA) = ca.F
@@ -110,7 +105,7 @@ inertia(ca::CA) = ca.I
 """
 Multiple Correspondence Analysis
 """
-mutable struct MCA{T<:Real} <: LinearDimensionalityReduction
+struct MCA{T<:Real} <: LinearDimensionalityReduction
 
     # The underlying corresponence analysis
     C::CA{T}
@@ -175,68 +170,55 @@ function get_eigs(I, K, J)
     return unadjusted, ben ./ sum(ben), ben ./ gt
 end
 
-# constructor
+"""
+    fit(MCA, X; ...)
 
-function MCA(Z; vnames = [])
+Fit a multiple correspondence analysis using the columns of `X` as the variables.
 
-    if length(vnames) == 0
+**Keyword Arguments**
+
+- `d`: The number of dimensions to retain.
+- `vnames`: Variable names, if `X` is a data frame then the column names are the
+  default variable names but will be replaced with these values if provided.
+
+**Notes:**
+
+- Missing values are recoded as fractional indicators, i.e. if there are k distinct
+  levels of a variable it is coded as 1/k, 1/k, ..., 1/k.
+"""
+function fit(::Type{MCA}, X; d::Int=5, vnames=[])
+
+    if length(vnames) == 0 && typeof(X) <: AbstractDataFrame
+        vnames = names(X)
+    elseif length(vnames) == 0
         vnames = ["v$(j)" for j = 1:size(Z, 2)]
     end
 
     # Get the indicator matrix
-    X, rd, dr = make_indicators(Z)
+    XI, rd, dr = make_indicators(X)
 
     # Create the underlying correspondence analysis value
-    C = CA(X)
+    C = fit(CA, XI; d=d)
 
     # Number of nominal variables
-    K = size(Z, 2)
+    K = size(X, 2)
 
     # Total number of categories in all variables
-    J = size(X, 2)
-
-    return MCA(C, vnames, rd, dr, Matrix{Float64}[], K, J, zeros(0), zeros(0), zeros(0))
-end
-
-"""
-    mca
-
-Fit a multiple correspondence analysis using the columns of `Z` as the
-variables.  The first `d` components are retained.  If `Z` is a
-dataframe then the column names are used as variable names, otherwise
-variable names may be provided as `vnames`.
-"""
-function mca(Z, d::Int; vnames = [])
-    m = MCA(Z; vnames)
-    fit!(m, d)
-    return m
-end
-
-function fit(::Type{MCA}, Z::AbstractMatrix, d::Int; vnames = [])
-    return mca(Z, d; vnames)
-end
-
-function fit!(mca::MCA, d::Int)
-
-    fit!(mca.C, d)
+    J = size(XI, 2)
 
     # Split the variable scores into separate arrays for each variable.
-    mca.Gv = xsplit(mca.C.G, mca.rd)
+    Gv = xsplit(C.G, rd)
 
-    una, ben, gra = get_eigs(mca.C.I, mca.J, mca.K)
+    una, ben, gra = get_eigs(C.I, J, K)
 
-    mca.unadjusted_eigs = una
-    mca.benzecri_eigs = ben
-    mca.greenacre_eigs = gra
-
-    return mca
+    return MCA(C, vnames, rd, dr, Gv, K, J, una, ben, gra)
 end
 
 # Create an indicator matrix corresponding to the distinct
-# values in z.  Also returns dictionaries mapping the unique
-# values to column offsets, and mapping the column offsets
-# to the unique values.
-function make_single_indicator(z)
+# values in the vector 'z'.  Also returns dictionaries mapping
+# the unique values to column offsets, and mapping the column
+# offsets to the unique values.
+function make_single_indicator(z::Vector{T}) where{T}
 
     n = length(z)
 
@@ -249,7 +231,7 @@ function make_single_indicator(z)
 
     # Recoding dictionary, maps each distinct value in z to
     # an offset
-    rd = Dict{eltype(z),Int}()
+    rd = Dict{T,Int}()
     for (j, v) in enumerate(uq)
         if !ismissing(v)
             rd[v] = j
@@ -271,7 +253,7 @@ function make_single_indicator(z)
     end
 
     # Reverse the recoding dictionary
-    rdi = Dict{Int,eltype(z)}()
+    rdi = Dict{Int,T}()
     for (k, v) in rd
         rdi[v] = k
     end
