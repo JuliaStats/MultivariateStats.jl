@@ -1,24 +1,19 @@
 module MultivariateStats
 
-using LinearAlgebra
-using SparseArrays
-using Statistics: middle
-using StatsAPI: RegressionModel
-using StatsBase:
-    SimpleCovariance,
-    CovarianceEstimator,
-    AbstractDataTransform,
-    ConvergenceException,
-    pairwise,
-    pairwise!,
-    CoefTable
+    using DataFrames
+    using LinearAlgebra
+    using SparseArrays
+    using Statistics: middle
+    using StatsAPI: RegressionModel
+    using StatsBase: SimpleCovariance, CovarianceEstimator, AbstractDataTransform,
+                     ConvergenceException, pairwise, pairwise!, CoefTable
 
-import Statistics: mean, var, cov, covm, cor
-import Base: length, size, show
-import StatsAPI: fit, predict, coef, weights, dof, r2
-import LinearAlgebra: eigvals, eigvecs
+    import Statistics: mean, var, cov, covm, cor
+    import Base: length, size, show
+    import StatsAPI: fit, predict, coef, weights, dof, r2
+    import LinearAlgebra: eigvals, eigvecs
 
-export
+    export
 
     ## common
     evaluate,           # evaluate discriminant function values
@@ -42,6 +37,7 @@ export
 
     # whiten
     Whitening,          # Type: Whitening transformation
+
     invsqrtm,           # Compute inverse of matrix square root, i.e. inv(sqrtm(A))
     cov_whitening,      # Compute a whitening transform based on covariance
     cov_whitening!,     # Compute a whitening transform based on covariance (input will be overwritten)
@@ -49,16 +45,19 @@ export
 
     ## pca
     PCA,                # Type: Principal Component Analysis model
+
     pcacov,             # PCA based on covariance
     pcasvd,             # PCA based on singular value decomposition of input data
     principalratio,     # the ratio of variances preserved in the principal subspace
     principalvar,       # the variance along a specific principal direction
     principalvars,      # the variances along all principal directions
+
     tprincipalvar,      # total principal variance, i.e. sum(principalvars(M))
     tresidualvar,       # total residual variance
 
     ## ppca
     PPCA,               # Type: the Probabilistic PCA model
+
     ppcaml,             # Maximum likelihood probabilistic PCA
     ppcaem,             # EM algorithm for probabilistic PCA
     bayespca,           # Bayesian PCA
@@ -68,6 +67,7 @@ export
 
     ## cca
     CCA,                # Type: Correlation Component Analysis model
+
     ccacov,             # CCA based on covariances
     ccasvd,             # CCA based on singular value decomposition of input data
     cor,                # correlations of all projected directions
@@ -77,17 +77,18 @@ export
     MetricMDS,
     classical_mds,      # perform classical MDS over a given distance matrix
     stress,             # stress evaluation
-    gram2dmat,
-    gram2dmat!,  # Gram matrix => Distance matrix
-    dmat2gram,
-    dmat2gram!,  # Distance matrix => Gram matrix
+
+    gram2dmat, gram2dmat!,  # Gram matrix => Distance matrix
+    dmat2gram, dmat2gram!,  # Distance matrix => Gram matrix
 
     ## lda
     LinearDiscriminant,     # Type: Linear Discriminant functional
     MulticlassLDAStats,     # Type: Statistics required for training multi-class LDA
     MulticlassLDA,          # Type: Multi-class LDA model
     SubspaceLDA,            # Type: LDA model for high-dimensional spaces
+
     ldacov,                 # Linear discriminant analysis based on covariances
+
     classweights,           # class-specific weights
     classmeans,             # class-specific means
     withclass_scatter,      # with-class scatter matrix
@@ -98,15 +99,18 @@ export
 
     ## ica
     ICA,                    # Type: the Fast ICA model
+
     fastica!,               # core algorithm function for the Fast ICA
 
     ## fa
     FactorAnalysis,         # Type: the Factor Analysis model
+
     faem,                   # EM algorithm for factor analysis
     facm,                   # CM algorithm for factor analysis
 
-    ## CA, MCA
+    ## ca, mca
     CA,                     # Type: correspondence analysis
+
     MCA,                    # Type: multiple correspondence analysis
     ca,                     # fit and return a correspondence analysis
     mca,                    # fit and return a multiple correspondence analysis
@@ -114,42 +118,40 @@ export
     variablescores,         # return the variable/category scores or coordinates from CA or MCA
     inertia                 # return the inertia (derived from eigenvalues) for CA
 
-## source files
-include("types.jl")
-include("common.jl")
-include("lreg.jl")
-include("whiten.jl")
-include("pca.jl")
-include("ppca.jl")
-include("kpca.jl")
-include("cca.jl")
-include("cmds.jl")
-include("mmds.jl")
-include("lda.jl")
-include("ica.jl")
-include("fa.jl")
-include("mca.jl")
+    ## source files
+    include("types.jl")
+    include("common.jl")
+    include("lreg.jl")
+    include("whiten.jl")
+    include("pca.jl")
+    include("ppca.jl")
+    include("kpca.jl")
+    include("cca.jl")
+    include("cmds.jl")
+    include("mmds.jl")
+    include("lda.jl")
+    include("ica.jl")
+    include("fa.jl")
+    include("mca.jl")
 
-## deprecations
-@deprecate indim(f) size(f, 1)
-@deprecate outdim(f) size(f, 2)
-@deprecate transform(f, x) predict(f, x)
-@deprecate indim(f::Whitening) length(f::Whitening)
-@deprecate outdim(f::Whitening) length(f::Whitening)
-@deprecate tvar(f::PCA) var(f::PCA)
-@deprecate classical_mds(D::AbstractMatrix, p::Int) predict(
-    fit(MDS, D, maxoutdim = p, distances = true),
-)
-@deprecate transform(f::MDS) predict(f::MDS)
-@deprecate xindim(M::CCA) size(M, 1)
-@deprecate yindim(M::CCA) size(M, 2)
-@deprecate outdim(M::CCA) size(M, 3)
-@deprecate correlations(M::CCA) cor(M)
-@deprecate xmean(M::CCA) mean(M, :x)
-@deprecate ymean(M::CCA) mean(M, :y)
-@deprecate xprojection(M::CCA) projection(M, :x)
-@deprecate yprojection(M::CCA) projection(M, :y)
-@deprecate xtransform(M::CCA, x) predict(M, x, :x)
-@deprecate ytransform(M::CCA, y) predict(M, y, :y)
+    ## deprecations
+    @deprecate indim(f) size(f,1)
+    @deprecate outdim(f) size(f,2)
+    @deprecate transform(f, x) predict(f, x)
+    @deprecate indim(f::Whitening) length(f::Whitening)
+    @deprecate outdim(f::Whitening) length(f::Whitening)
+    @deprecate tvar(f::PCA) var(f::PCA)
+    @deprecate classical_mds(D::AbstractMatrix, p::Int) predict(fit(MDS, D, maxoutdim=p, distances=true))
+    @deprecate transform(f::MDS) predict(f::MDS)
+    @deprecate xindim(M::CCA) size(M,1)
+    @deprecate yindim(M::CCA) size(M,2)
+    @deprecate outdim(M::CCA) size(M,3)
+    @deprecate correlations(M::CCA) cor(M)
+    @deprecate xmean(M::CCA) mean(M, :x)
+    @deprecate ymean(M::CCA) mean(M, :y)
+    @deprecate xprojection(M::CCA) projection(M, :x)
+    @deprecate yprojection(M::CCA) projection(M, :y)
+    @deprecate xtransform(M::CCA, x) predict(M, x, :x)
+    @deprecate ytransform(M::CCA, y) predict(M, y, :y)
 
 end # module

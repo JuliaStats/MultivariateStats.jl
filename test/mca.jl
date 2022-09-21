@@ -8,7 +8,7 @@ using MultivariateStats, DataFrames, Test
         :V3 => ["D", "D", "D", "C", "D", "C", "D", "C"],
     )
 
-    m = mca(da, 3; vnames = names(da))
+    m = fit(MCA, da; d=3, vnames = names(da))
     F = objectscores(m)
     G = variablescores(m.C)
 
