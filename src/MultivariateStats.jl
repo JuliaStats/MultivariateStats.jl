@@ -113,11 +113,11 @@ module MultivariateStats
     CA,                     # Type: correspondence analysis
 
     MCA,                    # Type: multiple correspondence analysis
-    ca,                     # fit and return a correspondence analysis
-    mca,                    # fit and return a multiple correspondence analysis
-    objectscores,           # return the object scores or coordinates from CA or MCA
-    variablescores,         # return the variable/category scores or coordinates from CA or MCA
-    inertia                 # return the inertia (derived from eigenvalues) for CA
+    object_coords,          # return the object scores or coordinates from CA or MCA
+    variable_coords,        # return the variable/category scores or coordinates from CA or MCA
+    inertia,                # return the inertia (derived from eigenvalues) for CA
+    ca_stats,               # fit statistics
+    quali_passive           # handle qualitative passive variables
 
     ## source files
     include("types.jl")

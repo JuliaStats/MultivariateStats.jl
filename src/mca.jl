@@ -1,8 +1,5 @@
 # Correspondence Analysis and Multiple Correspondence Analysis
 
-# Needed for the plotting function below
-#using Printf, PyPlot
-
 #==
 References:
 https://personal.utdallas.edu/~herve/Abdi-MCA2007-pretty.pdf
@@ -16,29 +13,165 @@ https://maths.cnam.fr/IMG/pdf/ClassMCA_cle825cfc.pdf
 """
 Correspondence Analysis
 """
-struct CA{T<:Real} <: LinearDimensionalityReduction
+mutable struct CA{T<:Real} <: LinearDimensionalityReduction
 
     # The data matrix
-    X::Array{T}
+    X::Matrix{T}
 
     # The residuals
-    R::Array{T}
+    R::Matrix{T}
 
-    # Row and column masses (means)
+    # Row masses
     rm::Vector{T}
+
+    # Column masses
     cm::Vector{T}
 
     # The standardized residuals
-    SR::Array{T}
+    SR::Matrix{T}
 
-    # Object scores
-    F::Array{T}
+    # Object coordinates in standard coordinates
+    FS::Matrix{T}
 
-    # Variable scores
-    G::Array{T}
+    # Variable coordinates in standard coordinates
+    GS::Matrix{T}
 
     # Inertia (eigenvalues of the indicator matrix)
     I::Vector{T}
+
+    # Standard normalization or principal normalization
+    normalize::String
+
+    # Use either the Burt method or the indicator method
+    method::String
+end
+
+function show(io::IO, ca::CA)
+    nobs, nvar = size(ca.X)
+    print(
+        io,
+        "CA(nobs = $nobs, nvar = $nvar, method = $(ca.method), normalize = $(ca.normalize))",
+    )
+end
+
+function print_inertia(io, I)
+    xx = hcat(I, I, I)
+    xx[:, 2] = xx[:, 1] ./ sum(xx[:, 1])
+    xx[:, 3] = cumsum(xx[:, 2])
+    ii = findfirst(xx[:, 3] .>= 0.999)
+    xx = xx[1:ii, :]
+    vn = ["Inertia", "Prop inertia", "Cumulative inertia"]
+    cft = CoefTable(xx, vn, string.("", 1:ii))
+    println(io, cft)
+end
+
+function build_coeftable(ca, vc, stats, rn)
+    cn = ["Mass"]
+    xx = [ca.cm]
+    d = size(ca.GS, 2)
+    for j = 1:d
+        push!(cn, "Coord-$(j)")
+        push!(xx, vc[:, j])
+        push!(cn, "SqCorr-$(j)")
+        push!(xx, stats.sqcorr_col[:, j])
+        push!(cn, "RelContrib-$(j)")
+        push!(xx, stats.relcontrib_col[:, j])
+    end
+    xx = hcat(xx...)
+    cft = CoefTable(xx, cn, rn)
+    return cft
+end
+
+function show(io::IO, ::MIME"text/plain", ca::CA)
+    nobs, nvar = size(ca.X)
+    stats = ca_stats(ca)
+
+    println(
+        io,
+        "CA(nobs = $nobs, nvar = $nvar, method = $(ca.method), normalize = $(ca.normalize))",
+    )
+    print_inertia(io, ca.I)
+    vc = variable_coords(ca)
+    m, d = size(ca.GS)
+    println(io, "\nVariable coordinates:")
+    rn = string.("", 1:m)
+    cft = build_coeftable(ca, vc, stats, rn)
+    print(io, cft)
+    print(io, "\n\n")
+end
+
+# Squared correlation of each variable with each component.
+function sqcorr(ca::CA, axis)
+    if axis == :row
+        z = ca.rm ./ sum(abs2, ca.SR; dims = 2)[:]
+        p = length(ca.rm)
+        d = size(ca.GS, 2)
+        if ca.method == "burt"
+            # Not clear how to compute this so report zero for now
+            return zeros(p, d)
+        end
+        f = z * ones(d)'
+        return object_coords(ca; normalize = "principal") .^ 2 .* f
+    elseif axis == :col
+        z = ca.cm ./ sum(abs2, ca.SR; dims = 1)[:]
+        p = length(ca.cm)
+        d = size(ca.GS, 2)
+        f = z * ones(d)'
+        if ca.method == "burt"
+            # Not clear how to compute this so report zero for now
+            return zeros(p, d)
+        end
+        return variable_coords(ca; normalize = "principal") .^ 2 .* f
+    else
+        error("Unknown axis '$(axis)'")
+    end
+end
+
+# Relative contributions of each variable to each component.
+function relcontrib(ca::CA, axis)
+    e = ca.method == "indicator" ? 0.5 : 1
+    if axis == :row
+        d = size(ca.GS, 2)
+        z = ca.rm * (ca.I[1:d] .^ -e)'
+        return object_coords(ca; normalize = "principal") .^ 2 .* z
+    elseif axis == :col
+        d = size(ca.GS, 2)
+        z = ca.cm * (ca.I[1:d] .^ -e)'
+        return variable_coords(ca; normalize = "principal") .^ 2 .* z
+    else
+        error("Unknown axis '$(axis)'")
+    end
+end
+
+# Return several fit statistics.
+function ca_stats(ca::CA)
+    cr = sqcorr(ca, :col)
+    rc = relcontrib(ca, :col)
+    return (sqcorr_col = cr, relcontrib_col = rc)
+end
+
+# Multiply corresponding columns of Q by -1 as needed
+# to make the first non-zero value in each column of Q
+# positive.  This is the method used by Stata to identify
+# the coefficients.
+function orient(P, Q, e = 1e-12)
+    for j = 1:size(Q, 2)
+        i = findfirst(abs.(Q[:, j]) .>= e)
+        if Q[i, j] < 0
+            Q[:, j] .*= -1
+            P[:, j] .*= -1
+        end
+    end
+    return P, Q
+end
+
+function mca_check_args(normalize, method)
+    if !(normalize in ["standard", "principal"])
+        error("normalize = '$normalize' should be 'standard' or 'principal'")
+    end
+    if !(method in ["indicator", "burt"])
+        error("method = '$method' should be 'indicator' or 'burt'")
+    end
 end
 
 """
@@ -49,6 +182,7 @@ Peform a Correspondence Analysis using the data in `X`.
 **Keyword Arguments**
 
 - `d` the number of dimensions to retain.
+- `normalize` a coordinate normalization method, either 'standard' or 'principal'.
 
 **Notes:**
 
@@ -60,7 +194,15 @@ Peform a Correspondence Analysis using the data in `X`.
   with multiple nominal columns as input and performs a CA on
   its indicator matrix.
 """
-function fit(::Type{CA}, X::AbstractMatrix{T}; d::Int = 5) where{T}
+function fit(
+    ::Type{CA},
+    X::AbstractMatrix{T};
+    d::Int = 5,
+    normalize = "standard",
+    method = "indicator",
+) where {T}
+
+    mca_check_args(normalize, method)
 
     # Convert to proportions
     X = X ./ sum(X)
@@ -77,38 +219,119 @@ function fit(::Type{CA}, X::AbstractMatrix{T}; d::Int = 5) where{T}
     Wc = Diagonal(sqrt.(cm))
     SR = Wr \ R / Wc
 
-    # Get the object scores (F) and variable scores (G).
+    # Factor the standardized residual matrix
     P, D, Q = svd(SR)
-    Dq = Diagonal(D)[:, 1:d]
 
     # Check that there are no repeated non-zero eigenvalues.
-    d = diff(D[D .> 1e-10])
-    if maximum(d) >= -1e-10
+    di = diff(D[D.>1e-10])
+    if maximum(di) >= -1e-10
         @warn("The indicator matrix has repeated non-zero eigenvalues")
     end
 
-    Wr = Diagonal(sqrt.(rm))
-    Wc = Diagonal(sqrt.(cm))
-    F = Wr \ P * Dq
-    G = Wc \ Q * Dq
-
     # Get the eigenvalues
-    I = D .^ 2
+    I = method == "burt" ? D .^ 4 : D .^ 2
 
-    return CA(X, R, rm, cm, SR, F, G, I)
+    # Reduce to the selected dimension
+    P = P[:, 1:d]
+    D = D[1:d]
+    Q = Q[:, 1:d]
+
+    # Flip the loading vectors to a standard orientation.
+    P, Q = orient(P, Q)
+
+    # Get the object scores (F) and variable scores (G).  These are the
+    # standard coordinates.
+    FS = Wr \ P
+    GS = Wc \ Q
+
+    ca = CA(X, R, rm, cm, SR, FS, GS, I, normalize, method)
+    return ca
 end
 
-objectscores(ca::CA) = ca.F
-variablescores(ca::CA) = ca.G
+# Calculate the standard coordinates of any qualitative passive variables.
+function quali_passive(ca::CA, passive; normalize = "principal")
+
+    if size(passive, 1) == 0
+        return
+    end
+
+    if length(size(passive)) != 2
+        error("passive variable array must be two-dimensional")
+    end
+
+    (; X, GS) = ca
+    PX = Matrix(passive)
+
+    if size(PX, 1) != size(X, 1)
+        @error("Passive data must have same leading axis length as active data.")
+    end
+
+    M = hcat(X, PX)
+    B = M' * M
+    B ./= sum(B)
+    p = size(X, 2)
+    B = B[p+1:end, 1:p]
+
+    PGS = B * GS
+    for k = 1:size(B, 1)
+        PGS[k, :] ./= sum(B[k, :])
+    end
+    d = size(PGS, 2)
+    if ca.method == "burt"
+        PGS = PGS * Diagonal(1 ./ sqrt.(ca.I[1:d]))
+    elseif ca.method == "indicator"
+        PGS = PGS * Diagonal(1 ./ ca.I[1:d])
+    else
+        error("Unknown method '$(ca.method)'")
+    end
+
+    if normalize == "standard"
+        return PGS
+    elseif normalize == "principal"
+        return PGS * Diagonal(sqrt.(ca.I[1:d]))
+    else
+        error("Unknown normalization '$(normalize)'")
+    end
+
+    return PGS
+end
+
+function object_coords(ca::CA; normalize = ca.normalize)
+    if normalize == "standard"
+        ca.FS
+    elseif normalize == "principal"
+        d = size(ca.FS, 2)
+        return ca.FS * Diagonal(sqrt.(ca.I[1:d]))
+    else
+        error("Unknown normalization '$(normalize)'")
+    end
+end
+
 inertia(ca::CA) = ca.I
+
+function variable_coords(ca::CA; normalize = ca.normalize)
+    (; GS) = ca
+
+    d = size(GS, 2)
+    if normalize == "standard"
+        return GS
+    elseif normalize == "principal"
+        return GS * Diagonal(sqrt.(ca.I[1:d]))
+    else
+        error("Unknown normalization '$(normalize)'")
+    end
+end
 
 """
 Multiple Correspondence Analysis
 """
-struct MCA{T<:Real} <: LinearDimensionalityReduction
+mutable struct MCA{T<:Real} <: LinearDimensionalityReduction
 
     # The underlying corresponence analysis
     C::CA{T}
+
+    # Indicator matrix
+    Inds::Matrix{Float64}
 
     # Variable names
     vnames::Vector{String}
@@ -117,11 +340,7 @@ struct MCA{T<:Real} <: LinearDimensionalityReduction
     rd::Vector{Dict}
 
     # Map integer positions to values
-    dr::Vector{Dict}
-
-    # Split the variable scores into separate arrays for
-    # each variable.
-    Gv::Vector{Matrix{T}}
+    dr::Vector{Vector}
 
     # Number of nominal variables
     K::Int
@@ -135,21 +354,52 @@ struct MCA{T<:Real} <: LinearDimensionalityReduction
     greenacre_eigs::Vector{Float64}
 end
 
-objectscores(mca::MCA) = mca.C.F
-variablescores(mca::MCA) = mca.Gv
-
-# Split the variable scores to a separate array for each
-# variable.
-function xsplit(G, rd)
-    K = [length(di) for di in rd]
-    Js = cumsum(K)
-    Js = vcat(1, 1 .+ Js)
-    Gv = Vector{Matrix{eltype(G)}}()
-    for j in eachindex(K)
-        g = G[Js[j]:Js[j+1]-1, :]
-        push!(Gv, g)
+function expand_names(vnames, dr)
+    names, levels = [], []
+    for (j, v) in enumerate(vnames)
+        u = dr[j]
+        for k in eachindex(u)
+            push!(names, v)
+            push!(levels, u[k])
+        end
     end
-    return Gv
+    return (Variable = names, Level = levels)
+end
+
+object_coords(mca::MCA; normalize = "principal") =
+    object_coords(mca.C, normalize = normalize)
+
+function variable_coords(mca::MCA; normalize = "principal")
+    (; C, vnames, dr) = mca
+    na = expand_names(vnames, dr)
+    G = variable_coords(C, normalize = normalize)
+    return (Variable = na.Variable, Level = na.Level, Coord = G)
+end
+
+function show(io::IO, mca::MCA)
+    nobs, ninds = size(mca.C.X)
+    nvar = length(mca.vnames)
+    print(io, "MCA(nobs = $nobs, nvar = $nvar, ninds = $ninds)")
+end
+
+function show(io::IO, ::MIME"text/plain", mca::MCA)
+    nobs, ninds = size(mca.C.X)
+    stats = ca_stats(mca.C)
+    nvar = length(mca.vnames)
+    println(io, "MCA(nobs = $nobs, nvar = $nvar, ninds = $ninds)")
+    print_inertia(io, mca.C.I)
+    vc = variable_coords(mca.C; normalize = "principal")
+    d = size(vc, 2)
+    en = expand_names(mca.vnames, mca.dr)
+    rn = ["$(a) $(b)" for (a, b) in zip(en.Variable, en.Level)]
+    cft = build_coeftable(mca.C, vc, stats, rn)
+    println(io, "\nVariable coordinates (principal normalization):")
+    print(io, cft)
+    print(io, "\n\n")
+end
+
+function ca_stats(mca::MCA)
+    return ca_stats(mca.C)
 end
 
 # Calculate the eigenvalues with different debiasings.
@@ -186,19 +436,26 @@ Fit a multiple correspondence analysis using the columns of `X` as the variables
 - Missing values are recoded as fractional indicators, i.e. if there are k distinct
   levels of a variable it is coded as 1/k, 1/k, ..., 1/k.
 """
-function fit(::Type{MCA}, X; d::Int=5, vnames=[])
+function fit(
+    ::Type{MCA},
+    X;
+    d::Int = 5,
+    normalize = "standard",
+    method = "indicator",
+    vnames = [],
+)
 
     if length(vnames) == 0 && typeof(X) <: AbstractDataFrame
         vnames = names(X)
     elseif length(vnames) == 0
-        vnames = ["v$(j)" for j = 1:size(Z, 2)]
+        vnames = ["v$j" for j = 1:size(X, 2)]
     end
 
     # Get the indicator matrix
     XI, rd, dr = make_indicators(X)
 
     # Create the underlying correspondence analysis value
-    C = fit(CA, XI; d=d)
+    C = fit(CA, XI; d = d, normalize = normalize, method = method)
 
     # Number of nominal variables
     K = size(X, 2)
@@ -206,19 +463,38 @@ function fit(::Type{MCA}, X; d::Int=5, vnames=[])
     # Total number of categories in all variables
     J = size(XI, 2)
 
-    # Split the variable scores into separate arrays for each variable.
-    Gv = xsplit(C.G, rd)
-
     una, ben, gra = get_eigs(C.I, J, K)
 
-    return MCA(C, vnames, rd, dr, Gv, K, J, una, ben, gra)
+    mca = MCA(C, XI, vnames, rd, dr, K, J, una, ben, gra)
+
+    return mca
+end
+
+function quali_passive(mca::MCA, passive; normalize = "principal")
+    (; C) = mca
+    if size(passive, 1) != size(C.X, 1)
+        error("Wrong number of rows in passive data array")
+    end
+
+    PI, _, drp = make_indicators(passive)
+    r = quali_passive(C, PI; normalize = normalize)
+
+    vnames = if typeof(passive) <: AbstractDataFrame
+        names(passive)
+    else
+        m = length(drp)
+        string.("p", 1:m)
+    end
+
+    v = expand_names(vnames, drp)
+    return (Variable = v.Variable, Level = v.Level, Coord = r)
 end
 
 # Create an indicator matrix corresponding to the distinct
 # values in the vector 'z'.  Also returns dictionaries mapping
 # the unique values to column offsets, and mapping the column
 # offsets to the unique values.
-function make_single_indicator(z::Vector{T}) where{T}
+function make_single_indicator(z::Vector{T}) where {T}
 
     n = length(z)
 
@@ -232,9 +508,11 @@ function make_single_indicator(z::Vector{T}) where{T}
     # Recoding dictionary, maps each distinct value in z to
     # an offset
     rd = Dict{T,Int}()
+    rdi = []
     for (j, v) in enumerate(uq)
         if !ismissing(v)
             rd[v] = j
+            push!(rdi, v)
         end
     end
 
@@ -252,12 +530,6 @@ function make_single_indicator(z::Vector{T}) where{T}
         end
     end
 
-    # Reverse the recoding dictionary
-    rdi = Dict{Int,T}()
-    for (k, v) in rd
-        rdi[v] = k
-    end
-
     return X, rd, rdi
 end
 
@@ -267,17 +539,21 @@ end
 # to levels for each variable.
 function make_indicators(Z)
 
-    rd, rdr = Dict[], Dict[]
+    if size(Z, 1) == 0
+        return zeros(0, 0), Dict[], Vector[]
+    end
+
+    rd, rdi = Dict[], Vector[]
     XX = []
     for j = 1:size(Z, 2)
-        X, di, dir = make_single_indicator(Z[:, j])
-        push!(rd, di)
-        push!(rdr, dir)
+        X, dv, di = make_single_indicator(Z[:, j])
+        push!(rd, dv)
+        push!(rdi, di)
         push!(XX, X)
     end
     I = hcat(XX...)
 
-    return I, rd, rdr
+    return I, rd, rdi
 end
 
 # Return a table summarizing the inertia.
@@ -290,47 +566,3 @@ function inertia(mca::MCA)
     )
     return inr
 end
-
-# Plot the category scores for components numbered 'x' and 'y'.  Ordered factors
-# are connected with line segments.
-#function variable_plot(mca::MCA; x = 1, y = 2, vnames = [], ordered = [], kwargs...)
-
-#    fig = PyPlot.figure()
-#    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-#    ax.grid(true)
-
-# Set up the colormap
-#    cm = get(kwargs, :cmap, PyPlot.get_cmap("tab10"))
-
-# Set up the axis limits
-#    mn = 1.2 * minimum(mca.C.G, dims = 1)
-#    mx = 1.2 * maximum(mca.C.G, dims = 1)
-#    xlim = get(kwargs, :xlim, [mn[x], mx[x]])
-#    ylim = get(kwargs, :ylim, [mn[y], mx[y]])
-#    ax.set_xlim(xlim...)
-#    ax.set_ylim(ylim...)
-
-#    for (j, g) in enumerate(mca.Gv)
-
-#        if mca.vnames[j] in ordered
-#            PyPlot.plot(g[:, x], g[:, y], "-", color = cm(j))
-#        end
-
-#        dr = mca.dr[j]
-#        vn = length(vnames) > 0 ? vnames[j] : ""
-#        for (k, v) in dr
-#            if vn != ""
-#                lb = "$(vn)-$(v)"
-#            else
-#                lb = v
-#            end
-#            ax.text(g[k, x], g[k, y], lb, color = cm(j), ha = "center", va = "center")
-#        end
-#    end
-
-#    inr = inertia(mca)
-#    PyPlot.xlabel(@sprintf("Dimension %d (%.2f%%)", x, 100 * inr[x, :Greenacre]))
-#    PyPlot.ylabel(@sprintf("Dimension %d (%.2f%%)", y, 100 * inr[y, :Greenacre]))
-
-#    return fig
-#end
