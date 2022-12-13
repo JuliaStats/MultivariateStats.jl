@@ -259,7 +259,10 @@ function quali_passive(ca::CA, passive; normalize = "principal")
         error("passive variable array must be two-dimensional")
     end
 
-    (; X, GS) = ca
+    #(; X, GS) = ca
+    X = ca.X
+    GS = ca.GS
+
     PX = Matrix(passive)
 
     if size(PX, 1) != size(X, 1)
@@ -310,7 +313,8 @@ end
 inertia(ca::CA) = ca.I
 
 function variable_coords(ca::CA; normalize = ca.normalize)
-    (; GS) = ca
+    #(; GS) = ca
+    GS = ca.GS
 
     d = size(GS, 2)
     if normalize == "standard"
@@ -370,7 +374,11 @@ object_coords(mca::MCA; normalize = "principal") =
     object_coords(mca.C, normalize = normalize)
 
 function variable_coords(mca::MCA; normalize = "principal")
-    (; C, vnames, dr) = mca
+    #(; C, vnames, dr) = mca
+    C = mca.C
+    vnames = mca.vnames
+    dr = mca.dr
+
     na = expand_names(vnames, dr)
     G = variable_coords(C, normalize = normalize)
     return (Variable = na.Variable, Level = na.Level, Coord = G)
@@ -471,7 +479,8 @@ function fit(
 end
 
 function quali_passive(mca::MCA, passive; normalize = "principal")
-    (; C) = mca
+    #(; C) = mca
+    C = mca.C
     if size(passive, 1) != size(C.X, 1)
         error("Wrong number of rows in passive data array")
     end
