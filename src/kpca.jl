@@ -159,7 +159,7 @@ function fit(::Type{KernelPCA}, X::AbstractMatrix{T};
     elseif kernel === nothing
         @assert issymmetric(X) "Precomputed kernel matrix must be symmetric."
         inverse = false
-        X
+        copy(X)
     else
         throw(ArgumentError("Incorrect kernel type. Use a function or a precomputed kernel."))
     end
