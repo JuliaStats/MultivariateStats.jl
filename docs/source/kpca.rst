@@ -68,6 +68,9 @@ One can use the ``fit`` method to perform kernel PCA over a given dataset.
 
                 This functions accepts two vector arguments ``x`` and ``y``,
                 and returns a scalar value.
+                
+                If ``X`` is a precomputed kernel matrix (Gramian), set 
+                ``kernel=nothing``.
     ----------- --------------------------------------------------------------- ---------------
      solver     The choice of solver:                                            ``:eig``
 
