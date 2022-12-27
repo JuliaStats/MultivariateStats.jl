@@ -132,7 +132,8 @@ This method returns an instance of [`KernelPCA`](@ref).
 Let `(d, n) = size(X)` be respectively the input dimension and the number of observations:
 
 - `kernel`: The kernel function. This functions accepts two vector arguments `x` and `y`,
-and returns a scalar value (*default:* `(x,y)->x'y`)
+and returns a scalar value (*default:* `(x,y)->x'y`). If set to `nothing`, the matrix `X` is
+the pre-computed symmetric kernel (Gram) matrix.
 - `solver`: The choice of solver:
     - `:eig`: uses `LinearAlgebra.eigen` (*default*)
     - `:eigs`: uses `Arpack.eigs` (always used for sparse data)
