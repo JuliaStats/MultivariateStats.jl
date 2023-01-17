@@ -340,6 +340,9 @@ mutable struct MCA{T<:Real} <: LinearDimensionalityReduction
     # Variable names
     vnames::Vector{String}
 
+    # Variable+level names
+    names::NamedTuple
+
     # Map values to integer positions
     rd::Vector{Dict}
 
@@ -473,7 +476,9 @@ function fit(
 
     una, ben, gra = get_eigs(C.I, J, K)
 
-    mca = MCA(C, XI, vnames, rd, dr, K, J, una, ben, gra)
+    na = expand_names(vnames, dr)
+
+    mca = MCA(C, XI, vnames, na, rd, dr, K, J, una, ben, gra)
 
     return mca
 end
