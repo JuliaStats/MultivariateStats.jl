@@ -463,7 +463,7 @@ function fit(
     end
 
     # Get the indicator matrix
-    XI, rd, dr = make_indicators(X)
+    XI, rd, dr = make_indicators(X, "active")
 
     # Create the underlying correspondence analysis value
     C = fit(CA, XI; d = d, normalize = normalize, method = method)
@@ -490,7 +490,7 @@ function quali_passive(mca::MCA, passive; normalize = "principal")
         error("Wrong number of rows in passive data array")
     end
 
-    PI, _, drp = make_indicators(passive)
+    PI, _, drp = make_indicators(passive, "passive")
     r = quali_passive(C, PI; normalize = normalize)
 
     vnames = if typeof(passive) <: AbstractDataFrame
@@ -508,19 +508,21 @@ end
 # values in the vector 'z'.  Also returns dictionaries mapping
 # the unique values to column offsets, and mapping the column
 # offsets to the unique values.
-function make_single_indicator(z::Vector{T}) where {T}
+function make_single_indicator(z::AbstractVector, vtype::String, pos::Int)
 
     n = length(z)
 
     # Unique values of the variable
     uq = sort(unique(z))
 
-    if length(uq) > 50
-        @warn("Nominal variable has more than 50 levels")
+    # This situation usually results from user error so warn.
+    if length(uq) > 20
+        @warn("$(titlecase(vtype)) variable in column $(pos) has more than 20 levels")
     end
 
     # Recoding dictionary, maps each distinct value in z to
     # an offset
+    T = eltype(z)
     rd = Dict{T,Int}()
     rdi = []
     for (j, v) in enumerate(uq)
@@ -551,7 +553,7 @@ end
 # In addition to the indicator matrix, return vectors of
 # dictionaries mapping levels to positions and positions
 # to levels for each variable.
-function make_indicators(Z)
+function make_indicators(Z, vtype::String)
 
     if size(Z, 1) == 0
         return zeros(0, 0), Dict[], Vector[]
@@ -560,7 +562,7 @@ function make_indicators(Z)
     rd, rdi = Dict[], Vector[]
     XX = []
     for j = 1:size(Z, 2)
-        X, dv, di = make_single_indicator(Z[:, j])
+        X, dv, di = make_single_indicator(Z[:, j], vtype, j)
         push!(rd, dv)
         push!(rdi, di)
         push!(XX, X)
