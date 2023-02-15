@@ -53,7 +53,7 @@ import Statistics: mean, cov, var
     d = 5
     n = 1000
 
-    R = collect(qr(randn(rng, d, d)).Q)
+    R = Matrix(qr(randn(rng, d, d)).Q)
     @test R'R ≈ Matrix(I, 5, 5)
     rmul!(R, Diagonal(sqrt.([0.5, 0.3, 0.1, 0.05, 0.05])))
 
