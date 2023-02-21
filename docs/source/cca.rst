@@ -40,7 +40,7 @@ Let ``M`` be an instance of ``CCA``, ``dx`` be the dimension of ``X``, ``dy`` th
 
 .. function:: correlations(M)
 
-    The correlations of the projected componnents (a vector of length ``p``).
+    The correlations of the projected components (a vector of length ``p``).
 
 Transformation
 ~~~~~~~~~~~~~~~

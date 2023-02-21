@@ -37,7 +37,7 @@ function extract_kv(fac::Factorization{T}, ord::AbstractVector{Int}, k::Int) whe
 end
 
 
-# symmmetrize a matrix
+# symmetrize a matrix
 
 function symmetrize!(A::Matrix)
     n = size(A, 1)

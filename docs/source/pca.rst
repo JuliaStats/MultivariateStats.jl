@@ -147,7 +147,7 @@ One can use the ``fit`` method to perform PCA over a given dataset.
 .. code-block:: julia
 
     using MultivariateStats, RDatasets, Plots
-    plotly() # using plotly for 3D-interacive graphing
+    plotly() # using plotly for 3D interactive graphing
 
     # load iris dataset 
     iris = dataset("datasets", "iris")
@@ -177,7 +177,7 @@ One can use the ``fit`` method to perform PCA over a given dataset.
     versicolor = Yte[:,Xte_labels.=="versicolor"]
     virginica = Yte[:,Xte_labels.=="virginica"]
 
-    # visualize first 3 principal components in 3D interacive plot
+    # visualize first 3 principal components in 3D interactive plot
     p = scatter(setosa[1,:],setosa[2,:],setosa[3,:],marker=:circle,linewidth=0)
     scatter!(versicolor[1,:],versicolor[2,:],versicolor[3,:],marker=:circle,linewidth=0)
     scatter!(virginica[1,:],virginica[2,:],virginica[3,:],marker=:circle,linewidth=0)
