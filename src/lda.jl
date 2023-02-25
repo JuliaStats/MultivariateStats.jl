@@ -23,7 +23,7 @@ end
 Performs LDA given a covariance matrix `C` and both mean vectors `μp` & `μn`.  Returns a linear discriminant functional of type [`LinearDiscriminant`](@ref).
 
 *Parameters*
-- `C`: The pooled covariane matrix (*i.e* ``(Cp + Cn)/2``)
+- `C`: The pooled covariance matrix (*i.e* ``(Cp + Cn)/2``)
 - `μp`: The mean vector of the positive class.
 - `μn`: The mean vector of the negative class.
 """
@@ -128,7 +128,7 @@ length(f::LinearDiscriminant) = length(f.w)
 """
     fit(LinearDiscriminant, Xp, Xn; covestimator = SimpleCovariance())
 
-Performs LDA given both positive and negative samples. The function accepts follwing parameters:
+Performs LDA given both positive and negative samples. The function accepts following parameters:
 
 **Parameters**
 - `Xp`: The sample matrix of the positive class.

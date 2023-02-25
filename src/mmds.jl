@@ -19,7 +19,7 @@ mds = fit(MDS, D; distances=true, maxoutdim=size(D,1)-1)
 where `D` is a symmetric matrix `D` of distances between points.
 
 In addition, the `metric` parameter specifies type of MDS, By default, it is assigned with `nothing` value
-which results in performing *metric MDS* with dissimilarities calculated as Euclidian distances.
+which results in performing *metric MDS* with dissimilarities calculated as Euclidean distances.
 
 An arbitrary transformation function can be provided to `metric` parameter to
 perform metric MDS with transformed proximities. The function has to accept two parameters,

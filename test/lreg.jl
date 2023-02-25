@@ -147,7 +147,7 @@ using StableRNGs
     @test aa ≈ Aa[:,1]
 
 
-    ## ridge (with qudratic r matrix)
+    ## ridge (with quadratic r matrix)
 
     Q = qr(randn(rng, n, n)).Q
     r = Q' * diagm(0=>r) * Q
