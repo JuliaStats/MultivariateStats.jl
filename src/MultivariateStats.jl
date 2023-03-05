@@ -1,5 +1,6 @@
 module MultivariateStats
 
+    using DataFrames
     using LinearAlgebra
     using SparseArrays
     using Statistics: middle
@@ -105,7 +106,17 @@ module MultivariateStats
     FactorAnalysis,         # Type: the Factor Analysis model
 
     faem,                   # EM algorithm for factor analysis
-    facm                    # CM algorithm for factor analysis
+    facm,                   # CM algorithm for factor analysis
+
+    ## ca, mca
+    CA,                     # Type: correspondence analysis
+
+    MCA,                    # Type: multiple correspondence analysis
+    object_coords,          # return the object scores or coordinates from CA or MCA
+    variable_coords,        # return the variable/category scores or coordinates from CA or MCA
+    inertia,                # return the inertia (derived from eigenvalues) for CA
+    ca_stats,               # fit statistics
+    quali_passive           # handle qualitative passive variables
 
     ## source files
     include("types.jl")
@@ -121,6 +132,7 @@ module MultivariateStats
     include("lda.jl")
     include("ica.jl")
     include("fa.jl")
+    include("mca.jl")
 
     ## deprecations
     @deprecate indim(f) size(f,1)
