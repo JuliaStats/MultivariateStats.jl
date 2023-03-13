@@ -4,10 +4,6 @@ using Test
 using StableRNGs
 using Statistics: mean, cov, cor
 
-# DEBUG
-using CSV
-using Tables
-
 @testset "CCA" begin
 
     rng = StableRNG(34568)
