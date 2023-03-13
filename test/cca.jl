@@ -4,6 +4,10 @@ using Test
 using StableRNGs
 using Statistics: mean, cov, cor
 
+# DEBUG
+using CSV
+using Tables
+
 @testset "CCA" begin
 
     rng = StableRNG(34568)
@@ -20,7 +24,7 @@ using Statistics: mean, cov, cor
     Px = qr(randn(rng, dx, dx)).Q[:, 1:p]
     Py = qr(randn(rng, dy, dy)).Q[:, 1:p]
 
-    M = CCA(Float64[], Float64[], Px, Py, [0.8, 0.6, 0.4])
+    M = CCA(Float64[], Float64[], Px, Py, [0.8, 0.6, 0.4], zeros(3), -1)
 
     @test size(M)[1] == dx
     @test size(M)[2] == dy
@@ -40,7 +44,7 @@ using Statistics: mean, cov, cor
     ux = randn(rng, dx)
     uy = randn(rng, dy)
 
-    M = CCA(ux, uy, Px, Py, [0.8, 0.6, 0.4])
+    M = CCA(ux, uy, Px, Py, [0.8, 0.6, 0.4], zeros(3), -1)
 
     @test size(M)[1] == dx
     @test size(M)[2] == dy
@@ -145,12 +149,31 @@ using Statistics: mean, cov, cor
     predict(M, YY, :y)
     predict(MM, XX, :x)
     predict(MM, YY, :y)
-    
+
     # type stability
     for func in (M->mean(M, :x), M->mean(M, :y),
                  M->projection(M, :x),
                  M->projection(M, :y), cor)
         @test eltype(func(M)) == Float64
         @test eltype(func(MM)) == Float32
+    end
+
+    M1 = fit(CCA, X, Y; method=:svd, outdim=5)
+    M2 = fit(CCA, X, Y; method=:cov, outdim=5)
+
+    # From Stata
+    stats = [0.000384245, 2.81275, 55.1432]
+    df1 = [30, 30, 30]
+    df2 = [3958, 4965, 4937]
+    fstats = [810.3954, 212.8296, 1814.9480]
+
+    ct1 = MultivariateStats.tests(M1)
+    ct2 = MultivariateStats.tests(M2; n=size(X, 2))
+
+    for ct in [ct1, ct2]
+        @test isapprox(ct.stat, stats, atol=1e-5, rtol=1e-5)
+        @test isapprox(ct.fstat, fstats, atol=1e-5, rtol=1e-5)
+        @test isapprox(ct.df1, df1, atol=1e-5, rtol=1e-5)
+        @test isapprox(ct.df2, df2, atol=1e-5, rtol=1e-5)
     end
 end

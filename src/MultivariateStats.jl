@@ -3,6 +3,7 @@ module MultivariateStats
     using LinearAlgebra
     using SparseArrays
     using Statistics: middle
+    using Distributions: cdf, FDist
     using StatsAPI: RegressionModel
     using StatsBase: SimpleCovariance, CovarianceEstimator, AbstractDataTransform,
                      ConvergenceException, pairwise, pairwise!, CoefTable
@@ -28,6 +29,7 @@ module MultivariateStats
     eigvecs,            # eignenvectors of the transformation
     loadings,           # model loadings
     var,                # model variance
+    tests,              # hypothesis tests
 
     # lreg
     llsq,               # Linear Least Square regression
