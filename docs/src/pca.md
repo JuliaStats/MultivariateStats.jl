@@ -94,6 +94,10 @@ pcacov
 pcasvd
 ```
 
+**Note:** By default, the model displayed with additional statistics (e.g. loadings, variance, etc.).
+Depending on a screens size this output may be limited. Use `show(stdout, "text/plain", M)` to produce
+a full model output.
+
 ## Kernel Principal Component Analysis
 
 [Kernel Principal Component Analysis](https://en.wikipedia.org/wiki/Kernel_principal_component_analysis>) (kernel PCA)

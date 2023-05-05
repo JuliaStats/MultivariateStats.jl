@@ -143,8 +143,16 @@ function show(io::IO, M::PCA)
 end
 
 function show(io::IO, ::MIME"text/plain", M::PCA)
+    screenheight = if !(get(io, :limit, false)::Bool)
+        typemax(Int)
+    else
+        displaysize(io)[1]-4
+    end
+
     idim, odim = size(M)
     print(io, "PCA(indim = $idim, outdim = $odim, principalratio = $(r2(M)))")
+    screenheight > idim+4 || return
+
     ldgs = loadings(M)
     rot = diag(ldgs' * ldgs)
     ldgs = ldgs[:, sortperm(rot, rev=true)]
@@ -154,6 +162,8 @@ function show(io::IO, ::MIME"text/plain", M::PCA)
     print(io, "\n\nPattern matrix (unstandardized loadings):\n")
     cft = CoefTable(ldgs, string.("PC", 1:odim), string.("", 1:idim))
     print(io, cft)
+    screenheight > idim+15 || return
+
     print(io, "\n\n")
     print(io, "Importance of components:\n")
     λ = eigvals(M)
