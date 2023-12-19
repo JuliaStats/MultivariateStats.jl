@@ -266,15 +266,15 @@ the weight equals the number of samples of each class.
 """
 classweights(M::MulticlassLDA) = classweights(M.stats)
 """
-withinclass_scatter(M)
+    withinclass_scatter(M)
 
-    Get the within-class scatter matrix (of size ``(d, d)``).
+Get the within-class scatter matrix (of size ``(d, d)``).
 """
 withclass_scatter(M::MulticlassLDA) = withclass_scatter(M.stats)
 """
-betweenclass_scatter(M)
+    betweenclass_scatter(M)
 
-    Get the between-class scatter matrix (of size ``(d, d)``).
+Get the between-class scatter matrix (of size ``(d, d)``).
 """
 betweenclass_scatter(M::MulticlassLDA) = betweenclass_scatter(M.stats)
 
