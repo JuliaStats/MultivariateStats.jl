@@ -30,13 +30,13 @@ loadings(::FactorAnalysis)
 Given a factor analysis model ``M``, one can use it to transform observations into
 latent variables, as
 
-```@math
+```math
 \mathbf{z} =  \mathbf{W}^T \mathbf{\Sigma}^{-1} (\mathbf{x} - \boldsymbol{\mu})
 ```
 
 or use it to reconstruct (approximately) the observations from latent variables, as
 
-```@math
+```math
 \tilde{\mathbf{x}} = \mathbf{\Sigma} \mathbf{W} (\mathbf{W}^T \mathbf{W})^{-1} \mathbf{z} + \boldsymbol{\mu}
 ```
 
