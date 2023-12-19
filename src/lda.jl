@@ -121,6 +121,8 @@ Return the linear discriminant model coefficient vector.
 weights(f::LinearDiscriminant) = f.w
 
 """
+    length(f::LinearDiscriminant)
+
 Get the length of the coefficient vector.
 """
 length(f::LinearDiscriminant) = length(f.w)
