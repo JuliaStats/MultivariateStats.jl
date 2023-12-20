@@ -160,7 +160,7 @@ Let ``M`` be an instance of [`PPCA`](@ref), ``d`` be the dimension of observatio
 and ``p`` be the output dimension (*i.e* the dimension of the principal subspace).
 
 ```@docs
-fit
+fit(::PPCA)
 size(::PPCA)
 mean(::PPCA)
 var(::PPCA)
