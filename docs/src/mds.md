@@ -74,7 +74,7 @@ projection(M::MDS)
 loadings(M::MDS)
 eigvals(M::MDS)
 eigvecs(M::MDS)
-stress
+stress(M::MDS)
 ```
 
 This package provides following functions related to classical MDS.
