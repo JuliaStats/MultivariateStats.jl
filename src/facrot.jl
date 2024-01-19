@@ -500,7 +500,7 @@ function rotate(L::AbstractMatrix,
     lsiter::Integer=10,
     tol::Real=1.0e-6) where {T<:FactorRotationMethod}
     return FactorRotation(
-        gparotate(L, C; normalizerows, randominit, maxiter, lsiter, ϵ=tol)...
+        gparotate(L, C; normalizerows=normalizerows, randominit=randominit, maxiter=maxiter, lsiter=lsiter, ϵ=tol)...
     )
 end
 
@@ -517,7 +517,7 @@ function rotate!(M::FactorAnalysis,
     maxiter::Integer=1000,
     lsiter::Integer=10,
     tol::Real=1.0e-6) where {T<:FactorRotationMethod}
-    FR = rotate(loadings(M), C; normalizerows, randominit, maxiter, lsiter, tol)
+    FR = rotate(loadings(M), C; normalizerows=normalizerows, randominit=randominit, maxiter=maxiter, lsiter=lsiter, tol=tol)
     M.W .= loadings(FR)
 
     return M
@@ -536,7 +536,7 @@ function rotate!(M::PCA,
     maxiter::Integer=1000,
     lsiter::Integer=10,
     tol::Real=1.0e-6) where {T<:FactorRotationMethod}
-    FR = rotate(projection(M), C; normalizerows, randominit, maxiter, lsiter, tol)
+    FR = rotate(projection(M), C; normalizerows=normalizerows, randominit=randominit, maxiter=maxiter, lsiter=lsiter, tol=tol)
     M.proj .= loadings(FR)
 
     return M
