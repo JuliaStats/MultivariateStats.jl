@@ -11,6 +11,10 @@ module MultivariateStats
     import Base: length, size, show
     import StatsAPI: fit, predict, coef, weights, dof, r2
     import LinearAlgebra: eigvals, eigvecs
+    
+    @static if VERSION ≥ v"1.5"
+        import LinearAlgebra: rotate!
+    end
 
     export
 
@@ -105,7 +109,26 @@ module MultivariateStats
     FactorAnalysis,         # Type: the Factor Analysis model
 
     faem,                   # EM algorithm for factor analysis
-    facm                    # CM algorithm for factor analysis
+    facm,                   # CM algorithm for factor analysis
+
+    ## facrot
+    FactorRotationMethod,    # Type: a factor rotation method
+    Orthogonal,              # Type: Orthogonal factor rotation method
+    Oblique,                 # Type: Oblique factor rotation method
+
+    FactorRotationCriterion, # Type: a factor rotation criterion
+    CrawfordFerguson,        # Type: Crawford-Fergusion rotation criteria
+    Varimax,                 # Type: Varimax rotation criterion
+    Quartimax,               # Type: Quartimax rotation criterion
+    MinimumEntropy,          # Type: MinimumEntropy rotation criterion
+    Oblimin,                 # Type: Oblimin rotation criteria
+    Quartimin,               # Type: Quartimin rotation criterion
+
+    FactorRotation,          # Type: Result of a general factor rotation
+    rotation,                # Extract rotation matrix
+
+    rotate,                  # Rotate factors
+    rotate!                  # Rotate in-place
 
     ## source files
     include("types.jl")
@@ -121,6 +144,7 @@ module MultivariateStats
     include("lda.jl")
     include("ica.jl")
     include("fa.jl")
+    include("facrot.jl")
 
     ## deprecations
     @deprecate indim(f) size(f,1)
