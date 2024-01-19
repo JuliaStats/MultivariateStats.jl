@@ -265,6 +265,8 @@ to perform the computation
   line search
 - `ϵ` is the convergence tolerance
 
+Returns the rotated loading matrix and the rotation matrix as a tuple.
+
 **References**
 - Bernaards, C.A. and Jennrich, R.I. (2005) Gradient Projection Algorithms
   and Software for Arbitrary Rotation Criteria in Factor Analysis.
@@ -365,6 +367,8 @@ to perform the computation
 - `lsiter` determines the maximum number of iterations spent on
   line search
 - `ϵ` is the convergence tolerance
+
+Returns the rotated loading matrix and the rotation matrix as a tuple.
 
 **References**
 - Bernaards, C.A. and Jennrich, R.I. (2005) Gradient Projection Algorithms
@@ -481,6 +485,8 @@ Rotate the loadings in matrix `L` using the criterion `C`.
 - `L` is the matrix of loadings to be rotated
 - `C` is a factor rotation criterion
 
+Returns a [`FactorRotation`](@ref) object.
+
 **Keyword parameters**
 - If `normalizerows` is true, then the rows of `F` are normalized to
   length 1 before rotation and the rows of the rotated loadings are
@@ -507,7 +513,7 @@ end
 """
     rotate(M::FactorAnalysis, C::FactorRotationCriterion{T <: FactorRotationMethod}; ...)
 
-Rotate the loadings of the Factor Analysis model `M` using the criterion `C`.
+Rotate the loadings of the [`FactorAnalysis`](@ref) model `M` using the criterion `C`.
 Modifies the loading matrix in `M`. Parameters as in [`rotate`](@ref).
 """
 function rotate!(M::FactorAnalysis,
@@ -526,7 +532,7 @@ end
 """
     rotate(M::PCA, C::FactorRotationCriterion{T <: FactorRotationMethod}; ...)
 
-Rotate the components of the PCA model `M` using the criterion `C`.
+Rotate the components of the [`PCA`](@ref) model `M` using the criterion `C`.
 Modifies the projection matrix in `M`. Parameters as in [`rotate`](@ref).
 """
 function rotate!(M::PCA,

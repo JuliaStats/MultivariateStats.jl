@@ -15,8 +15,8 @@ makedocs(
         "ica.md",
         "cca.md",
         "fa.md",
-        "mds.md",
         "facrot.md",
+        "mds.md",
         "Development" => "api.md"]
 )
 
