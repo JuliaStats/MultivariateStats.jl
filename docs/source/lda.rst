@@ -77,7 +77,7 @@ The package provides several functions to perform Linear Discriminant Analysis.
 
     Performs LDA given a covariance matrix and both mean vectors. 
 
-    :param C: The pooled covariane matrix (*i.e* ``(Cp + Cn)/2``)
+    :param C: The pooled covariance matrix (*i.e* ``(Cp + Cn)/2``)
     :param μp: The mean vector of the positive class.
     :param μn: The mean vector of the negative class.
 

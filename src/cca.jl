@@ -81,7 +81,7 @@ end
 """
     cor(M::CCA)
 
-The correlations of the projected componnents (a vector of length `p`).
+The correlations of the projected components (a vector of length `p`).
 """
 cor(M::CCA) = M.corrs
 
@@ -244,7 +244,7 @@ end
 #   Proceedings 25 (2003), 81-99.
 #
 #   Note: in this paper, each row is considered as an observation.
-#   The algorithm is adpated to the column-major format here.
+#   The algorithm is adapted to the column-major format here.
 #
 function _ccasvd(Zx::DenseMatrix{T}, Zy::DenseMatrix{T}, xmean::Vector{T}, ymean::Vector{T}, p::Int) where T<:Real
     # svd factorization of Z
@@ -315,7 +315,7 @@ function fit(::Type{CCA}, X::AbstractMatrix{T}, Y::AbstractMatrix{T};
         throw(DimensionMismatch("X and Y should have the same number of columns."))
 
     (n >= dx && n >= dy) ||
-        @warn("CCA would be numerically instable when n < dx or n < dy.")
+        @warn("CCA would be numerically unstable when n < dx or n < dy.")
 
     xmv = preprocess_mean(X, xmean)
     ymv = preprocess_mean(Y, ymean)
