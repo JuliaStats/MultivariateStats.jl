@@ -10,7 +10,11 @@ module MultivariateStats
     import Statistics: mean, var, cov, covm, cor
     import Base: length, size, show
     import StatsAPI: fit, predict, coef, weights, dof, r2
-    import LinearAlgebra: eigvals, eigvecs, rotate!
+    import LinearAlgebra: eigvals, eigvecs
+    
+    @static if VERSION ≥ v"1.5"
+        import LinearAlgebra: rotate!
+    end
 
     export
 
