@@ -36,11 +36,11 @@ of rotation can be set through the type parameter `T`.
 
 This criterion minimizes
 
-`Q(Λ) = (1 - k) * tr((Λ.^2)' * Λ.^2 * N) / 4 + k * tr((Λ.^2)' * M * Λ.^2) / 4`
+`Q(Λ) = (1 - kappa) * tr((Λ.^2)' * Λ.^2 * N) / 4 + kappa * tr((Λ.^2)' * M * Λ.^2) / 4`
 
 where `Λ` is a `d x p` rotated loading matrix, `N` is a `p x p`
 matrix with zeros on the diagonal and ones everywhere else, `M` is an
-analogous `d x d` matrix, and `k` is a non-negative shape parameter.
+analogous `d x d` matrix, and `kappa` is a non-negative shape parameter.
 
 **Parameters**
 - `kappa` is a non-negative shape parameter. In the orthogonal setting,
@@ -205,10 +205,10 @@ shape parameter.
   Psychometrika, 44, 173-177.
 """
 struct Oblimin{T} <: FactorRotationCriterion{T}
-    γ::Real
+    gamma::Real
 
-    Oblimin{T}(; γ::Union{Real,Integer}=0.0) where {T<:FactorRotationMethod} = begin
-        new(float(γ))
+    Oblimin{T}(; gamma::Union{Real,Integer}=0.0) where {T<:FactorRotationMethod} = begin
+        new(float(gamma))
     end
 end
 
@@ -500,7 +500,7 @@ function rotate(L::AbstractMatrix,
     lsiter::Integer=10,
     tol::Real=1.0e-6) where {T<:FactorRotationMethod}
     return FactorRotation(
-        gparotate(L, C; normalizerows, randominit, maxiter, lsiter, tol)...
+        gparotate(L, C; normalizerows, randominit, maxiter, lsiter, ϵ=tol)...
     )
 end
 
