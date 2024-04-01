@@ -9,7 +9,7 @@ A linear discriminant functional can be written as
     f(\\mathbf{x}) = \\mathbf{w}^T \\mathbf{x} + b
 ```
 
-Here, ``w`` is the coefficient vector, and ``b`` is the bias constant.
+Here, ``\\mathbf{w}`` is the coefficient vector, and ``b`` is the bias constant.
 """
 struct LinearDiscriminant{T<:Real} <: RegressionModel
     w::Vector{T}
@@ -23,7 +23,7 @@ end
 Performs LDA given a covariance matrix `C` and both mean vectors `μp` & `μn`.  Returns a linear discriminant functional of type [`LinearDiscriminant`](@ref).
 
 *Parameters*
-- `C`: The pooled covariance matrix (*i.e* ``(Cp + Cn)/2``)
+- `C`: The pooled covariance matrix (*i.e* ``(\\mathbf{C}_p + \\mathbf{C}_n)/2``)
 - `μp`: The mean vector of the positive class.
 - `μn`: The mean vector of the negative class.
 """
@@ -49,7 +49,7 @@ Performs LDA given covariances and mean vectors. Returns a linear discriminant f
 - `μp`: The mean vector of the positive class.
 - `μn`: The mean vector of the negative class.
 
-**Note:** The coefficient vector is scaled such that ``w'μp + b = 1`` and ``w'μn + b = -1``.
+**Note:** The coefficient vector is scaled such that ``\\mathbf{w}'\\boldsymbol{μ}_p + b = 1`` and ``\\mathbf{w}'\\boldsymbol{μ}_n + b = -1``.
 """
 ldacov(Cp::DenseMatrix{T},
        Cn::DenseMatrix{T},
@@ -59,14 +59,14 @@ ldacov(Cp::DenseMatrix{T},
 """
     evaluate(f, x::AbstractVector)
 
-Evaluate the linear discriminant value, *i.e* ``w'x + b``, it returns a real value.
+Evaluate the linear discriminant value, *i.e* ``\\mathbf{w}'x + b``, it returns a real value.
 """
 evaluate(f::LinearDiscriminant, x::AbstractVector) = dot(f.w, x) + f.b
 
 """
     evaluate(f, X::AbstractMatrix)
 
-Evaluate the linear discriminant value, *i.e* ``w'x + b``, for each sample in columns of `X`. The function returns a vector of length `size(X, 2)`.
+Evaluate the linear discriminant value, *i.e* ``\\mathbf{w}'x + b``, for each sample in columns of `X`. The function returns a vector of length `size(X, 2)`.
 """
 function evaluate(f::LinearDiscriminant, X::AbstractMatrix)
     R = transpose(X) * f.w
@@ -242,20 +242,20 @@ length(M::MulticlassLDA) = M.stats.dim
 """
     projection(M::MulticlassLDA)
 
-Get the projection matrix (of size *d x p*).
+Get the projection matrix (of size ``d × p``).
 """
 projection(M::MulticlassLDA) = M.proj
 """
     mean(M::MulticlassLDA)
 
-Get the overall sample mean vector (of length *d*).
+Get the overall sample mean vector (of length ``d``).
 """
 mean(M::MulticlassLDA) = mean(M.stats)
 
 """
     classmeans(M)
 
-Get the matrix comprised of class-specific means as columns (of size ``(d, m)``).
+Get the matrix comprised of class-specific means as columns (of size ``d × m``).
 """
 classmeans(M::MulticlassLDA) = classmeans(M.stats)
 """
@@ -268,13 +268,13 @@ classweights(M::MulticlassLDA) = classweights(M.stats)
 """
     withinclass_scatter(M)
 
-Get the within-class scatter matrix (of size ``(d, d)``).
+Get the within-class scatter matrix (of size ``d × d``).
 """
 withclass_scatter(M::MulticlassLDA) = withclass_scatter(M.stats)
 """
     betweenclass_scatter(M)
 
-Get the between-class scatter matrix (of size ``(d, d)``).
+Get the between-class scatter matrix (of size ``d × d``).
 """
 betweenclass_scatter(M::MulticlassLDA) = betweenclass_scatter(M.stats)
 
@@ -322,7 +322,7 @@ The resultant projection matrix ``P`` satisfies:
 ```math
 \\mathbf{P}^T (\\mathbf{S}_w + \\kappa \\mathbf{I}) \\mathbf{P} = \\mathbf{I}
 ```
-Here, ``\\kappa`` equals `regcoef * eigmax(Sw)`. The columns of ``P`` are arranged in descending order of
+Here, ``\\kappa`` equals `regcoef * eigmax(Sw)`. The columns of ``\\mathbf{P}`` are arranged in descending order of
 the corresponding generalized eigenvalues.
 
 Note that [`MulticlassLDA`](@ref) does not currently support the normalized version using ``\\mathbf{S}_w^*`` and
