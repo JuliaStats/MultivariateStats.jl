@@ -10,7 +10,7 @@ struct FactorAnalysis{T<:Real} <: LatentVariableDimensionalityReduction
 end
 
 """
-    size(M::PPCA)
+    size(M::FactorAnalysis)
 
 Returns a tuple with values of the input dimension ``d``, *i.e* the dimension of
 the observation space, and the output dimension ``p``, *i.e* the dimension of
@@ -19,7 +19,7 @@ the principal subspace.
 size(M::FactorAnalysis) = size(M.W)
 
 """
-    mean(M::PPCA)
+    mean(M::FactorAnalysis)
 
 Get the mean vector (of length ``d``).
 """
