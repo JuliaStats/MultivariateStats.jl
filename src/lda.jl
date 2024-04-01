@@ -121,6 +121,8 @@ Return the linear discriminant model coefficient vector.
 weights(f::LinearDiscriminant) = f.w
 
 """
+    length(f::LinearDiscriminant)
+
 Get the length of the coefficient vector.
 """
 length(f::LinearDiscriminant) = length(f.w)
@@ -264,13 +266,13 @@ the weight equals the number of samples of each class.
 """
 classweights(M::MulticlassLDA) = classweights(M.stats)
 """
-withinclass_scatter(M)
+    withinclass_scatter(M)
 
 Get the within-class scatter matrix (of size ``d × d``).
 """
 withclass_scatter(M::MulticlassLDA) = withclass_scatter(M.stats)
 """
-betweenclass_scatter(M)
+    betweenclass_scatter(M)
 
 Get the between-class scatter matrix (of size ``d × d``).
 """
