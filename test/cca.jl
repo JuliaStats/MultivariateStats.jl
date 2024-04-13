@@ -157,19 +157,23 @@ using Statistics: mean, cov, cor
     M1 = fit(CCA, X, Y; method=:svd, outdim=5)
     M2 = fit(CCA, X, Y; method=:cov, outdim=5)
 
-    # From Stata
-    stats = [0.000384245, 2.81275, 55.1432]
-    df1 = [30, 30, 30]
-    df2 = [3958, 4965, 4937]
-    fstats = [810.3954, 212.8296, 1814.9480]
+    # Compare hypothesis tests with Stata
+    stats = (WilksLambda=0.000384245, PillaiTrace=2.81275, LawleyHotelling=55.1432)
+    df1 = (WilksLambda=30, PillaiTrace=30, LawleyHotelling=30)
+    df2 = (WilksLambda=3958, PillaiTrace=4965, LawleyHotelling=4937)
+    fstats = (WilksLambda=810.3954, PillaiTrace=212.8296, LawleyHotelling=1814.9480)
 
-    ct1 = MultivariateStats.tests(M1)
-    ct2 = MultivariateStats.tests(M2; n=size(X, 2))
+    for f in [WilksLambda, PillaiTrace, LawleyHotelling]
 
-    for ct in [ct1, ct2]
-        @test isapprox(ct.stat, stats, atol=1e-5, rtol=1e-5)
-        @test isapprox(ct.fstat, fstats, atol=1e-5, rtol=1e-5)
-        @test isapprox(ct.df1, df1, atol=1e-5, rtol=1e-5)
-        @test isapprox(ct.df2, df2, atol=1e-5, rtol=1e-5)
+        ct1 = f(M1)
+        ct2 = f(M2; n=size(X, 2))
+        s = Symbol(f)
+
+        for ct in [ct1, ct2]
+            @test isapprox(ct.stat, stats[s], atol=1e-5, rtol=1e-5)
+            @test isapprox(ct.fstat, fstats[s], atol=1e-5, rtol=1e-5)
+            @test isapprox(ct.df1, df1[s], atol=1e-5, rtol=1e-5)
+            @test isapprox(ct.df2, df2[s], atol=1e-5, rtol=1e-5)
+        end
     end
 end

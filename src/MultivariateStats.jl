@@ -69,7 +69,9 @@ module MultivariateStats
 
     ## cca
     CCA,                # Type: Correlation Component Analysis model
-    CCATest,            # Type: hypothesis tests for CCA
+    WilksLambda,        # Wilks lambda statistics and tests
+    PillaiTrace,        # Pillai trace statistics and tests
+    LawleyHotelling,    # Lawley-Hotelling statistics and tests
 
     ccacov,             # CCA based on covariances
     ccasvd,             # CCA based on singular value decomposition of input data

@@ -341,52 +341,39 @@ function fit(::Type{CCA}, X::AbstractMatrix{T}, Y::AbstractMatrix{T};
     return M::CCA
 end
 
-struct CCATest <: HypothesisTest
-    # All below are vectors of length 3, containing
-    # results for Wilks, Pillai, and Lawley-Hotelling
-    # respectively.
-    stat::Vector{Float64}
-    fstat::Vector{Float64}
-    df1::Vector{Float64}
-    df2::Vector{Float64}
+abstract type MultivariateTest <: HypothesisTest end
+
+struct WilksLambda <: MultivariateTest
+    stat::Float64
+    fstat::Float64
+    df1::Float64
+    df2::Float64
 end
 
-function htype(type::AbstractString)
-    t = lowercase(type)
-    if t == "wilks"
-        return 1
-    elseif t == "pillai"
-        return 2
-    elseif t == "lawley"
-        return 3
-    else
-        throw(error("Unkown type '$(type)'"))
-    end
+struct LawleyHotelling <: MultivariateTest
+    stat::Float64
+    fstat::Float64
+    df1::Float64
+    df2::Float64
 end
 
-function pvalue(ct::CCATest; type="Wilks")
-    i = htype(type)
-    return 1 - cdf(FDist(ct.df1[i], ct.df2[i]), ct.fstat[i])
+struct PillaiTrace <: MultivariateTest
+    stat::Float64
+    fstat::Float64
+    df1::Float64
+    df2::Float64
 end
 
-function dof(ct::CCATest; type="Wilks")
-    return (ct.df1[htype(type)], ct.df2[htype(type)])
+function pvalue(ct::MultivariateTest)
+    return 1 - cdf(FDist(ct.df1, ct.df2), ct.fstat)
 end
 
-"""
-Test hypotheses based on a fitted CCA.
+function dof(ct::MultivariateTest)
+    return (ct.df1, ct.df2)
+end
 
-Three test statistics (Wilks Lambda, Pillai's trace, and the
-Lawley-Hotelling statistic) are used to test the null hypothesis
-that canonical correlations k, k+1, ... are identically zero.  By
-default the null hypothesis is that k==1 -- all canonical correlations
-are zero.
+function _testprep(cca::CCA, n, k)
 
-**Keyword arguments:**
-- `n`: The sample size, required if the CCA was fit using the :cov method.
-- `k`: Test the null hypothesis that canonical correlations k, k+1, ... are zero.
-"""
-function tests(cca::CCA; n=nothing, k=1)
     r = cca.eigs[k:end]
     dx = length(cca.xmean)
     dy = length(cca.ymean)
@@ -394,44 +381,72 @@ function tests(cca::CCA; n=nothing, k=1)
         @error("If CCA was fit using :cov, n must be provided to tests")
         return
     end
-    if !isnothing(n) && cca.nobs != -1 && cca.nobs != n
+    if n != -1 && cca.nobs != -1 && cca.nobs != n
         @warn("Provided n is different from actual n")
     end
-    n = isnothing(n) ? cca.nobs : n
-
-    # Below are from Rencher and Christensen (2012)
+    n = n == -1 ? cca.nobs : n
 
     p = dx - k + 1
     q = dy - k + 1
     n = n - k + 1
 
-    # Wilks lambda
-    wilks = prod(1 .- r.^2)
-    w = n - (p + q + 3) / 2
-    t = p*q == 2 ? 1.0 : sqrt((p^2*q^2 - 4) / (p^2 + q^2 - 5))
-    wilks_df1 = p*q
-    wilks_df2 = w*t - p*q/2 + 1
-    wilks_f = ((1 - wilks^(1/t)) / wilks^(1/t)) * (wilks_df2 / wilks_df1)
-
-    # Pillai's trace
-    pillai = sum(abs2, r)
-    s = min(p, q)
     m = (abs(p - q) - 1) / 2
     N = (n - p - q - 2) / 2
-    pillai_f = (2*N + s + 1)*pillai / ((2*m + s + 1) * (s - pillai))
-    pillai_df1 = s*(2*m + s + 1)
-    pillai_df2 = s*(2*N + s + 1)
+    s = min(p, q)
 
-    # Lawley-Hotelling
-    lawley = sum(r.^2 ./ (1 .- r.^2))
-    lawley_f = 2*(s*N + 1) * lawley / (s^2 * (2*m + s + 1))
-    lawley_df1 = s*(2*m + s + 1)
-    lawley_df2 = 2*(s*N + 1)
+    return r, s, m, N, n, dx, dy, p, q
+end
 
-    stat = [wilks, pillai, lawley]
-    fstat = [wilks_f, pillai_f, lawley_f]
-    df1 = [wilks_df1, pillai_df1, lawley_df1]
-    df2 = [wilks_df2, pillai_df2, lawley_df2]
+"""
+    WilksLambda(cca; n=-1, k=1)
 
-    return CCATest(stat, fstat, df1, df2)
+Use Wilks Lambda to test the dimension of a CCA.  The null hypothesis of
+the test is that canonical correlations k, k+1, ... are zero.  If the
+CCA was fit with a covariance matrix then the sample size n must be provided.
+"""
+function WilksLambda(cca::CCA; n=-1, k=1)
+
+    # Reference: Rencher and Christensen (2012)
+
+    r, s, m, N, n, dx, dy, p, q = _testprep(cca, n, k)
+    stat = prod(1 .- r.^2)
+    w = n - (p + q + 3) / 2
+    t = p*q == 2 ? 1.0 : sqrt((p^2*q^2 - 4) / (p^2 + q^2 - 5))
+    df1 = p*q
+    df2 = w*t - p*q/2 + 1
+    fstat = ((1 - stat^(1/t)) / stat^(1/t)) * (df2 / df1)
+    return WilksLambda(stat, fstat, df1, df2)
+end
+
+"""
+    PillaiTrace(cca; n=-1, k=1)
+
+Use Pillai's trace to test the dimension of a CCA.  The null hypothesis of
+the test is that canonical correlations k, k+1, ... are zero.  If the
+CCA was fit with a covariance matrix then the sample size n must be provided.
+"""
+function PillaiTrace(cca::CCA; n=-1, k=1)
+    r, s, m, N, n, dx, dy, p, q = _testprep(cca, n, k)
+    stat = sum(abs2, r)
+    fstat = (2*N + s + 1)*stat / ((2*m + s + 1) * (s - stat))
+    df1 = s*(2*m + s + 1)
+    df2 = s*(2*N + s + 1)
+    return PillaiTrace(stat, fstat, df1, df2)
+end
+
+"""
+    LawleyHotelling(cca; n=-1, k=1)
+
+Use the Lawley Hotelling statistics to test the dimension of a CCA.  The
+null hypothesis of the test is that canonical correlations k, k+1, ... are
+zero.  If the CCA was fit with a covariance matrix then the sample size n
+must be provided.
+"""
+function LawleyHotelling(cca::CCA; n=-1, k=1)
+    r, s, m, N, n, dx, dy, p, q = _testprep(cca, n, k)
+    stat = sum(r.^2 ./ (1 .- r.^2))
+    fstat = 2*(s*N + 1) * stat / (s^2 * (2*m + s + 1))
+    df1 = s*(2*m + s + 1)
+    df2 = 2*(s*N + 1)
+    return LawleyHotelling(stat, fstat, df1, df2)
 end
