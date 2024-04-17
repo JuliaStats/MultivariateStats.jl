@@ -30,7 +30,7 @@ import Statistics: mean, cov
         Z = K - I1*K - K*I2 + I1*K*I2
 
         KC = fit(MultivariateStats.KernelCenter, K)
-        @test all(Z .≈ MultivariateStats.transform!(KC, copy(K)))
+        @test all(.≈(Z, MultivariateStats.transform!(KC, copy(K)); atol=1e-12))
     end
 
     # kernel calculations
