@@ -135,7 +135,7 @@ projection(M::MDS) = M.U
 """
     eigvecs(M::MDS)
 
-Get the MDS model `M` eigenvectors matrix. 
+Get the MDS model `M` eigenvectors matrix.
 """
 eigvecs(M::MDS) = projection(M)
 
@@ -151,7 +151,7 @@ eigvals(M::MDS) = M.λ
 
 Get the loading of the MDS model `M`.
 """
-loadings(M::MDS) = sqrt.(M.λ)' .* M.U
+loadings(M::MDS) = sqrt.(M.λ)' .* M.U[:,eachindex(M.λ)]
 
 ## use
 
