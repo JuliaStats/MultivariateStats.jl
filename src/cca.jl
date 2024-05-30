@@ -365,7 +365,7 @@ struct PillaiTrace <: MultivariateTest
 end
 
 function pvalue(ct::MultivariateTest)
-    return 1 - cdf(FDist(ct.df1, ct.df2), ct.fstat)
+    return ccdf(FDist(ct.df1, ct.df2), ct.fstat)
 end
 
 function dof(ct::MultivariateTest)
@@ -378,7 +378,7 @@ function _testprep(cca::CCA, n, k)
     dx = length(cca.xmean)
     dy = length(cca.ymean)
     if isnothing(n) && cca.nobs == -1
-        @error("If CCA was fit using :cov, n must be provided to tests")
+        throw(ArgumentError("If CCA was fit using :cov, n must be provided to tests"))
         return
     end
     if n != -1 && cca.nobs != -1 && cca.nobs != n
