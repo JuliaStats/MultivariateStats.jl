@@ -156,5 +156,12 @@ using StableRNGs
     M = fit(MetricMDS, Δ, maxoutdim=2, distances=true, initial=Z, metric=isotonic, tol=1e-6)
     @test stress(M) ≈ 0.234 atol=1e-2
 
+    # loadings when the Gramian has fewer positive eigenvalues than there are points
+    X = randn(2, 100)
+    D = [norm(x - y) for x in eachcol(X), y in eachcol(X)]
+    M = fit(MDS, D; distances=true)
+    @test length(eigvals(M)) < 99   # check that this test is checking what we want it to check
+    Y = loadings(M)
+    @test size(Y) == (100, length(eigvals(M)))
 end
 
