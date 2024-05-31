@@ -29,7 +29,6 @@ module MultivariateStats
     eigvecs,            # eignenvectors of the transformation
     loadings,           # model loadings
     var,                # model variance
-    tests,              # hypothesis tests
     pvalue,             # p-values for hypothesis tests
 
     # lreg
