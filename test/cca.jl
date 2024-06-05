@@ -158,12 +158,12 @@ using Statistics: mean, cov, cor
     M2 = fit(CCA, X, Y; method=:cov, outdim=5)
 
     # Compare hypothesis tests with Stata
-    stats = (WilksLambda=0.000384245, PillaiTrace=2.81275, LawleyHotelling=55.1432)
-    df1 = (WilksLambda=30, PillaiTrace=30, LawleyHotelling=30)
-    df2 = (WilksLambda=3958, PillaiTrace=4965, LawleyHotelling=4937)
-    fstats = (WilksLambda=810.3954, PillaiTrace=212.8296, LawleyHotelling=1814.9480)
+    stats = (WilksLambdaTest=0.000384245, PillaiTraceTest=2.81275, LawleyHotellingTest=55.1432)
+    df1 = (WilksLambdaTest=30, PillaiTraceTest=30, LawleyHotellingTest=30)
+    df2 = (WilksLambdaTest=3958, PillaiTraceTest=4965, LawleyHotellingTest=4937)
+    fstats = (WilksLambdaTest=810.3954, PillaiTraceTest=212.8296, LawleyHotellingTest=1814.9480)
 
-    for f in [WilksLambda, PillaiTrace, LawleyHotelling]
+    for f in [WilksLambdaTest, PillaiTraceTest, LawleyHotellingTest]
 
         ct1 = f(M1)
         ct2 = f(M2; n=size(X, 2))

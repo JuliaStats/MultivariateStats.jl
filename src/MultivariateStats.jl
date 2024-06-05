@@ -67,10 +67,10 @@ module MultivariateStats
     KernelPCA,          # Type: the Kernel PCA model
 
     ## cca
-    CCA,                # Type: Correlation Component Analysis model
-    WilksLambda,        # Wilks lambda statistics and tests
-    PillaiTrace,        # Pillai trace statistics and tests
-    LawleyHotelling,    # Lawley-Hotelling statistics and tests
+    CCA,                 # Type: Correlation Component Analysis model
+    WilksLambdaTest,     # Wilks lambda statistics and tests
+    PillaiTraceTest,     # Pillai trace statistics and tests
+    LawleyHotellingTest, # Lawley-Hotelling statistics and tests
 
     ccacov,             # CCA based on covariances
     ccasvd,             # CCA based on singular value decomposition of input data

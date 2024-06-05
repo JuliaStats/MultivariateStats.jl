@@ -343,21 +343,21 @@ end
 
 abstract type MultivariateTest <: HypothesisTest end
 
-struct WilksLambda <: MultivariateTest
+struct WilksLambdaTest <: MultivariateTest
     stat::Float64
     fstat::Float64
     df1::Float64
     df2::Float64
 end
 
-struct LawleyHotelling <: MultivariateTest
+struct LawleyHotellingTest <: MultivariateTest
     stat::Float64
     fstat::Float64
     df1::Float64
     df2::Float64
 end
 
-struct PillaiTrace <: MultivariateTest
+struct PillaiTraceTest <: MultivariateTest
     stat::Float64
     fstat::Float64
     df1::Float64
@@ -379,10 +379,9 @@ function _testprep(cca::CCA, n, k)
     dy = length(cca.ymean)
     if isnothing(n) && cca.nobs == -1
         throw(ArgumentError("If CCA was fit using :cov, n must be provided to tests"))
-        return
     end
     if n != -1 && cca.nobs != -1 && cca.nobs != n
-        @warn("Provided n is different from actual n")
+        throw("Provided n is different from actual n")
     end
     n = n == -1 ? cca.nobs : n
 
@@ -398,13 +397,13 @@ function _testprep(cca::CCA, n, k)
 end
 
 """
-    WilksLambda(cca; n=-1, k=1)
+    WilksLambdaTest(cca; n=-1, k=1)
 
 Use Wilks Lambda to test the dimension of a CCA.  The null hypothesis of
 the test is that canonical correlations k, k+1, ... are zero.  If the
 CCA was fit with a covariance matrix then the sample size n must be provided.
 """
-function WilksLambda(cca::CCA; n=-1, k=1)
+function WilksLambdaTest(cca::CCA; n=-1, k=1)
 
     # Reference: Rencher and Christensen (2012)
 
@@ -415,38 +414,38 @@ function WilksLambda(cca::CCA; n=-1, k=1)
     df1 = p*q
     df2 = w*t - p*q/2 + 1
     fstat = ((1 - stat^(1/t)) / stat^(1/t)) * (df2 / df1)
-    return WilksLambda(stat, fstat, df1, df2)
+    return WilksLambdaTest(stat, fstat, df1, df2)
 end
 
 """
-    PillaiTrace(cca; n=-1, k=1)
+    PillaiTraceTest(cca; n=-1, k=1)
 
 Use Pillai's trace to test the dimension of a CCA.  The null hypothesis of
 the test is that canonical correlations k, k+1, ... are zero.  If the
 CCA was fit with a covariance matrix then the sample size n must be provided.
 """
-function PillaiTrace(cca::CCA; n=-1, k=1)
+function PillaiTraceTest(cca::CCA; n=-1, k=1)
     r, s, m, N, n, dx, dy, p, q = _testprep(cca, n, k)
     stat = sum(abs2, r)
     fstat = (2*N + s + 1)*stat / ((2*m + s + 1) * (s - stat))
     df1 = s*(2*m + s + 1)
     df2 = s*(2*N + s + 1)
-    return PillaiTrace(stat, fstat, df1, df2)
+    return PillaiTraceTest(stat, fstat, df1, df2)
 end
 
 """
-    LawleyHotelling(cca; n=-1, k=1)
+    LawleyHotellingTest(cca; n=-1, k=1)
 
 Use the Lawley Hotelling statistics to test the dimension of a CCA.  The
 null hypothesis of the test is that canonical correlations k, k+1, ... are
 zero.  If the CCA was fit with a covariance matrix then the sample size n
 must be provided.
 """
-function LawleyHotelling(cca::CCA; n=-1, k=1)
+function LawleyHotellingTest(cca::CCA; n=-1, k=1)
     r, s, m, N, n, dx, dy, p, q = _testprep(cca, n, k)
     stat = sum(r.^2 ./ (1 .- r.^2))
     fstat = 2*(s*N + 1) * stat / (s^2 * (2*m + s + 1))
     df1 = s*(2*m + s + 1)
     df2 = 2*(s*N + 1)
-    return LawleyHotelling(stat, fstat, df1, df2)
+    return LawleyHotellingTest(stat, fstat, df1, df2)
 end
