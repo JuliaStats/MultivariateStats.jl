@@ -3,13 +3,14 @@ module MultivariateStats
     using LinearAlgebra
     using SparseArrays
     using Statistics: middle
-    using StatsAPI: RegressionModel
+    using Distributions: cdf, FDist
+    using StatsAPI: RegressionModel, HypothesisTest
     using StatsBase: SimpleCovariance, CovarianceEstimator, AbstractDataTransform,
                      ConvergenceException, pairwise, pairwise!, CoefTable
 
     import Statistics: mean, var, cov, covm, cor
     import Base: length, size, show
-    import StatsAPI: fit, predict, coef, weights, dof, r2
+    import StatsAPI: fit, predict, coef, weights, dof, r2, pvalue
     import LinearAlgebra: eigvals, eigvecs
 
     export
@@ -28,6 +29,7 @@ module MultivariateStats
     eigvecs,            # eignenvectors of the transformation
     loadings,           # model loadings
     var,                # model variance
+    pvalue,             # p-values for hypothesis tests
 
     # lreg
     llsq,               # Linear Least Square regression
@@ -65,7 +67,10 @@ module MultivariateStats
     KernelPCA,          # Type: the Kernel PCA model
 
     ## cca
-    CCA,                # Type: Correlation Component Analysis model
+    CCA,                 # Type: Correlation Component Analysis model
+    WilksLambdaTest,     # Wilks lambda statistics and tests
+    PillaiTraceTest,     # Pillai trace statistics and tests
+    LawleyHotellingTest, # Lawley-Hotelling statistics and tests
 
     ccacov,             # CCA based on covariances
     ccasvd,             # CCA based on singular value decomposition of input data

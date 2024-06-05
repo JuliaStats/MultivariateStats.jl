@@ -10,12 +10,16 @@ struct CCA{T<:Real} <: RegressionModel
     xproj::Matrix{T}  # projection matrix for X, of size (dx, p)
     yproj::Matrix{T}  # projection matrix for Y, of size (dy, p)
     corrs::Vector{T}  # correlations, of length p
+    eigs::Vector{T}   # eigenvalues
+    nobs::Int64       # number of observations
 
     function CCA(xm::Vector{T},
                  ym::Vector{T},
                  xp::Matrix{T},
                  yp::Matrix{T},
-                 crs::Vector{T}) where T<:Real
+                 crs::Vector{T},
+                 eigs::Vector{T},
+                 nobs::Int) where T<:Real
 
         dx, px = size(xp)
         dy, py = size(yp)
@@ -32,7 +36,7 @@ struct CCA{T<:Real} <: RegressionModel
         length(crs) == px ||
             throw(DimensionMismatch("Incorrect length of corrs."))
 
-        new{T}(xm, ym, xp, yp, crs)
+        new{T}(xm, ym, xp, yp, crs, eigs, nobs)
     end
 end
 
@@ -177,7 +181,7 @@ function _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p::Int)
         G = cholesky(Cyy) \ Cxy'
         Ex = eigen(Symmetric(Cxy * G), Symmetric(Cxx))
         ord = sortperm(Ex.values; rev=true)
-        vx, Px = extract_kv(Ex, ord, p)
+        eigs, Px = extract_kv(Ex, ord, p)
         Py = qnormalize!(G * Px, Cyy)
     else
         # solve Py: (Cyx * inv(Cxx) * Cxy) Py = λ Cyy Py
@@ -186,7 +190,7 @@ function _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p::Int)
         H = cholesky(Cxx) \ Cxy
         Ey = eigen(Symmetric(Cxy'H), Symmetric(Cyy))
         ord = sortperm(Ey.values; rev=true)
-        vy, Py = extract_kv(Ey, ord, p)
+        eigs, Py = extract_kv(Ey, ord, p)
         Px = qnormalize!(H * Py, Cxx)
     end
 
@@ -196,7 +200,7 @@ function _ccacov(Cxx, Cyy, Cxy, xmean, ymean, p::Int)
     crs = coldot(Px, Cxy * Py)
 
     # construct CCA model
-    CCA(xmean, ymean, Px, Py, crs)
+    CCA(xmean, ymean, Px, Py, crs, sqrt.(eigs), -1)
 end
 
 """
@@ -275,7 +279,7 @@ function _ccasvd(Zx::DenseMatrix{T}, Zy::DenseMatrix{T}, xmean::Vector{T}, ymean
     crs = rmul!(coldot(Zx'Px, Zy'Py), one(T)/(n-1))
 
     # construct CCA model
-    CCA(xmean, ymean, Px, Py, crs)
+    CCA(xmean, ymean, Px, Py, crs, S.S[si], n)
 end
 
 ## interface functions
@@ -335,4 +339,113 @@ function fit(::Type{CCA}, X::AbstractMatrix{T}, Y::AbstractMatrix{T};
     end
 
     return M::CCA
+end
+
+abstract type MultivariateTest <: HypothesisTest end
+
+struct WilksLambdaTest <: MultivariateTest
+    stat::Float64
+    fstat::Float64
+    df1::Float64
+    df2::Float64
+end
+
+struct LawleyHotellingTest <: MultivariateTest
+    stat::Float64
+    fstat::Float64
+    df1::Float64
+    df2::Float64
+end
+
+struct PillaiTraceTest <: MultivariateTest
+    stat::Float64
+    fstat::Float64
+    df1::Float64
+    df2::Float64
+end
+
+function pvalue(ct::MultivariateTest)
+    return ccdf(FDist(ct.df1, ct.df2), ct.fstat)
+end
+
+function dof(ct::MultivariateTest)
+    return (ct.df1, ct.df2)
+end
+
+function _testprep(cca::CCA, n, k)
+
+    r = cca.eigs[k:end]
+    dx = length(cca.xmean)
+    dy = length(cca.ymean)
+    if isnothing(n) && cca.nobs == -1
+        throw(ArgumentError("If CCA was fit using :cov, n must be provided to tests"))
+    end
+    if n != -1 && cca.nobs != -1 && cca.nobs != n
+        throw("Provided n is different from actual n")
+    end
+    n = n == -1 ? cca.nobs : n
+
+    p = dx - k + 1
+    q = dy - k + 1
+    n = n - k + 1
+
+    m = (abs(p - q) - 1) / 2
+    N = (n - p - q - 2) / 2
+    s = min(p, q)
+
+    return r, s, m, N, n, dx, dy, p, q
+end
+
+"""
+    WilksLambdaTest(cca; n=-1, k=1)
+
+Use Wilks Lambda to test the dimension of a CCA.  The null hypothesis of
+the test is that canonical correlations k, k+1, ... are zero.  If the
+CCA was fit with a covariance matrix then the sample size n must be provided.
+"""
+function WilksLambdaTest(cca::CCA; n=-1, k=1)
+
+    # Reference: Rencher and Christensen (2012)
+
+    r, s, m, N, n, dx, dy, p, q = _testprep(cca, n, k)
+    stat = prod(1 .- r.^2)
+    w = n - (p + q + 3) / 2
+    t = p*q == 2 ? 1.0 : sqrt((p^2*q^2 - 4) / (p^2 + q^2 - 5))
+    df1 = p*q
+    df2 = w*t - p*q/2 + 1
+    fstat = ((1 - stat^(1/t)) / stat^(1/t)) * (df2 / df1)
+    return WilksLambdaTest(stat, fstat, df1, df2)
+end
+
+"""
+    PillaiTraceTest(cca; n=-1, k=1)
+
+Use Pillai's trace to test the dimension of a CCA.  The null hypothesis of
+the test is that canonical correlations k, k+1, ... are zero.  If the
+CCA was fit with a covariance matrix then the sample size n must be provided.
+"""
+function PillaiTraceTest(cca::CCA; n=-1, k=1)
+    r, s, m, N, n, dx, dy, p, q = _testprep(cca, n, k)
+    stat = sum(abs2, r)
+    fstat = (2*N + s + 1)*stat / ((2*m + s + 1) * (s - stat))
+    df1 = s*(2*m + s + 1)
+    df2 = s*(2*N + s + 1)
+    return PillaiTraceTest(stat, fstat, df1, df2)
+end
+
+"""
+    LawleyHotellingTest(cca; n=-1, k=1)
+
+Use the Lawley Hotelling statistics to test the dimension of a CCA.  The
+null hypothesis of the test is that canonical correlations k, k+1, ... are
+zero.  If the CCA was fit with a covariance matrix then the sample size n
+must be provided.
+"""
+function LawleyHotellingTest(cca::CCA; n=-1, k=1)
+    r, s, m, N, n, dx, dy, p, q = _testprep(cca, n, k)
+    stat = sum(r.^2 ./ (1 .- r.^2))
+    fstat = 2*(s*N + 1) * stat / (s^2 * (2*m + s + 1))
+    df1 = s*(2*m + s + 1)
+    df2 = 2*(s*N + 1)
+    return LawleyHotellingTest(stat, fstat, df1, df2)
 end
