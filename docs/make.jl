@@ -5,20 +5,21 @@ if Base.HOME_PROJECT[] !== nothing
 end
 
 makedocs(
-    sitename = "MultivariateStats.jl",
-    modules = [MultivariateStats],
-    pages = ["Home"=>"index.md",
-             "whiten.md",
-             "lreg.md",
-             "lda.md",
-             "pca.md",
-             "ica.md",
-             "cca.md",
-             "fa.md",
-             "mds.md",
-             "Development"=>"api.md"]
+    sitename="MultivariateStats.jl",
+    modules=[MultivariateStats],
+    pages=["Home" => "index.md",
+        "whiten.md",
+        "lreg.md",
+        "lda.md",
+        "pca.md",
+        "ica.md",
+        "cca.md",
+        "fa.md",
+        "facrot.md",
+        "mds.md",
+        "Development" => "api.md"]
 )
 
 deploydocs(
-    repo = "github.com/JuliaStats/MultivariateStats.jl.git"
+    repo="github.com/JuliaStats/MultivariateStats.jl.git"
 )
