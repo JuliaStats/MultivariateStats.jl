@@ -52,7 +52,7 @@ or use it to reconstruct (approximately) the observations from latent variables,
 
     \tilde{\mathbf{x}} = \mathbf{\Sigma} \mathbf{W} (\mathbf{W}^T \mathbf{W})^{-1} \mathbf{z} + \boldsymbol{\mu}
 
-Here, :math:`\mathbf{W}` is the factor loadings or weight matrix, :math:`\mathbf{\Sigma} = \mathbf{\Psi} + \mathbf{W}^T \mathbf{W}` is the covariance matrix.
+Here, :math:`\mathbf{W}` is the factor loadings or weight matrix, :math:`\mathbf{\Sigma} = \mathbf{\Psi} + \mathbf{W} \mathbf{W}^T` is the covariance matrix.
 
 The package provides methods to do so:
 
