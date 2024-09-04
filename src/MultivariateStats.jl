@@ -1,16 +1,16 @@
 module MultivariateStats
 
-    using DataFrames
     using LinearAlgebra
     using SparseArrays
     using Statistics: middle
-    using StatsAPI: RegressionModel
+    using Distributions: cdf, FDist
+    using StatsAPI: RegressionModel, HypothesisTest
     using StatsBase: SimpleCovariance, CovarianceEstimator, AbstractDataTransform,
                      ConvergenceException, pairwise, pairwise!, CoefTable
 
     import Statistics: mean, var, cov, covm, cor
     import Base: length, size, show
-    import StatsAPI: fit, predict, coef, weights, dof, r2
+    import StatsAPI: fit, predict, coef, weights, dof, r2, pvalue
     import LinearAlgebra: eigvals, eigvecs
 
     export
@@ -67,7 +67,10 @@ module MultivariateStats
     KernelPCA,          # Type: the Kernel PCA model
 
     ## cca
-    CCA,                # Type: Correlation Component Analysis model
+    CCA,                 # Type: Correlation Component Analysis model
+    WilksLambdaTest,     # Wilks lambda statistics and tests
+    PillaiTraceTest,     # Pillai trace statistics and tests
+    LawleyHotellingTest, # Lawley-Hotelling statistics and tests
 
     ccacov,             # CCA based on covariances
     ccasvd,             # CCA based on singular value decomposition of input data
@@ -107,17 +110,7 @@ module MultivariateStats
     FactorAnalysis,         # Type: the Factor Analysis model
 
     faem,                   # EM algorithm for factor analysis
-    facm,                   # CM algorithm for factor analysis
-
-    ## ca, mca
-    CA,                     # Type: correspondence analysis
-
-    MCA,                    # Type: multiple correspondence analysis
-    object_coords,          # return the object scores or coordinates from CA or MCA
-    variable_coords,        # return the variable/category scores or coordinates from CA or MCA
-    inertia,                # return the inertia (derived from eigenvalues) for CA
-    ca_stats,               # fit statistics
-    quali_passive           # handle qualitative passive variables
+    facm                    # CM algorithm for factor analysis
 
     ## source files
     include("types.jl")
@@ -133,7 +126,6 @@ module MultivariateStats
     include("lda.jl")
     include("ica.jl")
     include("fa.jl")
-    include("mca.jl")
 
     ## deprecations
     @deprecate indim(f) size(f,1)
