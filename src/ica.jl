@@ -107,6 +107,7 @@ Invoke the Fast ICA algorithm[^1].
 - `fun`: The approximate neg-entropy functor of type [`ICAGDeriv`](@ref).
 - `maxiter`: Maximum number of iterations.
 - `tol`: Tolerable change of `W` at convergence.
+- `omit_convergence_exception`: Whether to omit an exception if the function did not converge.
 
 Returns the updated `W`.
 
@@ -116,7 +117,8 @@ function fastica!(W::DenseMatrix{T},         # initialized component matrix, siz
                   X::DenseMatrix{T},         # (whitened) observation sample matrix, size(m, n)
                   fun::ICAGDeriv,            # approximate neg-entropy functor
                   maxiter::Int,              # maximum number of iterations
-                  tol::Real) where {T<:Real} # convergence tolerance
+                  tol::Real,                 # convergence tolerance
+                  omit_convergence_exception::Bool) where {T<:Real}
 
     # argument checking
     m = size(W, 1)
@@ -173,7 +175,11 @@ function fastica!(W::DenseMatrix{T},         # initialized component matrix, siz
 
         @debug "Iteration $t" change=chg tolerance=tol
     end
-    converged || throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
+
+    if !omit_convergence_exception && !converged
+        throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
+    end
+
     return W
 end
 
@@ -194,6 +200,7 @@ while each column corresponds to an observation (*e.g* all signal value at a par
 - `do_whiten`: Whether to perform pre-whitening (*default* `true`)
 - `maxiter`: Maximum number of iterations (*default* `100`)
 - `tol`: Tolerable change of ``W`` at convergence (*default* `1.0e-6`)
+- `omit_convergence_exception`: Whether to omit an exception if the function did not converge (*default* `false`).
 - `mean`: The mean vector, which can be either of:
     - `0`: the input data has already been centralized
     - `nothing`: this function will compute the mean (*default*)
@@ -216,6 +223,7 @@ function fit(::Type{ICA}, X::AbstractMatrix{T},# sample matrix, size (m, n)
              do_whiten::Bool=true,             # whether to perform pre-whitening
              maxiter::Integer=100,             # maximum number of iterations
              tol::Real=1.0e-6,                 # convergence tolerance
+             omit_convergence_exception::Bool=false,
              mean=nothing,                     # pre-computed mean
              winit::Matrix{T}=zeros(T,0,0)     # init guess of W, size (m, k)
             ) where {T<:Real}
@@ -247,7 +255,7 @@ function fit(::Type{ICA}, X::AbstractMatrix{T},# sample matrix, size (m, n)
     W = (isempty(winit) ? randn(T, size(Z,1), k) : copy(winit))
 
     # invoke core algorithm
-    fastica!(W, Z, fun, maxiter, tol)
+    fastica!(W, Z, fun, maxiter, tol, omit_convergence_exception)
 
     # construct model
     if do_whiten

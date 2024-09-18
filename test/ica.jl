@@ -85,6 +85,7 @@ using StatsBase: ConvergenceException
         @test W'C * W ≈ Matrix(I, k, k)
 
         @test_throws ConvergenceException fit(ICA, X, k; do_whiten=true, tol=1e-8, maxiter=2)
+        _ = fit(ICA, X, k; do_whiten=true, tol=1e-8, maxiter=2, omit_convergence_exception=true)
 
         # Use data of different type
         XX = convert(Matrix{Float32}, X)
