@@ -117,6 +117,10 @@ predict(::KernelPCA)
 predict(::KernelPCA, ::AbstractVecOrMat{T}) where {T<:Real}
 reconstruct(::KernelPCA, ::AbstractVecOrMat{T}) where {T<:Real}
 size(::KernelPCA)
+```
+!!! note
+	If `reconstruct` is called with an input that is not an `AbstractVecOrMat` of real numbers, an `ArgumentError` is thrown indicating the invalid input type and the expected type.
+```
 projection(::KernelPCA)
 eigvals(::KernelPCA)
 eigvecs(::KernelPCA)
@@ -164,6 +168,10 @@ fit
 size(::PPCA)
 mean(::PPCA)
 var(::PPCA)
+```
+!!! note
+	If `reconstruct` is called with an input that is not an `AbstractVecOrMat` of real numbers, an `ArgumentError` is thrown indicating the invalid input type and the expected type.
+```
 cov(::PPCA)
 projection(::PPCA)
 loadings(::PPCA)
@@ -188,6 +196,9 @@ Here, ``\mathbf{W}`` is the factor loadings or weight matrix.
 predict(::PPCA, ::AbstractVecOrMat{T}) where {T<:Real}
 reconstruct(::PPCA, ::AbstractVecOrMat{T}) where {T<:Real}
 ```
+```
+!!! note
+	If `reconstruct` is called with an input that is not an `AbstractVecOrMat` of real numbers, an `ArgumentError` is thrown indicating the invalid input type and the expected type.
 
 Auxiliary functions:
 

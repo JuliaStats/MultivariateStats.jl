@@ -43,6 +43,12 @@ import SparseArrays
     @test reconstruct(M, Y[:,1]) ≈ P * Y[:,1]
     @test reconstruct(M, Y) ≈ P * Y
 
+    @test_throws ArgumentError reconstruct(M, 123)
+    @test_throws ArgumentError reconstruct(M, Dict())
+    @test_throws ArgumentError reconstruct(M, "abc")
+    @test_throws ArgumentError reconstruct(M, 8923.29)
+    @test_throws ArgumentError reconstruct(M, 1+2im)
+
 
     ## PCA with non-zero mean
 
