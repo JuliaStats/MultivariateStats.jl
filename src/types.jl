@@ -23,8 +23,14 @@ projection(model::AbstractDimensionalityReduction) = error("'projection' is not 
     reconstruct(model::AbstractDimensionalityReduction, y)
 
 Return the model response (a.k.a. the dependent variable).
+Throws an `ArgumentError` if `y` is not an `AbstractVecOrMat` of real numbers, indicating the invalid 
+input type and the expected type.
 """
-reconstruct(model::AbstractDimensionalityReduction, y) = error("'reconstruct' is not defined for $(typeof(model)).")
+function reconstruct(model::AbstractDimensionalityReduction, y)
+    throw(ArgumentError("Invalid input type $(typeof(y)) for reconstruct(::$(typeof(model))). " * 
+    "Expected an AbstractVecOrMat of real numbers."
+    ))
+end
 
 abstract type LinearDimensionalityReduction <: AbstractDimensionalityReduction end
 
