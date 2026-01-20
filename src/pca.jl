@@ -180,16 +180,14 @@ function check_pcaparams(d::Int, mean::AbstractVector, md::Int, pr::Real)
     0.0 < pr <= 1.0 || throw(ArgumentError("principal ratio must be a positive real value ≤ 1.0."))
 end
 
-function choose_pcadim(v::AbstractVector{T}, ord::Vector{Int}, vsum::T, md::Int,
-                       pr::Real) where {T<:Real}
+function choose_pcadim(v::AbstractVector{T}, ord::AbstractVector{Int}, vsum::T, md::Int,
+    pr::Real) where {T<:Real}
     md = min(length(v), md)
-    k = 1
-    a = v[ord[1]]
     thres = vsum * convert(T, pr)
-    while k < md && a < thres
-        a += v[ord[k += 1]]
-    end
-    return k
+    vo = @view v[ord[1:md]]  # Create a view to avoid data copying
+    cumsum_vo = cumsum(vo)   # Compute the cumulative sum
+    k = findfirst(>=(thres), cumsum_vo)
+    return k === nothing ? md : k
 end
 
 
@@ -239,11 +237,9 @@ function pcasvd(Z::AbstractMatrix{T}, mean::AbstractVector{T}, n::Real;
 
     check_pcaparams(size(Z,1), mean, maxoutdim, pratio)
     Svd = svd(Z)
-    v = Svd.S::Vector{T}
-    U = Svd.U::Matrix{T}
-    for i = 1:length(v)
-        @inbounds v[i] = abs2(v[i]) / (n-1)
-    end
+    v = Svd.S
+    U = Svd.U
+    v = abs2.(v) / (n-1)
     ord = sortperm(v; rev=true)
     vsum = sum(v)
     k = choose_pcadim(v, ord, vsum, maxoutdim, pratio)
