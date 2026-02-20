@@ -1,6 +1,6 @@
 # Canonical Correlation Analysis
 
-[Canonical Correlation Analysis](http://en.wikipedia.org/wiki/Canonical_correlation)(CCA) is
+[Canonical Correlation Analysis](http://en.wikipedia.org/wiki/Canonical_correlation) (CCA) is
 a statistical analysis technique to identify correlations between two sets of
 variables. Given two vector variables ``X`` and ``Y``, it finds two projections,
 one for each, to transform them to a common space with maximum correlations.
