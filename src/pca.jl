@@ -153,7 +153,7 @@ function show(io::IO, ::MIME"text/plain", M::PCA)
     ldgs = ldgs * diagm(0 => ldgs_signs[:])
     print(io, "\n\nPattern matrix (unstandardized loadings):\n")
     cft = CoefTable(ldgs, string.("PC", 1:odim), string.("", 1:idim))
-    print(io, cft)
+    show(io, MIME"text/plain"(), cft)
     print(io, "\n\n")
     print(io, "Importance of components:\n")
     λ = eigvals(M)
@@ -164,7 +164,7 @@ function show(io::IO, ::MIME"text/plain", M::PCA)
              "Proportion explained", "Cumulative proportion"]
     cft = CoefTable(vcat(λ', prp', cumsum(prp)',  prpv', cumsum(prpv)'),
                     string.("PC", 1:odim), names)
-    print(io, cft)
+    show(io, MIME"text/plain"(), cft)
 end
 
 #### PCA Training

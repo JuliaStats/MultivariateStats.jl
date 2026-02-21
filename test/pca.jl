@@ -49,6 +49,30 @@ import SparseArrays
     @test_throws ArgumentError reconstruct(M, 8923.29)
     @test_throws ArgumentError reconstruct(M, 1+2im)
 
+    @test repr("text/plain", M) == """
+        PCA(indim = 5, outdim = 3, principalratio = 0.8)
+
+        Pattern matrix (unstandardized loadings):
+        ─────────────────────────────────
+                 PC1        PC2       PC3
+        ─────────────────────────────────
+        1  -0.236399   0.706558  1.21106
+        2   1.27426    0.047799  0.212282
+        3   0.990598  -1.22718   0.882179
+        4  -1.51861   -0.725771  0.631665
+        5   0.181386   1.21069   0.557706
+        ─────────────────────────────────
+
+        Importance of components:
+        ───────────────────────────────────────────────────
+                                        PC1       PC2   PC3
+        ───────────────────────────────────────────────────
+        SS Loadings (Eigenvalues)  5.0       4.0       3.0
+        Variance explained         0.333333  0.266667  0.2
+        Cumulative variance        0.333333  0.6       0.8
+        Proportion explained       0.416667  0.333333  0.25
+        Cumulative proportion      0.416667  0.75      1.0
+        ───────────────────────────────────────────────────"""
 
     ## PCA with non-zero mean
 
