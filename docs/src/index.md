@@ -11,7 +11,7 @@ end
 [MultivariateStats.jl](https://github.com/JuliaStats/MultivariateStats.jl) is a Julia package for multivariate statistical analysis. It provides a rich set of useful analysis techniques, such as PCA, CCA, LDA, ICA, etc.
 
 ```@contents
-Pages = ["whiten.md", "lreg.md", "lda.md", "pca.md", "ica.md", "cca.md", "fa.md", "mds.md", "api.md"]
+Pages = ["whiten.md", "lreg.md", "lda.md", "pca.md", "ica.md", "cca.md", "fa.md", "facrot.md", "mds.md", "api.md"]
 Depth = 2
 ```
 
