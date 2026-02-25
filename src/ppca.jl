@@ -153,12 +153,14 @@ or an empty vector indicating a zero mean.
 
 Returns the resultant [`PPCA`](@ref) model.
 
-**Note:** This function accepts three keyword arguments: `maxoutdim`, `tol`, and `maxiter`.
+**Note:** This function accepts four keyword arguments: `maxoutdim`, `tol`,
+`maxiter` and `omit_convergence_exception`.
 """
 function ppcaem(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
                 maxoutdim::Int=size(S,1)-1,
                 tol::Real=1.0e-6,   # convergence tolerance
-                maxiter::Integer=1000) where {T<:Real}
+                maxiter::Integer=1000,
+                omit_convergence_exception::Bool = false) where {T<:Real}
 
     check_pcaparams(size(S,1), mean, maxoutdim, 1.)
 
@@ -197,7 +199,10 @@ function ppcaem(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
         L_old = L
         i += 1
     end
-    converged || throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
+
+    if !omit_convergence_exception && !converged
+        throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
+    end
 
     return PPCA(mean, W, σ²)
 end
@@ -217,14 +222,16 @@ or an empty vector indicating a zero mean.
 Returns the resultant [`PPCA`](@ref) model.
 
 **Notes:**
-- This function accepts three keyword arguments: `maxoutdim`, `tol`, and `maxiter`.
+- **Note:** This function accepts four keyword arguments: `maxoutdim`, `tol`,
+`maxiter` and `omit_convergence_exception`.
 - Function uses the `maxoutdim` parameter as an upper boundary when it automatically
 determines the latent space dimensionality.
 """
 function bayespca(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
                  maxoutdim::Int=size(S,1)-1,
                  tol::Real=1.0e-6,   # convergence tolerance
-                 maxiter::Integer=1000) where {T<:Real}
+                 maxiter::Integer=1000,
+                omit_convergence_exception::Bool = false) where {T<:Real}
 
     check_pcaparams(size(S,1), mean, maxoutdim, 1.)
 
@@ -271,7 +278,10 @@ function bayespca(S::AbstractMatrix{T}, mean::Vector{T}, n::Int;
         L_old = L
         i += 1
     end
-    converged || throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
+
+    if !omit_convergence_exception && !converged
+        throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
+    end
 
     return PPCA(mean, W[:,wnorm .> 0.], σ²)
 end
@@ -299,6 +309,7 @@ Let `(d, n) = size(X)` be respectively the input dimension and the number of obs
     - a pre-computed mean vector
 - `tol`: Convergence tolerance (*default* `1.0e-6`)
 - `maxiter`: Maximum number of iterations (*default* `1000`)
+- `omit_convergence_exception`: Whether to omit an exception if the function did not converge (*default* `false`).
 
 **Notes:** This function calls [`ppcaml`](@ref), [`ppcaem`](@ref) or
 [`bayespca`](@ref) internally, depending on the choice of method.
@@ -308,7 +319,8 @@ function fit(::Type{PPCA}, X::AbstractMatrix{T};
              maxoutdim::Int=size(X,1)-1,
              mean=nothing,
              tol::Real=1.0e-6,   # convergence tolerance
-             maxiter::Integer=1000) where {T<:Real}
+             maxiter::Integer=1000,
+                omit_convergence_exception::Bool = false) where {T<:Real}
 
     @assert !SparseArrays.issparse(X) "Use Kernel PCA for sparse arrays"
 
@@ -326,9 +338,25 @@ function fit(::Type{PPCA}, X::AbstractMatrix{T};
     elseif method == :em || method == :bayes
         S = covm(X, isempty(mv) ? 0 : mv, 2)
         if method == :em
-            M = ppcaem(S, mv, n, maxoutdim=maxoutdim, tol=tol, maxiter=maxiter)
+            M = ppcaem(
+                S,
+                mv,
+                n,
+                maxoutdim=maxoutdim,
+                tol=tol,
+                maxiter=maxiter,
+                omit_convergence_exception=omit_convergence_exception
+            )
         elseif method == :bayes
-            M = bayespca(S, mv, n, maxoutdim=maxoutdim, tol=tol, maxiter=maxiter)
+            M = bayespca(
+                S,
+                mv,
+                n,
+                maxoutdim=maxoutdim,
+                tol=tol,
+                maxiter=maxiter,
+                omit_convergence_exception=omit_convergence_exception
+            )
         end
     else
         throw(ArgumentError("Invalid method name $(method)"))

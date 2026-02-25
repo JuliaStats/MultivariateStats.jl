@@ -113,6 +113,7 @@ Let `(d, n) = size(X)` be respectively the input dimension and the number of obs
     - any two parameter disparity transformation function, where the first parameter is a vector of proximities (i.e. dissimilarities) and the second parameter is a vector of distances, e.g. `(p,d)->b*p` for some `b` is a transformation function for *ratio* MDS.
 - `tol`: Convergence tolerance (*default* `1.0e-3`)
 - `maxiter`: Maximum number of iterations (*default* `300`)
+- `omit_convergence_exception`: Whether to omit an exception if the function did not converge (*default* `false`).
 - `initial`: an initial reduced space point configuration
     - `nothing`: then an initial configuration is randomly generated (*default*)
     - pre-defined matrix
@@ -129,7 +130,8 @@ function fit(::Type{MetricMDS}, X::AbstractMatrix{T};
              maxiter::Int = 300,
              initial::Union{Nothing,AbstractMatrix{<:Real}} = nothing,
              weights::Union{Nothing,AbstractMatrix{<:Real}} = nothing,
-             distances::Bool) where {T<:Real}
+             distances::Bool,
+             omit_convergence_exception::Bool = false) where {T<:Real}
 
     # get distance matrix and space dimension
     Δ, d = if !distances
@@ -204,7 +206,10 @@ function fit(::Type{MetricMDS}, X::AbstractMatrix{T};
         σ′ = σ
         i += 1
     end
-    converged || throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
+
+    if !omit_convergence_exception && !converged
+        throw(ConvergenceException(maxiter, chg, oftype(chg, tol)))
+    end
 
     MetricMDS(d, Z, σ′)
 end
