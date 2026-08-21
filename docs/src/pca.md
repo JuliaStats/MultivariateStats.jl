@@ -172,13 +172,13 @@ loadings(::PPCA)
 Given a probabilistic PCA model ``M``, one can use it to transform observations into
 latent variables, as
 
-```@math
+```math
 \mathbf{z} = (\mathbf{W}^T \mathbf{W} + \sigma^2 \mathbf{I}) \mathbf{W}^T (\mathbf{x} - \boldsymbol{\mu})
 ```
 
 or use it to reconstruct (approximately) the observations from latent variables, as
 
-```@math
+```math
 \tilde{\mathbf{x}} = \mathbf{W} \mathbb{E}[\mathbf{z}] + \boldsymbol{\mu}
 ```
 

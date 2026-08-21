@@ -75,3 +75,29 @@ Note: `?` refers to a possible implementation that is missing or called differen
                 - Methods: FA, PPCA
                   - Functions: cov
 
+
+## Generic Interface
+
+```@meta
+CurrentModule = MultivariateStats
+```
+
+The models above share a type hierarchy, and the following methods are defined
+generically on its abstract types.
+
+```@docs
+size(::AbstractDimensionalityReduction, ::Integer)
+projection(::AbstractDimensionalityReduction)
+reconstruct(::AbstractDimensionalityReduction, ::Any)
+loadings(::LinearDimensionalityReduction)
+```
+
+## Internals
+
+These are not part of the public API and may change without a breaking release.
+
+```@docs
+calcscattermat(::CovarianceEstimator, ::DenseMatrix{T}) where {T<:Real}
+toindices(::AbstractVector)
+L2distance(::AbstractMatrix{T}) where {T<:Real}
+```

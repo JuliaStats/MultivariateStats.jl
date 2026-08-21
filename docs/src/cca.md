@@ -3,7 +3,7 @@
 [Canonical Correlation Analysis](http://en.wikipedia.org/wiki/Canonical_correlation) (CCA) is
 a statistical analysis technique to identify correlations between two sets of
 variables. Given two vector variables ``X`` and ``Y``, it finds two projections,
-one for each, to transform them to a common space with maximum correlations.
+one for each, to transform them to a common space with maximum correlations[^1].
 
 The package defines a [`CCA`](@ref) type to represent a CCA model, and provides a set of methods to access the properties.
 
@@ -21,6 +21,15 @@ mean(::CCA, ::Symbol)
 projection(::CCA, ::Symbol)
 cor(::CCA)
 predict(::CCA, ::AbstractVecOrMat{<:Real}, ::Symbol)
+```
+
+The significance of the canonical correlations can be assessed with the following
+tests, each of which reduces its statistic to an approximate F-statistic:
+
+```@docs
+WilksLambdaTest(::CCA)
+PillaiTraceTest(::CCA)
+LawleyHotellingTest(::CCA)
 ```
 
 Auxiliary functions:

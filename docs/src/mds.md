@@ -68,7 +68,7 @@ the embedding dimension, and ``n`` is the number of the observations.
 ```@docs
 fit(::Type{MDS}, ::AbstractMatrix{T}; kwargs) where {T<:Real}
 predict(::MDS{T}) where {T<:Real}
-predict(::MDS, ::AbstractVector{<:Real})
+predict(::MDS{T}, ::AbstractVector) where {T<:Real}
 size(::MDS)
 projection(M::MDS)
 loadings(M::MDS)
