@@ -10,7 +10,7 @@ module MultivariateStats
 
     import Statistics: mean, var, cov, covm, cor
     import Base: length, size, show
-    import StatsAPI: fit, predict, coef, weights, dof, r2, pvalue
+    import StatsAPI: fit, predict, coef, coefnames, weights, dof, r2, pvalue
     import LinearAlgebra: eigvals, eigvecs
 
     export
@@ -42,7 +42,6 @@ module MultivariateStats
     invsqrtm,           # Compute inverse of matrix square root, i.e. inv(sqrtm(A))
     cov_whitening,      # Compute a whitening transform based on covariance
     cov_whitening!,     # Compute a whitening transform based on covariance (input will be overwritten)
-    invsqrtm,           # Compute C^{-1/2}, i.e. inv(sqrtm(C))
 
     ## pca
     PCA,                # Type: Principal Component Analysis model
