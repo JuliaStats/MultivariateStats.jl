@@ -51,7 +51,7 @@ projection(M::PCA) = M.proj
 """
     eigvecs(M::PCA)
 
-Get the eigenvalues of the PCA model `M`.
+Get the eigenvectors of the PCA model `M`.
 """
 eigvecs(M::PCA) = projection(M)
 
