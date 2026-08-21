@@ -30,13 +30,13 @@ loadings(::FactorAnalysis)
 Given a factor analysis model ``M``, one can use it to transform observations into
 latent variables, as
 
-```@math
+```math
 \mathbf{z} =  \mathbf{W}^T \mathbf{\Sigma}^{-1} (\mathbf{x} - \boldsymbol{\mu})
 ```
 
 or use it to reconstruct (approximately) the observations from latent variables, as
 
-```@math
+```math
 \tilde{\mathbf{x}} = \mathbf{\Sigma} \mathbf{W} (\mathbf{W}^T \mathbf{W})^{-1} \mathbf{z} + \boldsymbol{\mu}
 ```
 
@@ -50,7 +50,8 @@ predict(::FactorAnalysis, ::AbstractVecOrMat{T}) where {T<:Real}
 reconstruct(::FactorAnalysis, ::AbstractVecOrMat{T}) where {T<:Real}
 ```
 
-Auxiliary functions:
+The model can be fitted either with the expectation-maximization algorithm[^2]
+or with the conditional maximization algorithm[^3]:
 
 ```@docs
 faem

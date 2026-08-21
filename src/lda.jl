@@ -100,7 +100,7 @@ Return the coefficients of the linear discriminant model.
 coef(f::LinearDiscriminant) = (f.b, f.w)
 
 """
-    coef(f::LinearDiscriminant)
+    coefnames(f::LinearDiscriminant)
 
 Return the coefficients' names of the linear discriminant model.
 """

@@ -1,12 +1,12 @@
 using Documenter, MultivariateStats, StatsBase, Statistics, Random, LinearAlgebra
 
-if Base.HOME_PROJECT[] !== nothing
-    Base.HOME_PROJECT[] = abspath(Base.HOME_PROJECT[])
-end
-
 makedocs(
     sitename = "MultivariateStats.jl",
     modules = [MultivariateStats],
+    format = Documenter.HTML(
+        prettyurls = get(ENV, "CI", nothing) == "true",
+        canonical = "https://juliastats.org/MultivariateStats.jl/stable/"
+    ),
     pages = ["Home"=>"index.md",
              "whiten.md",
              "lreg.md",

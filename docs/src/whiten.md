@@ -34,4 +34,5 @@ Additional methods
 ```@docs
 cov_whitening
 cov_whitening!
+invsqrtm
 ```

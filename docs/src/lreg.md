@@ -154,7 +154,7 @@ This gives the following quadratic program:
 where ``E=\{(i,j):x_{i}\leq x_{j}\}`` specifies the partial ordering of
 the observed inputs ``x_{i}``.
 
-The package provides following functions to solve the above problems:
+The package solves this program with an active set method[^1]:
 ```@docs
 isotonic
 ```
