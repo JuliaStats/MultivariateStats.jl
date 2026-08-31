@@ -113,6 +113,7 @@ import StatsBase
     @test P'P ≈ Matrix(I, 3, 3)
 
     @test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:em, maxiter=1)
+    _ = fit(PPCA, X; method=:em, maxiter=1, omit_convergence_exception=true)
 
     # bayespca
     M0 = fit(PCA, X; mean=mval, maxoutdim = 3)
@@ -139,6 +140,7 @@ import StatsBase
     @test P'P ≈ Matrix(I, 2, 2)
 
     @test_throws StatsBase.ConvergenceException fit(PPCA, X; method=:bayes, maxiter=1)
+    _ = fit(PPCA, X; method=:bayes, maxiter=1, omit_convergence_exception=true)
 
     # Different data types
     # --------------------
