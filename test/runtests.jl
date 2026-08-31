@@ -8,7 +8,8 @@ tests = ["lreg",
          "ica",
          "ppca",
          "kpca",
-         "fa"
+         "fa",
+         "mca",
          ]
 
 for test in tests
